@@ -1,0 +1,55 @@
+<aside class="nav-rail">
+  <div class="brand">
+    <span class="brand-mark">◇</span>
+    <span class="brand-text">vibe-squire</span>
+  </div>
+  <nav class="nav">
+    {{#unless navMinimal}}
+      <a
+        href="/ui/dashboard"
+        class="nav-link {{#if (eq active 'dashboard')}}active{{/if}}"
+      >Dashboard</a>
+      <a
+        href="/ui/activity"
+        class="nav-link {{#if (eq active 'activity')}}active{{/if}}"
+      >Activity</a>
+    {{/unless}}
+
+    <div class="nav-settings-group">
+      <div class="nav-section-heading" id="nav-heading-settings">Settings</div>
+      <a
+        href="/ui/settings"
+        class="nav-link nav-link-nested {{#if (eq active 'general')}}active{{/if}}"
+        aria-labelledby="nav-heading-settings"
+      >General</a>
+      {{#unless navMinimal}}
+        {{#if showNavVkTools}}
+          <a
+            href="/ui/mappings"
+            class="nav-link nav-link-nested {{#if (eq active 'mappings')}}active{{/if}}"
+            aria-labelledby="nav-heading-settings"
+          >Mappings</a>
+        {{/if}}
+        {{#if showNavGithubSettings}}
+          <a
+            href="/ui/github"
+            class="nav-link nav-link-nested {{#if (eq active 'github')}}active{{/if}}"
+            aria-labelledby="nav-heading-settings"
+          >GitHub</a>
+        {{/if}}
+        {{#if showNavVkTools}}
+          <a
+            href="/ui/vibe-kanban"
+            class="nav-link nav-link-nested {{#if (eq active 'vibe_kanban')}}active{{/if}}"
+            aria-labelledby="nav-heading-settings"
+          >Vibe Kanban</a>
+        {{/if}}
+      {{/unless}}
+    </div>
+  </nav>
+  {{#if navMinimal}}
+    <p class="nav-foot muted">Choose integrations under Settings → General to unlock the operator UI.</p>
+  {{else}}
+    <p class="nav-foot muted">Operator UI · served by the API process</p>
+  {{/if}}
+</aside>

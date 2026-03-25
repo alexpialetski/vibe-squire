@@ -1,0 +1,95 @@
+{{#> layout title="Vibe Kanban" active="vibe_kanban" pageScript="operator-vibe-kanban.js" navMinimal=navMinimal showNavVkTools=showNavVkTools showNavGithubSettings=showNavGithubSettings}}
+  <div class="page">
+    <header class="page-head">
+      <h1>Vibe Kanban</h1>
+    </header>
+
+    {{#if saved}}
+      <div class="banner banner-ok">Vibe Kanban settings saved.</div>
+    {{/if}}
+    {{#if error}}
+      <div class="banner banner-error">{{error}}</div>
+    {{/if}}
+
+    <form method="post" action="/ui/vibe-kanban" class="card form-grid" id="vk-settings-form">
+      <div class="field" style="grid-column: 1 / -1">
+        <span class="field-label">{{vkLabels.default_organization_id}}</span>
+        <span class="field-key muted">default_organization_id · default_project_id</span>
+        <p class="muted" style="margin: 0.25rem 0 0.75rem; font-size: 0.9rem">
+          Required for sync. {{#if mcpBoardPicker}}Choose organization, then project.{{else}}Paste UUIDs from Vibe Kanban (dropdowns require MCP configured outside this page).{{/if}}
+          Click <strong>Save</strong> when done.
+        </p>
+        {{#if mcpBoardPicker}}
+          <input type="hidden" name="default_organization_id" id="vk-in-org" value="{{boardOrg}}" />
+          <input type="hidden" name="default_project_id" id="vk-in-proj" value="{{boardProj}}" />
+          {{#if vkBoardListError}}
+            <div class="banner banner-error" style="margin-bottom: 0.75rem">{{vkBoardListError}}</div>
+          {{/if}}
+          {{#if vkBoardProjectsEmpty}}
+            <p class="muted" style="margin: 0 0 0.75rem; font-size: 0.9rem">
+              No projects returned for this organization.
+            </p>
+          {{/if}}
+          <div class="form-row" style="flex-wrap: wrap; gap: 0.75rem; margin-bottom: 0.75rem">
+            <label class="field inline grow" style="min-width: 12rem">
+              <span class="field-label">Organization</span>
+              <select id="vk-sel-org" class="input">
+                <option value="">Select organization…</option>
+                {{#each vkBoardOrganizations}}
+                  <option value="{{id}}" {{#if (eq ../boardOrg id)}}selected{{/if}}>{{#if name}}{{name}} — {{id}}{{else}}{{id}}{{/if}}</option>
+                {{/each}}
+              </select>
+            </label>
+            <label class="field inline grow" style="min-width: 12rem">
+              <span class="field-label">Project</span>
+              <select id="vk-sel-proj" class="input mono" {{#unless hasVkProjectPick}}disabled="disabled"{{/unless}}>
+                {{#if hasVkProjectPick}}
+                  <option value="">Select project…</option>
+                  {{#each vkBoardProjects}}
+                    <option value="{{id}}" {{#if (eq ../boardProj id)}}selected{{/if}}>{{#if name}}{{name}} — {{id}}{{else}}{{id}}{{/if}}</option>
+                  {{/each}}
+                {{else}}
+                  <option value="">Select organization first</option>
+                {{/if}}
+              </select>
+            </label>
+          </div>
+          <p id="vk-board-err" class="banner banner-error" style="display: none; margin-top: 0.5rem"></p>
+        {{else}}
+          <label class="field">
+            <span class="field-label">Organization UUID</span>
+            <input id="vk-txt-org" name="default_organization_id" class="input mono" type="text" value="{{boardOrg}}" autocomplete="off" />
+          </label>
+          <label class="field">
+            <span class="field-label">Project UUID</span>
+            <input id="vk-txt-proj" name="default_project_id" class="input mono" type="text" value="{{boardProj}}" autocomplete="off" />
+          </label>
+        {{/if}}
+      </div>
+
+      <label class="field">
+        <span class="field-label">{{vkLabels.vk_workspace_executor}}</span>
+        <span class="field-key muted">vk_workspace_executor</span>
+        <select name="vk_workspace_executor" class="input">
+          {{#each executorOptions}}
+            <option value="{{value}}" {{#if (eq ../vkExecutor value)}}selected{{/if}}>{{label}}</option>
+          {{/each}}
+        </select>
+      </label>
+
+      <label class="field">
+        <span class="field-label">{{vkLabels.kanban_done_status}}</span>
+        <span class="field-key muted">kanban_done_status</span>
+        <input name="kanban_done_status" class="input" type="text" value="{{kanbanDoneStatus}}" />
+      </label>
+
+      <div class="actions-row" style="grid-column: 1 / -1">
+        <button type="submit" class="btn primary">Save</button>
+      </div>
+    </form>
+
+    {{#if orgError}}
+      <div class="banner banner-error">{{orgError}}</div>
+    {{/if}}
+  </div>
+{{/layout}}

@@ -1,0 +1,34 @@
+{{#> layout title="GitHub" active="github" navMinimal=navMinimal showNavVkTools=showNavVkTools showNavGithubSettings=showNavGithubSettings}}
+  <div class="page">
+    <header class="page-head">
+      <h1>GitHub</h1>
+      <p class="muted">
+        PR source settings (host override, review issue body template).
+      </p>
+    </header>
+
+    {{#if error}}
+      <div class="banner banner-error">{{error}}</div>
+    {{/if}}
+    {{#if saved}}
+      <div class="banner banner-ok">GitHub settings saved.</div>
+    {{/if}}
+
+    <form method="post" action="/ui/github" class="card form-grid">
+      {{#each fields}}
+        <label class="field">
+          <span class="field-label">{{label}}</span>
+          <span class="field-key muted">{{key}}</span>
+          {{#if (eq key "pr_review_body_template")}}
+            <textarea name="{{key}}" class="input" rows="4">{{value}}</textarea>
+          {{else}}
+            <input name="{{key}}" class="input" type="text" value="{{value}}" />
+          {{/if}}
+        </label>
+      {{/each}}
+      <div class="actions-row">
+        <button type="submit" class="btn primary">Save</button>
+      </div>
+    </form>
+  </div>
+{{/layout}}

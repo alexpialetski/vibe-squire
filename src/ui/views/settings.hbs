@@ -1,0 +1,87 @@
+{{#> layout title="General" active="general" navMinimal=navMinimal showNavVkTools=showNavVkTools showNavGithubSettings=showNavGithubSettings}}
+  <div class="page">
+    <header class="page-head">
+      <h1>General</h1>
+    </header>
+
+    {{#if error}}
+      <div class="banner banner-error">{{error}}</div>
+    {{/if}}
+    {{#if integrationSaved}}
+      <div class="banner banner-ok">Integration choices saved.</div>
+    {{/if}}
+    {{#if saved}}
+      <div class="banner banner-ok">Poll schedule saved. Scheduler refreshed if the interval changed.</div>
+    {{/if}}
+
+    <div class="card" id="integration">
+      <h2>Source &amp; destination</h2>
+      <p class="muted">
+        Choose one PR source and one work board. Select <strong>Not configured</strong> to clear that side.
+      </p>
+      <form method="post" action="/ui/setup/integration" class="form-stack">
+        <fieldset class="fieldset-plain">
+          <legend class="field-label">PR source</legend>
+          <label class="check-row">
+            <input
+              type="radio"
+              name="source_type"
+              value="none"
+              {{#if (eq sourceTypeChoice 'none')}}checked{{/if}}
+            />
+            <span>Not configured</span>
+          </label>
+          <label class="check-row">
+            <input
+              type="radio"
+              name="source_type"
+              value="github"
+              {{#if (eq sourceTypeChoice 'github')}}checked{{/if}}
+            />
+            <span>GitHub</span>
+          </label>
+        </fieldset>
+        <fieldset class="fieldset-plain">
+          <legend class="field-label">Work board (destination)</legend>
+          <label class="check-row">
+            <input
+              type="radio"
+              name="destination_type"
+              value="none"
+              {{#if (eq destinationTypeChoice 'none')}}checked{{/if}}
+            />
+            <span>Not configured</span>
+          </label>
+          <label class="check-row">
+            <input
+              type="radio"
+              name="destination_type"
+              value="vibe_kanban"
+              {{#if (eq destinationTypeChoice 'vibe_kanban')}}checked{{/if}}
+            />
+            <span>Vibe Kanban</span>
+          </label>
+        </fieldset>
+        <p class="muted"><strong>Current:</strong> {{sourceTypeLabel}} → {{destinationTypeLabel}}</p>
+        <button type="submit" class="btn primary">Save integration</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2>Poll schedule</h2>
+      <p class="muted">Effective env + database values. Manual &ldquo;Sync now&rdquo; ignores the interval.</p>
+      <form method="post" action="/ui/settings" class="form-grid">
+        {{#each fields}}
+          <label class="field">
+            <span class="field-label">{{label}}</span>
+            <span class="field-key muted">{{key}}</span>
+            <input name="{{key}}" class="input" type="text" value="{{value}}" />
+          </label>
+        {{/each}}
+        <div class="actions-row">
+          <button type="submit" class="btn primary">Save schedule</button>
+        </div>
+      </form>
+    </div>
+  </div>
+{{/layout}}

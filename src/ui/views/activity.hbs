@@ -1,0 +1,85 @@
+{{#> layout title="Activity" active="activity" navMinimal=navMinimal showNavVkTools=showNavVkTools showNavGithubSettings=showNavGithubSettings}}
+  <div class="page">
+    <header class="page-head">
+      <h1>Activity</h1>
+      <p class="muted">Per-sync GitHub PR scout outcomes: created issues, skips, and bots filtered before sync.</p>
+    </header>
+
+    {{#unless runs.length}}
+      <div class="card">
+        <p class="muted" style="margin:0">No sync runs recorded yet. Runs appear after a scheduled or manual sync completes.</p>
+      </div>
+    {{/unless}}
+
+    {{#each runs}}
+      <div class="card activity-run">
+        <div class="activity-run-summary">
+          <div class="activity-run-meta">
+            <span class="activity-run-time mono">{{startedAt}}</span>
+            <span class="activity-pill activity-pill-trigger">{{trigger}}</span>
+            <span class="activity-pill activity-pill-phase activity-pill-phase-{{phase}}">{{pollPhaseLabel phase}}</span>
+          </div>
+          {{#if (eq phase 'completed')}}
+            <p class="muted activity-run-counts" style="margin:0.35rem 0 0">
+              {{#if (eq candidatesCount null)}}—{{else}}{{candidatesCount}}{{/if}} PR(s) seen ·
+              {{#if (eq issuesCreated null)}}—{{else}}{{issuesCreated}}{{/if}} created ·
+              {{#if (eq skippedUnmapped null)}}—{{else}}{{skippedUnmapped}}{{/if}} unmapped ·
+              {{#if (eq skippedBot null)}}—{{else}}{{skippedBot}}{{/if}} bot ·
+              {{#if (eq skippedAlreadyTracked null)}}—{{else}}{{skippedAlreadyTracked}}{{/if}} already tracked ·
+              {{#if (eq skippedLinkedExisting null)}}—{{else}}{{skippedLinkedExisting}}{{/if}} linked existing
+            </p>
+          {{/if}}
+          {{#if (eq phase 'aborted')}}
+            <p class="muted activity-run-msg" style="margin:0.35rem 0 0">
+              {{#if abortReason}}<code class="mono">{{abortReason}}</code>{{else}}Aborted{{/if}}
+            </p>
+          {{/if}}
+          {{#if (eq phase 'failed')}}
+            <p class="banner banner-error activity-run-msg" style="margin:0.5rem 0 0">
+              {{#if errorMessage}}{{errorMessage}}{{else}}Sync failed{{/if}}
+            </p>
+          {{/if}}
+        </div>
+
+        {{#if itemCount}}
+          <details class="activity-details">
+            <summary class="activity-details-summary">
+              PR details ({{itemCount}})
+            </summary>
+            <div class="table-wrap activity-items-wrap">
+              <table class="data-table activity-items-table">
+                <thead>
+                  <tr>
+                    <th>PR</th>
+                    <th>Repo</th>
+                    <th>Outcome</th>
+                    <th>Detail</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {{#each items}}
+                    <tr>
+                      <td class="mono">
+                        <a href="{{prUrl}}" target="_blank" rel="noopener noreferrer">#{{prNumber}}</a>
+                        <div class="activity-pr-title muted">{{prTitle}}</div>
+                        {{#if authorLogin}}
+                          <div class="muted" style="font-size:0.8rem">@{{authorLogin}}</div>
+                        {{/if}}
+                      </td>
+                      <td class="mono wrap">{{githubRepo}}</td>
+                      <td>{{pollDecisionLabel decision}}</td>
+                      <td class="wrap muted">
+                        {{#if kanbanIssueId}}<span class="mono">issue {{kanbanIssueId}}</span>{{/if}}
+                        {{#if detail}}{{#if kanbanIssueId}} · {{/if}}{{detail}}{{/if}}
+                      </td>
+                    </tr>
+                  {{/each}}
+                </tbody>
+              </table>
+            </div>
+          </details>
+        {{/if}}
+      </div>
+    {{/each}}
+  </div>
+{{/layout}}

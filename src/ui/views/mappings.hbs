@@ -1,0 +1,98 @@
+{{#> layout title="Mappings" active="mappings" pageScript="operator-mappings.js" navMinimal=navMinimal showNavVkTools=showNavVkTools showNavGithubSettings=showNavGithubSettings}}
+  <div class="page">
+    <header class="page-head">
+      <h1>Mappings</h1>
+      <p class="muted">GitHub repo (<code>owner/repo</code>) → Vibe Kanban repository. Default Kanban <strong>project</strong> for new issues is set on the <a href="/ui/vibe-kanban">Vibe Kanban</a> page.</p>
+    </header>
+
+    {{#if error}}
+      <div class="banner banner-error">{{error}}</div>
+    {{/if}}
+
+    <div class="card">
+      <h2>New mapping</h2>
+      <form id="new-mapping-form" method="post" action="/ui/mappings" class="form-stack">
+        <div class="form-row">
+          <label class="field inline grow">
+            <span class="field-label">GitHub repo</span>
+            <input name="githubRepo" class="input" placeholder="owner/repo" required autocomplete="off" />
+          </label>
+        </div>
+        {{#if kanbanMcpPicker}}
+          <input type="hidden" name="vibeKanbanRepoId" id="h-vk-repo" value="" />
+          <div class="form-row">
+            <label class="field inline grow">
+              <span class="field-label">Vibe Kanban repository</span>
+              <select id="mk-repo" class="input mono">
+                <option value="">Loading…</option>
+              </select>
+            </label>
+          </div>
+          <p id="mk-err" class="banner banner-error" style="display: none"></p>
+        {{else}}
+          <div class="form-row">
+            <label class="field inline grow">
+              <span class="field-label">vibeKanbanRepoId</span>
+              <input name="vibeKanbanRepoId" class="input mono" required autocomplete="off" />
+            </label>
+          </div>
+        {{/if}}
+        <div class="form-row">
+          <label class="field inline grow">
+            <span class="field-label">label (optional)</span>
+            <input name="label" class="input" autocomplete="off" />
+          </label>
+        </div>
+        <button type="submit" class="btn primary">Add</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <div class="table-head">
+        <h2>Existing</h2>
+        <button type="button" class="btn ghost" onclick="location.reload()">Reload</button>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>GitHub repo</th>
+              <th>VK repository ID</th>
+              <th>Label</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {{#each rows}}
+              <tr class="js-mapping-row" data-id="{{id}}">
+                <td class="mono cell-d">
+                  <span class="disp">{{githubRepo}}</span>
+                  <input class="input input-sm edit" hidden value="{{githubRepo}}" />
+                </td>
+                <td class="mono wrap cell-d">
+                  <span class="disp">{{vibeKanbanRepoId}}</span>
+                  <input class="input input-sm mono edit" hidden value="{{vibeKanbanRepoId}}" />
+                </td>
+                <td class="cell-d">
+                  <span class="disp">{{#if label}}{{label}}{{else}}—{{/if}}</span>
+                  <input class="input input-sm edit" hidden value="{{#if label}}{{label}}{{/if}}" />
+                </td>
+                <td class="actions">
+                  <button type="button" class="btn btn-sm js-edit">Edit</button>
+                  <button type="button" class="btn btn-sm primary js-save" hidden>Save</button>
+                  <button type="button" class="btn btn-sm ghost js-cancel" hidden>Cancel</button>
+                  <form method="post" action="/ui/mappings/{{id}}/delete" class="inline-form" onsubmit="return confirm('Delete this mapping?');">
+                    <button type="submit" class="btn btn-sm danger">Delete</button>
+                  </form>
+                </td>
+              </tr>
+            {{/each}}
+          </tbody>
+        </table>
+        {{#unless rows.length}}
+          <p class="muted pad">No mappings yet.</p>
+        {{/unless}}
+      </div>
+    </div>
+  </div>
+{{/layout}}
