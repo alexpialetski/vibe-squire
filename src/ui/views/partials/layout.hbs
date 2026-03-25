@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{title}} · vibe-squire</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Source+Sans+3:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/ui/assets/operator.css" />
+  </head>
+  <body>
+    <div class="shell">
+      {{> nav active=active navMinimal=navMinimal showNavVkTools=showNavVkTools showNavGithubSettings=showNavGithubSettings}}
+      <main class="main">
+        {{{renderBlock}}}
+      </main>
+    </div>
+    {{#if pageScript}}
+      <script src="/ui/assets/{{pageScript}}" defer></script>
+    {{/if}}
+  </body>
+</html>

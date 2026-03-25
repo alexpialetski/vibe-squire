@@ -1,0 +1,43 @@
+{{#> layout title="Dashboard" active="dashboard" pageScript="operator-dashboard.js" navMinimal=navMinimal showNavVkTools=showNavVkTools showNavGithubSettings=showNavGithubSettings}}
+  <script type="application/json" id="boot-snapshot">{{{bootSnapshotJson}}}</script>
+  <div class="page">
+    <header class="page-head">
+      <h1>Dashboard</h1>
+      <p class="muted">
+        Updates live via SSE (<span id="sse-state" class="sse sse-connecting">connecting</span>). If the stream drops, status refetches automatically every 5 minutes.
+      </p>
+    </header>
+
+    {{#if showSetupChecklist}}
+      <div class="card setup-checklist-card">
+        <h2>Finish configuration</h2>
+        <p class="muted">Complete these before scheduled sync can run safely.</p>
+        <ul class="setup-checklist">
+          {{#each setupChecklist}}
+            <li class="setup-checklist-item">
+              <span class="setup-checklist-mark" aria-hidden="true">○</span>
+              <span class="setup-checklist-text">{{text}}</span>
+              {{#if linkHref}}
+                <a href="{{linkHref}}" class="btn btn-sm ghost">{{linkLabel}}</a>
+              {{/if}}
+            </li>
+          {{/each}}
+        </ul>
+      </div>
+    {{/if}}
+
+    <div id="action-msg" class="banner banner-info" style="display:none"></div>
+
+    <div class="card actions-row">
+      <button type="button" id="btn-sync" class="btn primary" {{#unless manualSync.canRun}}disabled{{/unless}} title="Run one full sync cycle now (same as the scheduler, but immediate)">Sync now</button>
+      <button type="button" id="btn-reinit" class="btn" style="display: none" title="Refresh settings cache, probe MCP if configured, reset scout backoff">Reinit</button>
+    </div>
+
+    <div id="status-overview" class="status-grid" aria-live="polite"></div>
+
+    <details class="card raw-details">
+      <summary>Technical details (raw JSON)</summary>
+      <pre id="status-snap" class="json-block">{{{snapshotPretty}}}</pre>
+    </details>
+  </div>
+{{/layout}}
