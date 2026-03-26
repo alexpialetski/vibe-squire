@@ -12,6 +12,7 @@ describe('ghSearchPrsResponseSchema', () => {
           url: 'https://github.example.com/github-apps/renovatebot',
         },
         number: 5070,
+        createdAt: '2026-02-06T12:26:12Z',
         repository: {
           name: 'epicgames-self-service-portal',
           nameWithOwner: 'online-web/epicgames-self-service-portal',

@@ -26,6 +26,16 @@
       </div>
     {{/if}}
 
+    {{#if showScheduledSyncOff}}
+      <div class="card setup-checklist-card">
+        <h2>Automatic polling is off</h2>
+        <p class="muted">
+          The scheduled timer will not run until you enable <strong>scheduled_sync_enabled</strong> (General settings) or set <code>SCHEDULED_SYNC_ENABLED=true</code> in the environment. Manual &ldquo;Sync now&rdquo; still works.
+        </p>
+        <a href="/ui/settings" class="btn primary">Open General settings</a>
+      </div>
+    {{/if}}
+
     <div id="action-msg" class="banner banner-info" style="display:none"></div>
 
     <div class="card actions-row">

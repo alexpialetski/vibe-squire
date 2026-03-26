@@ -45,7 +45,7 @@ export class SettingsController {
   }
 
   /**
-   * Body: `{ "vk_mcp_stdio_json": "[...]", "poll_interval_minutes": "15" }` — only known keys applied.
+   * Body: `{ "vk_mcp_stdio_json": "[...]", "scheduled_sync_enabled": "true", "poll_interval_minutes": "15" }` — only known keys applied.
    */
   @Patch()
   @ApiOperation({ summary: 'Upsert settings by key (strings only)' })

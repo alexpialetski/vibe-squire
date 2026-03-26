@@ -57,6 +57,7 @@ model PollRun {
   issuesCreated           Int?
   skippedUnmapped         Int?
   skippedBot              Int?
+  skippedBoardLimit       Int?
   skippedAlreadyTracked   Int?
   skippedLinkedExisting   Int?
   items PollRunItem[]
@@ -74,7 +75,7 @@ model PollRunItem {
   prNumber        Int
   prTitle         String
   authorLogin     String?
-  /// created | already_tracked | linked_existing | skipped_unmapped | skipped_bot
+  /// created | already_tracked | linked_existing | skipped_unmapped | skipped_bot | skipped_board_limit
   decision        String
   detail          String?
   kanbanIssueId   String?

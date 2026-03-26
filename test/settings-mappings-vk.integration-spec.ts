@@ -18,6 +18,7 @@ describe('Settings, mappings, vibe-kanban (integration)', () => {
       .fn()
       .mockResolvedValue([{ id: 'repo-1', name: 'Acme Repo' }]),
     listIssues: jest.fn().mockResolvedValue([]),
+    countActiveVibeSquireIssues: jest.fn().mockResolvedValue(0),
     getIssue: jest.fn().mockResolvedValue(null),
     createIssue: jest.fn().mockResolvedValue('fake-issue-id'),
     updateIssue: jest.fn().mockResolvedValue(undefined),

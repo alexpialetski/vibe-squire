@@ -28,6 +28,7 @@ describe('validateStatusSnapshot', () => {
       },
     ],
     manual_sync: { canRun: true },
+    scheduled_sync: { enabled: true },
   };
 
   it('accepts minimal valid snapshot', () => {

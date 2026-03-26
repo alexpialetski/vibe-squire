@@ -10,6 +10,12 @@ import type {
 } from './vk-entities';
 import { isVibeKanbanDestination } from './mcp-transport-config';
 import { VkMcpStdioSessionService } from './vk-mcp-stdio-session.service';
+import {
+  isGetIssueNotFoundMcpResult,
+  summarizeMcpToolErrorText,
+} from './mcp-tool-result-text';
+import { VIBE_SQUIRE_TITLE_MARKER } from './vk-mcp-list-get-issue-response.schema';
+import { vkListRowCountsTowardBoardCap } from './vk-board-cap';
 
 export type {
   VkIssueRef,
@@ -17,22 +23,6 @@ export type {
   VkProjectRef,
   VkRepoRef,
 } from './vk-entities';
-
-function summarizeMcpToolErrorText(result: unknown): string {
-  const r = result as {
-    content?: Array<{ type: string; text?: string }>;
-  };
-  const parts =
-    r.content
-      ?.filter(
-        (c): c is { type: 'text'; text: string } =>
-          c.type === 'text' && typeof c.text === 'string',
-      )
-      .map((c) => c.text.trim())
-      .filter(Boolean) ?? [];
-  const s = parts.join(' | ').slice(0, 800);
-  return s.length > 0 ? s : 'isError=true (no text in content)';
-}
 
 function parseToolJson(result: unknown): unknown {
   const r = result as {
@@ -88,11 +78,22 @@ function pickIssuesPayload(parsed: unknown): unknown[] {
   return [];
 }
 
+function unwrapListOrGetIssueRow(parsed: unknown): unknown {
+  if (parsed != null && typeof parsed === 'object') {
+    const inner = (parsed as { issue?: unknown }).issue;
+    if (inner != null && typeof inner === 'object') {
+      return inner;
+    }
+  }
+  return parsed;
+}
+
 function normalizeIssue(raw: unknown): VkIssueRef | null {
-  if (!raw || typeof raw !== 'object') {
+  const row = unwrapListOrGetIssueRow(raw);
+  if (!row || typeof row !== 'object') {
     return null;
   }
-  const o = raw as Record<string, unknown>;
+  const o = row as Record<string, unknown>;
   const id =
     (typeof o.id === 'string' && o.id) ||
     (typeof o.issue_id === 'string' && o.issue_id) ||
@@ -107,7 +108,9 @@ function normalizeIssue(raw: unknown): VkIssueRef | null {
         ? o.state
         : undefined;
   const title = typeof o.title === 'string' ? o.title : undefined;
-  return { id, status, title };
+  const description =
+    typeof o.description === 'string' ? o.description : undefined;
+  return { id, status, title, ...(description != null ? { description } : {}) };
 }
 
 function normalizeOrg(raw: unknown): VkOrgRef | null {
@@ -287,7 +290,7 @@ export class VibeKanbanMcpService implements WorkBoardPort {
 
   async listIssues(
     projectId: string,
-    opts?: { search?: string; limit?: number },
+    opts?: { search?: string; limit?: number; offset?: number },
   ): Promise<VkIssueRef[]> {
     return this.withClient(async (client) => {
       const args: Record<string, unknown> = { project_id: projectId };
@@ -296,6 +299,9 @@ export class VibeKanbanMcpService implements WorkBoardPort {
       }
       if (opts?.limit != null) {
         args.limit = opts.limit;
+      }
+      if (opts?.offset != null) {
+        args.offset = opts.offset;
       }
       const result = await client.callTool({
         name: 'list_issues',
@@ -309,12 +315,45 @@ export class VibeKanbanMcpService implements WorkBoardPort {
     });
   }
 
+  private static readonly VK_BOARD_PAGE_SIZE = 100;
+  private static readonly VK_BOARD_MAX_PAGES = 20;
+
+  /**
+   * Counts non-done issues whose title contains {@link VIBE_SQUIRE_TITLE_MARKER} on this project
+   * (`list_issues` search + offset paging, capped pages).
+   */
+  async countActiveVibeSquireIssues(projectId: string): Promise<number> {
+    const kanbanDone =
+      this.settings.getEffective('kanban_done_status').trim() || 'Done';
+    let total = 0;
+    for (let page = 0; page < VibeKanbanMcpService.VK_BOARD_MAX_PAGES; page++) {
+      const offset = page * VibeKanbanMcpService.VK_BOARD_PAGE_SIZE;
+      const rows = await this.listIssues(projectId, {
+        search: VIBE_SQUIRE_TITLE_MARKER,
+        limit: VibeKanbanMcpService.VK_BOARD_PAGE_SIZE,
+        offset,
+      });
+      for (const row of rows) {
+        if (vkListRowCountsTowardBoardCap(row, kanbanDone)) {
+          total += 1;
+        }
+      }
+      if (rows.length < VibeKanbanMcpService.VK_BOARD_PAGE_SIZE) {
+        break;
+      }
+    }
+    return total;
+  }
+
   async getIssue(issueId: string): Promise<VkIssueRef | null> {
     return this.withClient(async (client) => {
       const result = await client.callTool({
         name: 'get_issue',
         arguments: { issue_id: issueId },
       });
+      if (isGetIssueNotFoundMcpResult(result)) {
+        return null;
+      }
       this.assertToolCallOk('get_issue', result);
       const parsed = parseToolJson(result);
       return normalizeIssue(parsed);

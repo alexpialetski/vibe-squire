@@ -53,6 +53,9 @@ export class StatusService {
     ];
 
     const manualSync = this.sync.getManualSyncSnapshot();
+    const scheduledSyncEnabled = this.settings.getEffectiveBoolean(
+      'scheduled_sync_enabled',
+    );
 
     return {
       timestamp: new Date().toISOString(),
@@ -96,6 +99,9 @@ export class StatusService {
         },
       ],
       manual_sync: manualSync,
+      scheduled_sync: {
+        enabled: scheduledSyncEnabled,
+      },
     };
   }
 

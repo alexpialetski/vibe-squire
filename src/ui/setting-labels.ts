@@ -1,5 +1,5 @@
 import { SETTING_KEYS, type SettingKey } from '../config/setting-keys';
-import { SCHEDULER_UI_KEYS } from './integration-ui-registry';
+import { SCHEDULER_TEXT_FIELD_KEYS } from './integration-ui-registry';
 
 export const SETTING_LABELS: Record<SettingKey, string> = {
   source_type: 'PR / SCM source (github only for now)',
@@ -7,10 +7,14 @@ export const SETTING_LABELS: Record<SettingKey, string> = {
     'Work board / destination (vibe_kanban only for now; more later)',
   vk_mcp_stdio_json:
     'Vibe Kanban MCP stdio: JSON array [command, ...args] to spawn the MCP server',
+  scheduled_sync_enabled:
+    'Automatic polling — timer runs on the interval below. Manual Sync now always works. Override: SCHEDULED_SYNC_ENABLED',
   poll_interval_minutes:
     'Poll interval (minutes, min 5; manual Sync now ignores)',
   jitter_max_seconds: 'Jitter max (seconds)',
   run_now_cooldown_seconds: 'Run-now cooldown (seconds)',
+  max_board_pr_count:
+    'Max PRs on board at once (synced review queue); oldest by GitHub createdAt first; extra PRs skipped',
   default_organization_id:
     'Target Kanban organization UUID (required for sync; pick below or paste)',
   default_project_id:
@@ -24,12 +28,12 @@ export const SETTING_LABELS: Record<SettingKey, string> = {
 };
 
 /**
- * General `/ui/settings`: poll schedule only. GitHub → `/ui/github`, Vibe Kanban → `/ui/vibe-kanban`.
+ * General `/ui/settings` poll form: text fields only (`scheduled_sync_enabled` is a radio group in the template).
  */
-export function settingsFieldsForUi(
+export function schedulerTextFieldsForUi(
   values: Record<string, string>,
 ): { key: SettingKey; label: string; value: string }[] {
-  return SCHEDULER_UI_KEYS.map((key) => ({
+  return SCHEDULER_TEXT_FIELD_KEYS.map((key) => ({
     key,
     label: SETTING_LABELS[key],
     value: values[key] ?? '',

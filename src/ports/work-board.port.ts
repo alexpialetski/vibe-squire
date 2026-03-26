@@ -13,8 +13,10 @@ export interface WorkBoardPort {
   listRepos(): Promise<VkRepoRef[]>;
   listIssues(
     projectId: string,
-    opts?: { search?: string; limit?: number },
+    opts?: { search?: string; limit?: number; offset?: number },
   ): Promise<VkIssueRef[]>;
+  /** Active `[vibe-squire]` issues on the project (not done), via `list_issues` search + paging. */
+  countActiveVibeSquireIssues(projectId: string): Promise<number>;
   getIssue(issueId: string): Promise<VkIssueRef | null>;
   createIssue(params: {
     projectId: string;
