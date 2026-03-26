@@ -1,6 +1,4 @@
-import type { GithubPrCandidate } from '../scout/github-pr-scout.service';
+import type { SyncPrScoutPort } from './sync-pr-scout.port';
 
-/** Outbound scout port (§2.1) — GitHub PR review queue v1. */
-export interface GithubPrScoutPort {
-  listReviewRequestedForMe(): GithubPrCandidate[];
-}
+/** GitHub `gh` CLI adapter. Same surface as {@link SyncPrScoutPort} for v1. */
+export type GithubPrScoutPort = SyncPrScoutPort;

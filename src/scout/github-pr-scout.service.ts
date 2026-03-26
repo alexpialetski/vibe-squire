@@ -20,7 +20,10 @@ export type GithubPrCandidate = {
   authorLogin: string;
 };
 
-function compareCandidatesOldestFirst(a: GithubPrCandidate, b: GithubPrCandidate): number {
+function compareCandidatesOldestFirst(
+  a: GithubPrCandidate,
+  b: GithubPrCandidate,
+): number {
   const ta = Date.parse(a.createdAt);
   const tb = Date.parse(b.createdAt);
   if (Number.isFinite(ta) && Number.isFinite(tb) && ta !== tb) {

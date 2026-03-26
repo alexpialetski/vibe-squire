@@ -116,7 +116,9 @@ describe('Sync heal deleted Kanban issue (integration)', () => {
   });
 
   it('recreates board issue after get_issue returns null for stored id', async () => {
-    vkStub.createIssue.mockResolvedValueOnce('fake-issue-id').mockResolvedValue('fake-issue-id-2');
+    vkStub.createIssue
+      .mockResolvedValueOnce('fake-issue-id')
+      .mockResolvedValue('fake-issue-id-2');
 
     await request(app.getHttpServer()).post('/api/sync/run').expect(201);
     expect(vkStub.createIssue).toHaveBeenCalledTimes(1);

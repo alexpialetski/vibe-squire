@@ -25,7 +25,10 @@ describe('vk-board-cap', () => {
       ),
     ).toBe(false);
     expect(
-      vkListRowCountsTowardBoardCap({ title: 'no marker', status: 'Backlog' }, 'Done'),
+      vkListRowCountsTowardBoardCap(
+        { title: 'no marker', status: 'Backlog' },
+        'Done',
+      ),
     ).toBe(false);
   });
 });

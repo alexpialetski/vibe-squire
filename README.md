@@ -40,6 +40,17 @@ After `npm run start:dev`, open `/ui/dashboard` in the browser. CORS remains ena
 
 Effective precedence where an env var exists for a key: **env (non-empty) → SQLite → code default**. Keys listed above without env mapping use **SQLite → code default** only (`SettingsService`, `resolveEffectiveSetting`).
 
+### Sync orchestration (`source_type` / `destination_type`)
+
+Runtime settings choose **which adapter** runs the poll pipeline and MCP integration (see `REFACTORING-PLAN.md` §G). Today only **GitHub** (`source_type`) and **Vibe Kanban** (`destination_type` `vibe_kanban`) are implemented.
+
+| Role | Setting | Orchestration token (internal) | Adapter today |
+|------|---------|-------------------------------|---------------|
+| PR scout | `source_type` | `SYNC_PR_SCOUT_PORT` | GitHub `gh` scout via `GITHUB_PR_SCOUT_PORT` |
+| Destination board | `destination_type` | `SYNC_DESTINATION_BOARD_PORT` | Vibe Kanban MCP via `VIBE_KANBAN_BOARD_PORT` |
+
+If you set an unsupported value, sync calls that need that side throw at runtime (e.g. `Sync source not supported: …`). The operator UI should keep you on supported pairs; this matters if you edit SQLite or API settings directly.
+
 ## HTTP surface (summary)
 
 | Method | Path | Description |
@@ -72,7 +83,7 @@ After `npm run build`, the package exposes `vibe-squire` via `bin/vibe-squire.js
 ## Tests (§16)
 
 - **Unit:** setting precedence (`resolve-effective-setting.spec.ts`), poll backoff (`poll-backoff.spec.ts`).
-- **Integration:** happy path + idempotency (`sync-with-fakes.integration-spec.ts`), reconciliation (`sync-reconcile.integration-spec.ts`), VK-first board cap (`sync-vk-board-cap.integration-spec.ts`), Kanban heal / quota (`sync-kanban-issue-heal.integration-spec.ts`), settings / mappings / Kanban context (`settings-mappings-vk.integration-spec.ts`).
+- **Integration:** happy path + idempotency (`sync-with-fakes.integration-spec.ts`), reconciliation (`sync-reconcile.integration-spec.ts`), VK-first board cap (`sync-vk-board-cap.integration-spec.ts`), Kanban heal / quota (`sync-kanban-issue-heal.integration-spec.ts`), settings / mappings / Kanban context (`settings-mappings-vk.integration-spec.ts`), poll-cycle branches (`run-poll-cycle-branches.integration-spec.ts`), VK MCP listener + settings emit (`vk-mcp-integration-listener.integration-spec.ts`), UI smoke (`ui-smoke.integration-spec.ts`).
 - **Contract:** `validateStatusSnapshot` on `GET /api/status` in e2e.
 
 ## Docker (optional)

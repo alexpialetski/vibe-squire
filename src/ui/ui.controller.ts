@@ -21,134 +21,32 @@ import { isValidMaxBoardPrCountInput } from '../config/max-board-pr-count';
 import { isValidScheduledSyncEnabledInput } from '../config/scheduled-sync-enabled';
 import { parsePrIgnoreAuthorLogins } from '../sync/pr-ignore-author-logins';
 import { type SettingKey } from '../config/setting-keys';
-import {
-  normalizeVkWorkspaceExecutor,
-  VK_WORKSPACE_EXECUTOR_OPTIONS,
-} from '../config/vk-workspace-executors';
+import { normalizeVkWorkspaceExecutor } from '../config/vk-workspace-executors';
 import {
   schedulerTextFieldsForUi,
   integrationFieldsForUi,
-  SETTING_LABELS,
 } from './setting-labels';
 import {
   generalSettingsPostKeys,
   GITHUB_SOURCE_UI_KEYS,
   VIBE_KANBAN_UI_KEYS,
 } from './integration-ui-registry';
-import {
-  SetupEvaluationService,
-  type SetupEvaluation,
-} from '../setup/setup-evaluation.service';
+import { SetupEvaluationService } from '../setup/setup-evaluation.service';
 import { isVibeKanbanMcpConfigured } from '../vibe-kanban/mcp-transport-config';
 import { PollRunHistoryService } from '../sync/poll-run-history.service';
-
-function escapeForPre(s: string): string {
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
-
-/** Setup form `source_type` radio: `none` or missing → cleared. */
-function parseSetupSourceType(raw: unknown): '' | 'github' | null {
-  if (raw === undefined || raw === null) {
-    return '';
-  }
-  if (typeof raw !== 'string') {
-    return null;
-  }
-  const t = raw.trim();
-  if (t === '' || t === 'none') {
-    return '';
-  }
-  if (t === 'github') {
-    return 'github';
-  }
-  return null;
-}
-
-/** Setup form `destination_type` radio: `none` or missing → cleared. */
-function parseSetupDestinationType(raw: unknown): '' | 'vibe_kanban' | null {
-  if (raw === undefined || raw === null) {
-    return '';
-  }
-  if (typeof raw !== 'string') {
-    return null;
-  }
-  const t = raw.trim();
-  if (t === '' || t === 'none') {
-    return '';
-  }
-  if (t === 'vibe_kanban') {
-    return 'vibe_kanban';
-  }
-  return null;
-}
-
-function destinationTypeLabel(t: string): string {
-  if (t === 'vibe_kanban') {
-    return 'Vibe Kanban';
-  }
-  return t.length > 0 ? t : '(not set)';
-}
-
-function sourceTypeLabel(t: string): string {
-  if (t === 'github') {
-    return 'GitHub';
-  }
-  return t.length > 0 ? t : '(not set)';
-}
-
-function showNavVkToolsFrom(ev: SetupEvaluation): boolean {
-  return (
-    ev.integrationsConfigured && ev.destinationType.trim() === 'vibe_kanban'
-  );
-}
-
-type SetupChecklistRow = {
-  text: string;
-  linkHref?: string;
-  linkLabel?: string;
-};
-
-function buildSetupChecklist(ev: SetupEvaluation): SetupChecklistRow[] {
-  if (ev.complete || !ev.integrationsConfigured) {
-    return [];
-  }
-  const rows: SetupChecklistRow[] = [];
-  if (ev.destinationType.trim() === 'vibe_kanban') {
-    if (!ev.vkMcpReady) {
-      rows.push({
-        text: 'Configure Vibe Kanban MCP stdio (VK_MCP_STDIO_JSON env or PATCH vk_mcp_stdio_json via /api/settings).',
-      });
-    }
-    if (ev.reason === 'no_default_kanban_board') {
-      rows.push({
-        text: 'Set target Kanban organization and project on Vibe Kanban (required for sync).',
-        linkHref: '/ui/vibe-kanban',
-        linkLabel: 'Vibe Kanban',
-      });
-    }
-    if (ev.reason === 'no_mappings') {
-      rows.push({
-        text: 'Add at least one GitHub repo → Vibe Kanban repository mapping on Mappings.',
-        linkHref: '/ui/mappings',
-        linkLabel: 'Mappings',
-      });
-    }
-  }
-  return rows;
-}
-
-function uiNavLocals(ev: SetupEvaluation): {
-  navMinimal: boolean;
-  showNavVkTools: boolean;
-  showNavGithubSettings: boolean;
-} {
-  return {
-    navMinimal: !ev.integrationsConfigured,
-    showNavVkTools: showNavVkToolsFrom(ev),
-    showNavGithubSettings:
-      ev.integrationsConfigured && ev.sourceType.trim() === 'github',
-  };
-}
+import {
+  buildSetupChecklist,
+  destinationTypeLabel,
+  escapeForPre,
+  githubNotSourceRedirectUrl,
+  parseSetupDestinationType,
+  parseSetupSourceType,
+  presentActivityRunsForView,
+  sourceTypeLabel,
+  uiNavLocals,
+  vibeKanbanNotDestinationRedirectUrl,
+} from './ui-presenter';
+import { buildVibeKanbanPageLocals } from './ui-vibe-kanban-presenter';
 
 @Controller('ui')
 export class UiController {
@@ -237,36 +135,9 @@ export class UiController {
   async activityPage(): Promise<Record<string, unknown>> {
     const ev = await this.setupEvaluation.evaluate();
     const rows = await this.pollRunHistory.listRecentForUi(40);
-    const runs = rows.map((r) => ({
-      id: r.id,
-      startedAt: r.startedAt.toISOString(),
-      finishedAt: r.finishedAt?.toISOString() ?? null,
-      trigger: r.trigger,
-      phase: r.phase,
-      abortReason: r.abortReason,
-      errorMessage: r.errorMessage,
-      candidatesCount: r.candidatesCount,
-      issuesCreated: r.issuesCreated,
-      skippedUnmapped: r.skippedUnmapped,
-      skippedBot: r.skippedBot,
-      skippedBoardLimit: r.skippedBoardLimit,
-      skippedAlreadyTracked: r.skippedAlreadyTracked,
-      skippedLinkedExisting: r.skippedLinkedExisting,
-      itemCount: r.items.length,
-      items: r.items.map((i) => ({
-        prUrl: i.prUrl,
-        githubRepo: i.githubRepo,
-        prNumber: i.prNumber,
-        prTitle: i.prTitle,
-        authorLogin: i.authorLogin,
-        decision: i.decision,
-        detail: i.detail,
-        kanbanIssueId: i.kanbanIssueId,
-      })),
-    }));
     return {
       ...uiNavLocals(ev),
-      runs,
+      runs: presentActivityRunsForView(rows),
     };
   }
 
@@ -329,7 +200,10 @@ export class UiController {
       for (const key of generalSettingsPostKeys()) {
         if (Object.prototype.hasOwnProperty.call(body, key)) {
           const value = String(body[key] ?? '');
-          if (key === 'max_board_pr_count' && !isValidMaxBoardPrCountInput(value)) {
+          if (
+            key === 'max_board_pr_count' &&
+            !isValidMaxBoardPrCountInput(value)
+          ) {
             throw new Error(
               'Max PRs on board must be an integer from 1 to 200',
             );
@@ -357,12 +231,6 @@ export class UiController {
     }
   }
 
-  private githubNotSourceRedirectUrl(): string {
-    return `/ui/settings?err=${encodeURIComponent(
-      'The GitHub page applies only when GitHub is selected as the PR source (Settings → General).',
-    )}#integration`;
-  }
-
   @Get('github')
   async githubPage(
     @Res() res: Response,
@@ -371,7 +239,7 @@ export class UiController {
   ): Promise<void> {
     const src = this.settings.getEffective('source_type').trim();
     if (src !== 'github') {
-      res.redirect(302, this.githubNotSourceRedirectUrl());
+      res.redirect(302, githubNotSourceRedirectUrl());
       return;
     }
     const values = this.settings.listStoredNonSecret();
@@ -391,7 +259,7 @@ export class UiController {
   ): Promise<void> {
     const src = this.settings.getEffective('source_type').trim();
     if (src !== 'github') {
-      res.redirect(302, this.githubNotSourceRedirectUrl());
+      res.redirect(302, githubNotSourceRedirectUrl());
       return;
     }
     try {
@@ -488,90 +356,17 @@ export class UiController {
   ): Promise<void> {
     const dest = this.settings.getEffective('destination_type').trim();
     if (dest !== 'vibe_kanban') {
-      res.redirect(302, this.vibeKanbanNotDestinationRedirectUrl());
+      res.redirect(302, vibeKanbanNotDestinationRedirectUrl());
       return;
     }
-    const locals = await this.buildVibeKanbanPageLocals(saved, err);
+    const locals = await buildVibeKanbanPageLocals({
+      settings: this.settings,
+      setupEvaluation: this.setupEvaluation,
+      vk: this.vk,
+      saved,
+      err,
+    });
     res.render('vibe-kanban', locals);
-  }
-
-  private vibeKanbanNotDestinationRedirectUrl(): string {
-    return `/ui/settings?err=${encodeURIComponent(
-      'The Vibe Kanban page applies only when Vibe Kanban is selected as the work board (Settings → General).',
-    )}#integration`;
-  }
-
-  private async buildVibeKanbanPageLocals(
-    saved?: string,
-    err?: string,
-  ): Promise<Record<string, unknown>> {
-    const values = this.settings.listStoredNonSecret();
-    const ev = await this.setupEvaluation.evaluate();
-    const orgError = !isVibeKanbanMcpConfigured(this.settings)
-      ? 'Vibe Kanban MCP is not configured (set VK_MCP_STDIO_JSON or patch vk_mcp_stdio_json via API).'
-      : null;
-    const boardOrg = this.settings.getEffective('default_organization_id');
-    const boardProj = this.settings.getEffective('default_project_id');
-    const mcpBoardPicker = isVibeKanbanMcpConfigured(this.settings);
-
-    let vkBoardOrganizations: { id: string; name?: string }[] = [];
-    let vkBoardProjects: { id: string; name?: string }[] = [];
-    let vkBoardListError: string | null = null;
-
-    if (mcpBoardPicker) {
-      try {
-        vkBoardOrganizations = await this.vk.listOrganizations();
-      } catch (e) {
-        vkBoardListError = e instanceof Error ? e.message : String(e);
-      }
-      if (vkBoardListError === null) {
-        const oid = boardOrg.trim();
-        if (oid.length > 0 && vkBoardOrganizations.some((o) => o.id === oid)) {
-          try {
-            vkBoardProjects = await this.vk.listProjects(oid);
-          } catch (e) {
-            vkBoardListError = e instanceof Error ? e.message : String(e);
-          }
-        }
-      }
-    }
-
-    const hasVkProjectPick =
-      mcpBoardPicker &&
-      boardOrg.trim().length > 0 &&
-      vkBoardOrganizations.some((o) => o.id === boardOrg.trim());
-    const vkBoardProjectsEmpty =
-      hasVkProjectPick && vkBoardProjects.length === 0;
-
-    const vkExecutorRaw = this.settings
-      .getEffective('vk_workspace_executor')
-      .trim();
-    const normalizedEx = normalizeVkWorkspaceExecutor(vkExecutorRaw);
-    const vkExecutor =
-      normalizedEx ?? VK_WORKSPACE_EXECUTOR_OPTIONS[0]?.value ?? 'cursor_agent';
-
-    return {
-      ...uiNavLocals(ev),
-      saved: saved === '1',
-      error: err ? decodeURIComponent(err) : null,
-      mcpBoardPicker,
-      boardOrg,
-      boardProj,
-      kanbanDoneStatus: values.kanban_done_status ?? '',
-      vkExecutor,
-      executorOptions: VK_WORKSPACE_EXECUTOR_OPTIONS.map((o) => ({ ...o })),
-      vkLabels: {
-        default_organization_id: SETTING_LABELS.default_organization_id,
-        vk_workspace_executor: SETTING_LABELS.vk_workspace_executor,
-        kanban_done_status: SETTING_LABELS.kanban_done_status,
-      },
-      orgError,
-      vkBoardOrganizations,
-      vkBoardProjects,
-      vkBoardListError,
-      hasVkProjectPick,
-      vkBoardProjectsEmpty,
-    };
   }
 
   @Post('vibe-kanban')
@@ -581,7 +376,7 @@ export class UiController {
   ): Promise<void> {
     const dest = this.settings.getEffective('destination_type').trim();
     if (dest !== 'vibe_kanban') {
-      res.redirect(302, this.vibeKanbanNotDestinationRedirectUrl());
+      res.redirect(302, vibeKanbanNotDestinationRedirectUrl());
       return;
     }
     try {
@@ -623,7 +418,7 @@ export class UiController {
   ): Promise<void> {
     const dest = this.settings.getEffective('destination_type').trim();
     if (dest !== 'vibe_kanban') {
-      res.redirect(302, this.vibeKanbanNotDestinationRedirectUrl());
+      res.redirect(302, vibeKanbanNotDestinationRedirectUrl());
       return;
     }
     try {

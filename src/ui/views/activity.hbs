@@ -17,7 +17,7 @@
           <div class="activity-run-meta">
             <span class="activity-run-time mono">{{startedAt}}</span>
             <span class="activity-pill activity-pill-trigger">{{trigger}}</span>
-            <span class="activity-pill activity-pill-phase activity-pill-phase-{{phase}}">{{pollPhaseLabel phase}}</span>
+            <span class="activity-pill activity-pill-phase activity-pill-phase-{{phase}}">{{phaseLabel}}</span>
           </div>
           {{#if (eq phase 'completed')}}
             <p class="muted activity-run-counts" style="margin:0.35rem 0 0">
@@ -68,7 +68,7 @@
                         {{/if}}
                       </td>
                       <td class="mono wrap">{{githubRepo}}</td>
-                      <td>{{pollDecisionLabel decision}}</td>
+                      <td>{{decisionLabel}}</td>
                       <td class="wrap muted">
                         {{#if kanbanIssueId}}<span class="mono">issue {{kanbanIssueId}}</span>{{/if}}
                         {{#if detail}}{{#if kanbanIssueId}} · {{/if}}{{detail}}{{/if}}

@@ -75,7 +75,9 @@ export const vkMcpGetIssueResponseSchema = z.looseObject({
 });
 
 export type VkMcpListIssuesRow = z.infer<typeof vkMcpListIssuesRowSchema>;
-export type VkMcpListIssuesResponse = z.infer<typeof vkMcpListIssuesResponseSchema>;
+export type VkMcpListIssuesResponse = z.infer<
+  typeof vkMcpListIssuesResponseSchema
+>;
 export type VkMcpGetIssueDetail = z.infer<typeof vkMcpGetIssueDetailSchema>;
 export type VkMcpGetIssueResponse = z.infer<typeof vkMcpGetIssueResponseSchema>;
 
