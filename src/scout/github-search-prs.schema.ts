@@ -14,6 +14,8 @@ export const ghSearchPrsRowSchema = z.object({
   number: z.number().int(),
   title: z.string(),
   url: z.string().min(1),
+  /** ISO 8601 from `gh search prs` (sort oldest-first in scout). */
+  createdAt: z.string().min(1),
   repository: repositorySchema,
   author: authorSchema,
 });

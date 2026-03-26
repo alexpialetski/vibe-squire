@@ -157,6 +157,12 @@
       else if (scout.state === 'skipped') scDot = 'status-warn';
       else scDot = 'status-ok';
       const scLines = [];
+      const sched = snap.scheduled_sync || {};
+      if (sched.enabled === false) {
+        scLines.push(
+          'Automatic polling is disabled — enable scheduled_sync_enabled in General settings (or SCHEDULED_SYNC_ENABLED).',
+        );
+      }
       if (scout.state === 'running') {
         scLines.push('Sync cycle running…');
       } else {
@@ -185,7 +191,11 @@
         );
       }
       scLines.push('Last poll: ' + fmtIso(scout.lastPollAt));
-      scLines.push('Next scheduled: ' + fmtIso(scout.nextPollAt));
+      if (sched.enabled === false) {
+        scLines.push('Next scheduled: — (timer off)');
+      } else {
+        scLines.push('Next scheduled: ' + fmtIso(scout.nextPollAt));
+      }
       parts.push(card('Sync & scout', scDot, scLines));
     }
 

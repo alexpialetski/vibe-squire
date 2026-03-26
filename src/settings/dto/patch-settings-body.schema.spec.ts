@@ -23,4 +23,35 @@ describe('patchSettingsBodySchema', () => {
     });
     expect(r.success).toBe(false);
   });
+
+  it('rejects invalid max_board_pr_count', () => {
+    expect(
+      patchSettingsBodySchema.safeParse({ max_board_pr_count: '0' }).success,
+    ).toBe(false);
+    expect(
+      patchSettingsBodySchema.safeParse({ max_board_pr_count: '201' }).success,
+    ).toBe(false);
+  });
+
+  it('accepts valid max_board_pr_count', () => {
+    expect(
+      patchSettingsBodySchema.safeParse({ max_board_pr_count: '5' }).success,
+    ).toBe(true);
+  });
+
+  it('rejects invalid scheduled_sync_enabled', () => {
+    expect(
+      patchSettingsBodySchema.safeParse({ scheduled_sync_enabled: 'maybe' })
+        .success,
+    ).toBe(false);
+  });
+
+  it('accepts scheduled_sync_enabled booleans', () => {
+    for (const v of ['true', 'false', '1', '0', 'yes', 'no', 'TRUE']) {
+      expect(
+        patchSettingsBodySchema.safeParse({ scheduled_sync_enabled: v })
+          .success,
+      ).toBe(true);
+    }
+  });
 });

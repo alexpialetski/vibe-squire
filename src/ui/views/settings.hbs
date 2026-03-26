@@ -69,15 +69,43 @@
 
     <div class="card">
       <h2>Poll schedule</h2>
-      <p class="muted">Effective env + database values. Manual &ldquo;Sync now&rdquo; ignores the interval.</p>
-      <form method="post" action="/ui/settings" class="form-grid">
-        {{#each fields}}
-          <label class="field">
-            <span class="field-label">{{label}}</span>
-            <span class="field-key muted">{{key}}</span>
-            <input name="{{key}}" class="input" type="text" value="{{value}}" />
+      <p class="muted">
+        Values shown are effective (env overrides database where configured). Manual &ldquo;Sync now&rdquo; is not limited by the interval.
+      </p>
+      <form method="post" action="/ui/settings" class="form-stack">
+        <fieldset class="fieldset-plain">
+          <legend class="field-label">Automatic polling</legend>
+          <p class="muted" style="margin: 0 0 0.75rem 0">
+            When off, the scheduled timer does not run. Env: <code>SCHEDULED_SYNC_ENABLED</code>. Setting key: <code>scheduled_sync_enabled</code>
+          </p>
+          <label class="check-row">
+            <input
+              type="radio"
+              name="scheduled_sync_enabled"
+              value="true"
+              {{#if scheduledSyncEnabled}}checked{{/if}}
+            />
+            <span>On — run sync on the interval below</span>
           </label>
-        {{/each}}
+          <label class="check-row">
+            <input
+              type="radio"
+              name="scheduled_sync_enabled"
+              value="false"
+              {{#unless scheduledSyncEnabled}}checked{{/unless}}
+            />
+            <span>Off — timer disabled only</span>
+          </label>
+        </fieldset>
+        <div class="form-grid" style="margin-top: 1rem">
+          {{#each fields}}
+            <label class="field">
+              <span class="field-label">{{label}}</span>
+              <span class="field-key muted">{{key}}</span>
+              <input name="{{key}}" class="input" type="text" value="{{value}}" />
+            </label>
+          {{/each}}
+        </div>
         <div class="actions-row">
           <button type="submit" class="btn primary">Save schedule</button>
         </div>

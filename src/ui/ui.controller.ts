@@ -17,6 +17,8 @@ import { MappingsService } from '../mappings/mappings.service';
 import { VibeKanbanMcpService } from '../vibe-kanban/vibe-kanban-mcp.service';
 import { StatusEventsService } from '../events/status-events.service';
 import { IntegrationSettingsEmitterService } from '../events/integration-settings-emitter.service';
+import { isValidMaxBoardPrCountInput } from '../config/max-board-pr-count';
+import { isValidScheduledSyncEnabledInput } from '../config/scheduled-sync-enabled';
 import { parsePrIgnoreAuthorLogins } from '../sync/pr-ignore-author-logins';
 import { type SettingKey } from '../config/setting-keys';
 import {
@@ -24,7 +26,7 @@ import {
   VK_WORKSPACE_EXECUTOR_OPTIONS,
 } from '../config/vk-workspace-executors';
 import {
-  settingsFieldsForUi,
+  schedulerTextFieldsForUi,
   integrationFieldsForUi,
   SETTING_LABELS,
 } from './setting-labels';
@@ -247,6 +249,7 @@ export class UiController {
       issuesCreated: r.issuesCreated,
       skippedUnmapped: r.skippedUnmapped,
       skippedBot: r.skippedBot,
+      skippedBoardLimit: r.skippedBoardLimit,
       skippedAlreadyTracked: r.skippedAlreadyTracked,
       skippedLinkedExisting: r.skippedLinkedExisting,
       itemCount: r.items.length,
@@ -275,6 +278,9 @@ export class UiController {
     const bootSnapshotJson = JSON.stringify(snapshot).replace(/</g, '\\u003c');
     const ev = await this.setupEvaluation.evaluate();
     const setupChecklist = buildSetupChecklist(ev);
+    const scheduledSyncEnabled = this.settings.getEffectiveBoolean(
+      'scheduled_sync_enabled',
+    );
     return {
       ...uiNavLocals(ev),
       snapshotPretty,
@@ -282,6 +288,7 @@ export class UiController {
       manualSync: snapshot.manual_sync as Record<string, unknown>,
       showSetupChecklist: setupChecklist.length > 0,
       setupChecklist,
+      showScheduledSyncOff: ev.complete && !scheduledSyncEnabled,
     };
   }
 
@@ -294,9 +301,13 @@ export class UiController {
   ): Promise<Record<string, unknown>> {
     const values = this.settings.listStoredNonSecret();
     const ev = await this.setupEvaluation.evaluate();
+    const scheduledSyncEnabled = this.settings.getEffectiveBoolean(
+      'scheduled_sync_enabled',
+    );
     return {
       ...uiNavLocals(ev),
-      fields: settingsFieldsForUi(values),
+      fields: schedulerTextFieldsForUi(values),
+      scheduledSyncEnabled,
       saved: saved === '1',
       integrationSaved: integrationSaved === '1',
       error: err ? decodeURIComponent(err) : null,
@@ -317,7 +328,21 @@ export class UiController {
       const touched: SettingKey[] = [];
       for (const key of generalSettingsPostKeys()) {
         if (Object.prototype.hasOwnProperty.call(body, key)) {
-          await this.settings.setValue(key, String(body[key] ?? ''));
+          const value = String(body[key] ?? '');
+          if (key === 'max_board_pr_count' && !isValidMaxBoardPrCountInput(value)) {
+            throw new Error(
+              'Max PRs on board must be an integer from 1 to 200',
+            );
+          }
+          if (
+            key === 'scheduled_sync_enabled' &&
+            !isValidScheduledSyncEnabledInput(value)
+          ) {
+            throw new Error(
+              'Automatic polling must be true/false, 1/0, or yes/no',
+            );
+          }
+          await this.settings.setValue(key, value);
           touched.push(key);
         }
       }

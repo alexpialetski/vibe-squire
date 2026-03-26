@@ -9,19 +9,25 @@ import { VibeKanbanMcpService } from '../src/vibe-kanban/vibe-kanban-mcp.service
 import { PrismaService } from '../src/prisma/prisma.service';
 import { SettingsService } from '../src/settings/settings.service';
 
-describe('Sync with fakes (integration)', () => {
+/**
+ * Board cap is enforced from live VK list_issues count of [vibe-squire] issues,
+ * not SQLite queue cardinality. Only createIssue consumes per-poll quota.
+ */
+describe('Sync VK-first board cap (integration)', () => {
   let app: INestApplication<App>;
+  let createSeq = 0;
   const vkStub = {
     probe: jest.fn().mockResolvedValue(undefined),
     listOrganizations: jest.fn().mockResolvedValue([]),
     listProjects: jest.fn().mockResolvedValue([]),
     listRepos: jest.fn().mockResolvedValue([]),
     listIssues: jest.fn().mockResolvedValue([]),
-    countActiveVibeSquireIssues: jest.fn().mockResolvedValue(0),
-    getIssue: jest
-      .fn()
-      .mockResolvedValue({ id: 'fake-issue-id', status: 'Open' }),
-    createIssue: jest.fn().mockResolvedValue('fake-issue-id'),
+    countActiveVibeSquireIssues: jest.fn().mockResolvedValue(4),
+    getIssue: jest.fn().mockResolvedValue(null),
+    createIssue: jest.fn().mockImplementation(async () => {
+      createSeq += 1;
+      return `new-issue-${createSeq}`;
+    }),
     updateIssue: jest.fn().mockResolvedValue(undefined),
     startWorkspace: jest.fn().mockResolvedValue('ws-stub-id'),
   };
@@ -38,12 +44,30 @@ describe('Sync with fakes (integration)', () => {
       .useValue({
         listReviewRequestedForMe: () => [
           {
-            number: 42,
-            title: 'Hello',
-            url: 'https://github.com/acme/demo/pull/42',
+            number: 1,
+            title: 'One',
+            url: 'https://github.com/acme/demo/pull/1',
             githubRepo: 'acme/demo',
             createdAt: '2026-01-01T00:00:00Z',
-            headRefName: 'feature/foo',
+            headRefName: 'a',
+            authorLogin: 'human',
+          },
+          {
+            number: 2,
+            title: 'Two',
+            url: 'https://github.com/acme/demo/pull/2',
+            githubRepo: 'acme/demo',
+            createdAt: '2026-01-02T00:00:00Z',
+            headRefName: 'b',
+            authorLogin: 'human',
+          },
+          {
+            number: 3,
+            title: 'Three',
+            url: 'https://github.com/acme/demo/pull/3',
+            githubRepo: 'acme/demo',
+            createdAt: '2026-01-03T00:00:00Z',
+            headRefName: 'c',
             authorLogin: 'human',
           },
         ],
@@ -86,25 +110,10 @@ describe('Sync with fakes (integration)', () => {
     await app.close();
   });
 
-  it('POST /api/sync/run creates one board issue and row (idempotent on second run)', async () => {
+  it('allows at most (max_board_pr_count − active VK marker issues) creates in one poll', async () => {
     await request(app.getHttpServer()).post('/api/sync/run').expect(201);
     expect(vkStub.createIssue).toHaveBeenCalledTimes(1);
-    expect(vkStub.startWorkspace).toHaveBeenCalledTimes(1);
-    expect(vkStub.startWorkspace).toHaveBeenCalledWith(
-      expect.objectContaining({
-        issueId: 'fake-issue-id',
-        repositories: [{ repoId: 'vk-repo-uuid-1', branch: 'feature/foo' }],
-      }),
-    );
-
     const prisma = app.get(PrismaService);
-    expect(await prisma.syncedPullRequest.count()).toBe(1);
-    const row = await prisma.syncedPullRequest.findFirst();
-    expect(row?.vibeKanbanWorkspaceId).toBe('ws-stub-id');
-
-    await request(app.getHttpServer()).post('/api/sync/run').expect(201);
-    expect(vkStub.createIssue).toHaveBeenCalledTimes(1);
-    expect(vkStub.startWorkspace).toHaveBeenCalledTimes(1);
     expect(await prisma.syncedPullRequest.count()).toBe(1);
   });
 });

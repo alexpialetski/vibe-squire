@@ -6,9 +6,11 @@ export const SETTING_KEYS = [
   'source_type',
   'destination_type',
   'vk_mcp_stdio_json',
+  'scheduled_sync_enabled',
   'poll_interval_minutes',
   'jitter_max_seconds',
   'run_now_cooldown_seconds',
+  'max_board_pr_count',
   'default_organization_id',
   'default_project_id',
   'vk_workspace_executor',
@@ -45,6 +47,10 @@ export const SETTING_DEFINITIONS: Record<SettingKey, Def> = {
     envVar: 'VK_MCP_STDIO_JSON',
     defaultValue: '["npx","-y","vibe-kanban@latest","--mcp"]',
   },
+  scheduled_sync_enabled: {
+    envVar: 'SCHEDULED_SYNC_ENABLED',
+    defaultValue: 'true',
+  },
   poll_interval_minutes: {
     envVar: 'POLL_INTERVAL_MINUTES',
     defaultValue: '5',
@@ -53,6 +59,9 @@ export const SETTING_DEFINITIONS: Record<SettingKey, Def> = {
   run_now_cooldown_seconds: {
     envVar: 'RUN_NOW_COOLDOWN_SECONDS',
     defaultValue: '90',
+  },
+  max_board_pr_count: {
+    defaultValue: '5',
   },
   default_organization_id: {
     defaultValue: '',

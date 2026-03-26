@@ -22,6 +22,7 @@ describe('Sync reconciliation (integration)', () => {
     listProjects: jest.fn().mockResolvedValue([]),
     listRepos: jest.fn().mockResolvedValue([]),
     listIssues: jest.fn().mockResolvedValue([]),
+    countActiveVibeSquireIssues: jest.fn().mockResolvedValue(0),
     getIssue: jest
       .fn()
       .mockResolvedValue({ id: 'fake-issue-id', status: 'Open' }),
@@ -50,6 +51,7 @@ describe('Sync reconciliation (integration)', () => {
                 title: 'Reconcile me',
                 url: 'https://github.com/acme/demo/pull/1',
                 githubRepo: 'acme/demo',
+                createdAt: '2026-01-01T00:00:00Z',
                 headRefName: 'main',
                 authorLogin: 'human',
               },

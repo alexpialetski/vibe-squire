@@ -53,6 +53,9 @@ export const statusSnapshotSchema = z.object({
     reason: z.string().optional(),
     cooldownUntil: z.string().optional(),
   }),
+  scheduled_sync: z.looseObject({
+    enabled: z.boolean(),
+  }),
 });
 
 /**

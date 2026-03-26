@@ -5,6 +5,7 @@ export const POLL_RUN_ITEM_DECISION = {
   linkedExisting: 'linked_existing',
   skippedUnmapped: 'skipped_unmapped',
   skippedBot: 'skipped_bot',
+  skippedBoardLimit: 'skipped_board_limit',
 } as const;
 
 export type PollRunItemDecision =

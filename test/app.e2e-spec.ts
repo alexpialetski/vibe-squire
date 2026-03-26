@@ -113,6 +113,7 @@ describe('AppController (e2e)', () => {
         destinations: Array<{ id: string; state: string }>;
         scouts: Array<{ id: string; state: string }>;
         manual_sync: { canRun: boolean };
+        scheduled_sync: { enabled: boolean };
       };
       expect(typeof body.timestamp).toBe('string');
       expect(typeof body.gh.state).toBe('string');
@@ -129,6 +130,7 @@ describe('AppController (e2e)', () => {
       expect(body.scouts.length).toBe(1);
       expect(typeof body.scouts[0].state).toBe('string');
       expect(typeof body.manual_sync.canRun).toBe('boolean');
+      expect(typeof body.scheduled_sync.enabled).toBe('boolean');
 
       const contractErr = validateStatusSnapshot(body);
       expect(contractErr).toBeNull();

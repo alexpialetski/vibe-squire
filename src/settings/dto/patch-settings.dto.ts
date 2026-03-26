@@ -3,6 +3,7 @@ import { SETTING_KEYS } from '../../config/setting-keys';
 const example: Record<string, string> = {
   source_type: 'github',
   destination_type: 'vibe_kanban',
+  scheduled_sync_enabled: 'true',
   poll_interval_minutes: '5',
 };
 

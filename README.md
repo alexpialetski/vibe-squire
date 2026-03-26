@@ -32,7 +32,9 @@ After `npm run start:dev`, open `/ui/dashboard` in the browser. CORS remains ena
 |-----------|---------|
 | `DATABASE_URL` | SQLite `file:` URL for Prisma. If unset, see `src/database/resolve-database-url.ts` (`SQLITE_DATABASE_PATH`, `DATABASE_PATH`, `VIBE_SQUIRE_DATA_DIR`, OS defaults). |
 | `VK_MCP_STDIO_JSON` / `vk_mcp_stdio_json` | JSON array `[command, ...args]` to spawn the Vibe Kanban MCP server, e.g. `npx` + `-y` + `vibe-kanban@latest` + `--mcp`. |
-| `POLL_INTERVAL_MINUTES`, `JITTER_MAX_SECONDS`, `RUN_NOW_COOLDOWN_SECONDS` | Scheduled poll interval (**minimum 5 minutes**; values below 5 are clamped). **Manual “Sync now”** is not limited by this interval (only by cooldown). |
+| `SCHEDULED_SYNC_ENABLED` / `scheduled_sync_enabled` | When `false` / `0` / `no`, the **scheduled timer** does not run; **Manual “Sync now”** still works. Default **true**. General **Settings** (poll schedule form). |
+| `POLL_INTERVAL_MINUTES`, `JITTER_MAX_SECONDS`, `RUN_NOW_COOLDOWN_SECONDS` | Scheduled poll interval (**minimum 5 minutes**; values below 5 are clamped). **Manual “Sync now”** is not limited by this interval (only by cooldown). Ignored when scheduled sync is disabled. |
+| `max_board_pr_count` | **No env** — max **new** Kanban issues per poll is `limit` minus the live count of `[vibe-squire]` issues on the default Kanban project (from MCP `list_issues`), not SQLite queue size (default **5**, allowed **1–200**). Oldest GitHub PR by `createdAt` is admitted first; extras get `skipped_board_limit`. General **Settings** (poll schedule form). |
 | `default_organization_id`, `default_project_id`, `vk_workspace_executor`, `kanban_done_status`, `pr_ignore_author_logins`, `pr_review_body_template` | **No env vars** — set via operator UI (GitHub / Vibe Kanban / Settings) or `PATCH /api/settings`. Code defaults apply when unset (e.g. empty board UUIDs until you configure them). |
 | `HOST`, `PORT` | HTTP server bind (env-only). |
 
@@ -70,7 +72,7 @@ After `npm run build`, the package exposes `vibe-squire` via `bin/vibe-squire.js
 ## Tests (§16)
 
 - **Unit:** setting precedence (`resolve-effective-setting.spec.ts`), poll backoff (`poll-backoff.spec.ts`).
-- **Integration:** happy path + idempotency (`sync-with-fakes.integration-spec.ts`), reconciliation (`sync-reconcile.integration-spec.ts`), settings / mappings / Kanban context (`settings-mappings-vk.integration-spec.ts`).
+- **Integration:** happy path + idempotency (`sync-with-fakes.integration-spec.ts`), reconciliation (`sync-reconcile.integration-spec.ts`), VK-first board cap (`sync-vk-board-cap.integration-spec.ts`), Kanban heal / quota (`sync-kanban-issue-heal.integration-spec.ts`), settings / mappings / Kanban context (`settings-mappings-vk.integration-spec.ts`).
 - **Contract:** `validateStatusSnapshot` on `GET /api/status` in e2e.
 
 ## Docker (optional)

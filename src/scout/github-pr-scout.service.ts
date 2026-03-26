@@ -12,17 +12,35 @@ export type GithubPrCandidate = {
   title: string;
   url: string;
   githubRepo: string;
+  /** ISO 8601 from GitHub (`gh search prs --json createdAt`). */
+  createdAt: string;
   /** Fixed branch for `start_workspace` (not the PR head). */
   headRefName: string;
   /** From `gh search prs --json author`; used for author skip rules. */
   authorLogin: string;
 };
 
+function compareCandidatesOldestFirst(a: GithubPrCandidate, b: GithubPrCandidate): number {
+  const ta = Date.parse(a.createdAt);
+  const tb = Date.parse(b.createdAt);
+  if (Number.isFinite(ta) && Number.isFinite(tb) && ta !== tb) {
+    return ta - tb;
+  }
+  if (!Number.isFinite(ta) && Number.isFinite(tb)) {
+    return 1;
+  }
+  if (Number.isFinite(ta) && !Number.isFinite(tb)) {
+    return -1;
+  }
+  return a.url.localeCompare(b.url);
+}
+
 @Injectable()
 export class GithubPrScoutService implements GithubPrScoutPort {
   /**
    * Open PRs requesting review from the authenticated `gh` user.
    * Uses `gh search prs` (no local git repo required); host comes from `gh` auth default.
+   * Results are ordered oldest PR first (`createdAt` ascending) for stable board limits.
    */
   listReviewRequestedForMe(): GithubPrCandidate[] {
     const proc = spawnSync(
@@ -33,7 +51,7 @@ export class GithubPrScoutService implements GithubPrScoutPort {
         '--review-requested=@me',
         '--state=open',
         '--json',
-        'number,title,url,repository,author',
+        'number,title,url,createdAt,repository,author',
         '--limit',
         '200',
       ],
@@ -62,13 +80,16 @@ export class GithubPrScoutService implements GithubPrScoutPort {
       throw new Error(`gh search prs: unexpected response shape (${msg})`);
     }
 
-    return validated.data.map((row) => ({
+    const mapped = validated.data.map((row) => ({
       number: row.number,
       title: row.title,
       url: row.url,
+      createdAt: row.createdAt,
       githubRepo: row.repository.nameWithOwner.trim().toLowerCase(),
       headRefName: WORKSPACE_BRANCH,
       authorLogin: row.author.login.trim(),
     }));
+    mapped.sort(compareCandidatesOldestFirst);
+    return mapped;
   }
 }

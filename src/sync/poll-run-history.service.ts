@@ -53,6 +53,7 @@ export class PollRunHistoryService {
       issuesCreated: number;
       skippedUnmapped: number;
       skippedBot: number;
+      skippedBoardLimit: number;
       skippedAlreadyTracked: number;
       skippedLinkedExisting: number;
     },
@@ -67,6 +68,7 @@ export class PollRunHistoryService {
         issuesCreated: summary.issuesCreated,
         skippedUnmapped: summary.skippedUnmapped,
         skippedBot: summary.skippedBot,
+        skippedBoardLimit: summary.skippedBoardLimit,
         skippedAlreadyTracked: summary.skippedAlreadyTracked,
         skippedLinkedExisting: summary.skippedLinkedExisting,
       },

@@ -60,6 +60,8 @@ export function configureExpressApp(app: NestExpressApplication): void {
         return 'Skipped (unmapped)';
       case 'skipped_bot':
         return 'Skipped (bot author)';
+      case 'skipped_board_limit':
+        return 'Skipped (board limit)';
       default:
         return d;
     }

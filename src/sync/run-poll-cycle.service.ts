@@ -18,6 +18,7 @@ import { applyPrReviewBodyTemplate } from './pr-review-template';
 import { redactHttpUrls } from '../logging/redact-urls';
 import { SyncRunStateService } from './sync-run-state.service';
 import type { GithubPrCandidate } from '../scout/github-pr-scout.service';
+import type { VkIssueRef } from '../vibe-kanban/vk-entities';
 import { SetupEvaluationService } from '../setup/setup-evaluation.service';
 import { PollRunHistoryService } from './poll-run-history.service';
 import { POLL_RUN_ITEM_DECISION } from './poll-run-decisions';
@@ -25,12 +26,21 @@ import {
   isIgnoredAuthorLogin,
   parsePrIgnoreAuthorLogins,
 } from './pr-ignore-author-logins';
+import { resolveMaxBoardPrCount } from '../config/max-board-pr-count';
+import {
+  buildVibeSquirePrDescriptionMarker,
+  VIBE_SQUIRE_TITLE_MARKER,
+} from '../vibe-kanban/vk-mcp-list-get-issue-response.schema';
 
 type EnsureIssueOutcome =
   | { kind: 'created'; kanbanIssueId: string }
   | { kind: 'already_tracked'; kanbanIssueId: string }
   | { kind: 'linked_existing'; kanbanIssueId: string }
-  | { kind: 'skipped_unmapped' };
+  | { kind: 'skipped_unmapped' }
+  | { kind: 'skipped_board_limit' };
+
+/** Mutable create quota for one poll; only `createIssue` decrements. */
+export type VkCreateQuota = { remaining: number };
 
 /** Migrated rows without a real VK repo; treat as unmapped until user fixes mapping. */
 const PLACEHOLDER_VK_REPO_ID = '00000000-0000-4000-8000-000000000000';
@@ -58,7 +68,9 @@ function isTerminalKanbanStatus(status: string | undefined): boolean {
 
 function issueTitleForPr(pr: GithubPrCandidate): string {
   const t = pr.title.trim();
-  return t.length > 0 ? `PR #${pr.number}: ${t}` : `PR #${pr.number}`;
+  const base =
+    t.length > 0 ? `PR #${pr.number}: ${t}` : `PR #${pr.number}`;
+  return `${VIBE_SQUIRE_TITLE_MARKER} ${base}`;
 }
 
 function workspaceNameForPr(pr: GithubPrCandidate): string {
@@ -143,6 +155,26 @@ export class RunPollCycleService {
 
       const candidates = this.scout.listReviewRequestedForMe();
       const urlsNow = new Set(candidates.map((c) => c.url));
+      const boardLimit = resolveMaxBoardPrCount(
+        this.settings.getEffective('max_board_pr_count'),
+      );
+
+      const projectIdForCap = this.defaultKanbanProjectId();
+      let activeVkIssueCount = 0;
+      if (projectIdForCap.length > 0) {
+        try {
+          activeVkIssueCount =
+            await this.workBoard.countActiveVibeSquireIssues(projectIdForCap);
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : String(e);
+          this.logger.warn(
+            `countActiveVibeSquireIssues failed: ${redactHttpUrls(msg)}; treating as 0`,
+          );
+        }
+      }
+      const quotaForCreates: VkCreateQuota = {
+        remaining: Math.max(0, boardLimit - activeVkIssueCount),
+      };
 
       const ignoreParsed = parsePrIgnoreAuthorLogins(
         this.settings.getEffective('pr_ignore_author_logins'),
@@ -160,6 +192,7 @@ export class RunPollCycleService {
       let created = 0;
       let skippedUnmapped = 0;
       let skippedBot = 0;
+      let skippedBoardLimit = 0;
       let skippedAlreadyTracked = 0;
       let skippedLinkedExisting = 0;
 
@@ -177,7 +210,19 @@ export class RunPollCycleService {
           continue;
         }
 
-        const outcome = await this.ensureIssueForPr(pr);
+        const outcome = await this.ensureIssueForPr(pr, quotaForCreates);
+        if (outcome.kind === 'skipped_board_limit') {
+          skippedBoardLimit += 1;
+          await this.appendPollRunItem(
+            runId,
+            pr,
+            POLL_RUN_ITEM_DECISION.skippedBoardLimit,
+            {
+              detail: `Board limit ${boardLimit} (${activeVkIssueCount} active [vibe-squire] issue(s) on Kanban; oldest PRs first)`,
+            },
+          );
+          continue;
+        }
         if (outcome.kind === 'created') {
           created += 1;
           await this.appendPollRunItem(
@@ -257,13 +302,18 @@ export class RunPollCycleService {
         issuesCreated: created,
         skippedUnmapped,
         skippedBot,
+        skippedBoardLimit,
         skippedAlreadyTracked,
         skippedLinkedExisting,
       });
 
-      if (skippedUnmapped > 0 || skippedBot > 0) {
+      if (
+        skippedUnmapped > 0 ||
+        skippedBot > 0 ||
+        skippedBoardLimit > 0
+      ) {
         this.logger.log(
-          `Sync (${trigger}): ${candidates.length} PR(s), ${created} created, ${skippedUnmapped} skipped (unmapped), ${skippedBot} skipped (bot)`,
+          `Sync (${trigger}): ${candidates.length} PR(s), ${created} created, ${skippedUnmapped} skipped (unmapped), ${skippedBot} skipped (bot), ${skippedBoardLimit} skipped (board limit)`,
         );
       } else {
         this.logger.log(
@@ -310,7 +360,7 @@ export class RunPollCycleService {
   }
 
   private buildIssueDescription(pr: GithubPrCandidate): string {
-    const marker = `<!-- vibe-squire:pr:${pr.url} -->`;
+    const marker = buildVibeSquirePrDescriptionMarker(pr.url);
     const template = this.settings.getEffective('pr_review_body_template');
     const body = applyPrReviewBodyTemplate(template, pr);
     return `${marker}\n\n${body}`;
@@ -438,8 +488,41 @@ export class RunPollCycleService {
     }
   }
 
+  /**
+   * When several Kanban rows match the title heuristic, prefer the one whose body
+   * contains the vibe-squire PR marker or the PR URL.
+   */
+  private async disambiguateKanbanIssueHits(
+    pr: GithubPrCandidate,
+    hits: VkIssueRef[],
+  ): Promise<string> {
+    if (hits.length === 1) {
+      return hits[0].id;
+    }
+    const marker = buildVibeSquirePrDescriptionMarker(pr.url);
+    for (const h of hits) {
+      const live = await this.workBoard.getIssue(h.id);
+      if (
+        live?.description?.includes(marker) ||
+        live?.description?.includes(pr.url)
+      ) {
+        return h.id;
+      }
+    }
+    this.logger.warn(
+      {
+        prUrl: pr.url,
+        prNumber: pr.number,
+        candidateIds: hits.map((x) => x.id),
+      },
+      'Multiple Kanban title matches; none had PR marker in description — linking first',
+    );
+    return hits[0].id;
+  }
+
   private async ensureIssueForPr(
     pr: GithubPrCandidate,
+    quotaForCreates: VkCreateQuota,
   ): Promise<EnsureIssueOutcome> {
     const map = await this.prisma.repoProjectMapping.findUnique({
       where: { githubRepo: pr.githubRepo },
@@ -465,47 +548,85 @@ export class RunPollCycleService {
       where: { prUrl: pr.url },
     });
     if (existing) {
-      if (!existing.vibeKanbanWorkspaceId) {
-        await this.tryPersistWorkspace(
-          existing.id,
-          pr,
-          existing.kanbanIssueId,
-          vkRepoId,
+      try {
+        const live = await this.workBoard.getIssue(existing.kanbanIssueId);
+        if (live != null) {
+          if (!existing.vibeKanbanWorkspaceId) {
+            await this.tryPersistWorkspace(
+              existing.id,
+              pr,
+              existing.kanbanIssueId,
+              vkRepoId,
+            );
+          }
+          return {
+            kind: 'already_tracked',
+            kanbanIssueId: existing.kanbanIssueId,
+          };
+        }
+      } catch (e) {
+        const raw = e instanceof Error ? e.message : String(e);
+        this.logger.warn(
+          `get_issue failed for ${existing.kanbanIssueId} (${pr.url}); keeping sync row: ${redactHttpUrls(raw)}`,
         );
+        return {
+          kind: 'already_tracked',
+          kanbanIssueId: existing.kanbanIssueId,
+        };
       }
-      return {
-        kind: 'already_tracked',
-        kanbanIssueId: existing.kanbanIssueId,
-      };
+
+      this.logger.log(
+        `Kanban issue ${existing.kanbanIssueId} missing for ${pr.url}; removed sync row (re-link or create follows same quota as other PRs)`,
+      );
+      await this.prisma.syncedPullRequest.delete({ where: { id: existing.id } });
     }
 
-    let issueId: string | null = null;
-    const hints = [pr.url, String(pr.number), `${pr.githubRepo}#${pr.number}`];
+    let hitCandidates: VkIssueRef[] = [];
+    const hints = [
+      `${VIBE_SQUIRE_TITLE_MARKER} PR #${pr.number}`,
+      pr.url,
+      String(pr.number),
+    ];
     for (const search of hints) {
       const listed = await this.workBoard.listIssues(projectId, {
         search,
         limit: 40,
       });
-      const hit = listed.find(
+      const matches = listed.filter(
         (i) =>
-          i.title?.includes(`#${pr.number}`) ||
-          i.title?.includes(pr.url) ||
-          i.title?.toLowerCase().includes(pr.githubRepo),
+          i.title?.includes(VIBE_SQUIRE_TITLE_MARKER) &&
+          (i.title?.includes(`#${pr.number}`) || i.title?.includes(pr.url)),
       );
-      if (hit) {
-        issueId = hit.id;
+      if (matches.length > 0) {
+        const seen = new Set<string>();
+        hitCandidates = [];
+        for (const m of matches) {
+          if (!seen.has(m.id)) {
+            seen.add(m.id);
+            hitCandidates.push(m);
+          }
+        }
         break;
       }
     }
 
+    let issueId: string | null = null;
+    if (hitCandidates.length > 0) {
+      issueId = await this.disambiguateKanbanIssueHits(pr, hitCandidates);
+    }
+
     let createdNewIssue = false;
     if (!issueId) {
+      if (quotaForCreates.remaining <= 0) {
+        return { kind: 'skipped_board_limit' };
+      }
       issueId = await this.workBoard.createIssue({
         projectId,
         title: issueTitleForPr(pr),
         description: this.buildIssueDescription(pr),
       });
       createdNewIssue = true;
+      quotaForCreates.remaining -= 1;
       this.runState.setVibeKanbanHealth({
         state: 'ok',
         lastOkAt: new Date().toISOString(),
