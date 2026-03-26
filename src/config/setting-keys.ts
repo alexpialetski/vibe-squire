@@ -13,6 +13,7 @@ export const SETTING_KEYS = [
   'default_project_id',
   'vk_workspace_executor',
   'kanban_done_status',
+  'pr_ignore_author_logins',
   'pr_review_body_template',
 ] as const;
 
@@ -62,6 +63,10 @@ export const SETTING_DEFINITIONS: Record<SettingKey, Def> = {
   },
   kanban_done_status: {
     defaultValue: 'Done',
+  },
+  pr_ignore_author_logins: {
+    defaultValue:
+      'renovate[bot];renovatebot[bot];dependabot[bot];dependabot-preview[bot]',
   },
   pr_review_body_template: {
     defaultValue:

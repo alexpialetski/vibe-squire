@@ -17,6 +17,7 @@ import { MappingsService } from '../mappings/mappings.service';
 import { VibeKanbanMcpService } from '../vibe-kanban/vibe-kanban-mcp.service';
 import { StatusEventsService } from '../events/status-events.service';
 import { IntegrationSettingsEmitterService } from '../events/integration-settings-emitter.service';
+import { parsePrIgnoreAuthorLogins } from '../sync/pr-ignore-author-logins';
 import { type SettingKey } from '../config/setting-keys';
 import {
   normalizeVkWorkspaceExecutor,
@@ -372,7 +373,14 @@ export class UiController {
       const touched: SettingKey[] = [];
       for (const key of GITHUB_SOURCE_UI_KEYS) {
         if (Object.prototype.hasOwnProperty.call(body, key)) {
-          await this.settings.setValue(key, String(body[key] ?? ''));
+          const value = String(body[key] ?? '');
+          if (key === 'pr_ignore_author_logins') {
+            const parsed = parsePrIgnoreAuthorLogins(value);
+            if (!parsed.ok) {
+              throw new Error(parsed.message);
+            }
+          }
+          await this.settings.setValue(key, value);
           touched.push(key);
         }
       }

@@ -40,6 +40,7 @@ describe('Sync with fakes (integration)', () => {
             url: 'https://github.com/acme/demo/pull/42',
             githubRepo: 'acme/demo',
             headRefName: 'feature/foo',
+            authorLogin: 'human',
           },
         ],
       })
