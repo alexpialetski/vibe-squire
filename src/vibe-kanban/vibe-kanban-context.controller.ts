@@ -9,6 +9,7 @@ import {
 import { SettingsService } from '../settings/settings.service';
 import { isVibeKanbanMcpConfigured } from './mcp-transport-config';
 import { VibeKanbanMcpService } from './vibe-kanban-mcp.service';
+import { listProjectsQuerySchema } from './vibe-kanban-query.schema';
 
 @ApiTags('vibe-kanban')
 @Controller('api/vibe-kanban')
@@ -62,15 +63,15 @@ export class VibeKanbanContextController {
   @ApiBadRequestResponse({
     description: 'Missing organization_id or Vibe Kanban MCP not configured',
   })
-  async projects(@Query('organization_id') organizationId: string) {
+  async projects(@Query() query: Record<string, unknown>) {
     this.assertMcpConfigured();
-    const oid = organizationId?.trim();
-    if (!oid) {
+    const q = listProjectsQuerySchema.safeParse(query);
+    if (!q.success) {
       throw new BadRequestException(
-        'organization_id query parameter is required',
+        q.error.issues.map((i) => i.message).join('; '),
       );
     }
-    const projects = await this.vk.listProjects(oid);
+    const projects = await this.vk.listProjects(q.data.organization_id);
     return { projects };
   }
 

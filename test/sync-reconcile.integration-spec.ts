@@ -51,6 +51,7 @@ describe('Sync reconciliation (integration)', () => {
                 url: 'https://github.com/acme/demo/pull/1',
                 githubRepo: 'acme/demo',
                 headRefName: 'main',
+                authorLogin: 'human',
               },
             ];
           }

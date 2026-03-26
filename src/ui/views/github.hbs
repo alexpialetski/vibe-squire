@@ -19,7 +19,9 @@
         <label class="field">
           <span class="field-label">{{label}}</span>
           <span class="field-key muted">{{key}}</span>
-          {{#if (eq key "pr_review_body_template")}}
+          {{#if (eq key "pr_ignore_author_logins")}}
+            <textarea name="{{key}}" class="input" rows="3" placeholder="login1; login2">{{value}}</textarea>
+          {{else if (eq key "pr_review_body_template")}}
             <textarea name="{{key}}" class="input" rows="4">{{value}}</textarea>
           {{else}}
             <input name="{{key}}" class="input" type="text" value="{{value}}" />

@@ -13,10 +13,14 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { SettingsService } from './settings.service';
-import { isSettingKey, type SettingKey } from '../config/setting-keys';
+import { type SettingKey } from '../config/setting-keys';
 import { StatusEventsService } from '../events/status-events.service';
 import { IntegrationSettingsEmitterService } from '../events/integration-settings-emitter.service';
 import { PATCH_SETTINGS_SCHEMA } from './dto/patch-settings.dto';
+import {
+  formatZodIssuesForBadRequest,
+  patchSettingsBodySchema,
+} from './dto/patch-settings-body.schema';
 
 @ApiTags('settings')
 @Controller('api/settings')
@@ -50,19 +54,14 @@ export class SettingsController {
     schema: { type: 'object', properties: { ok: { type: 'boolean' } } },
   })
   @ApiBadRequestResponse({ description: 'Unknown key or non-string value' })
-  async patch(@Body() body: Record<string, unknown>) {
-    if (!body || typeof body !== 'object') {
-      throw new BadRequestException('Expected JSON object');
+  async patch(@Body() body: unknown) {
+    const parsed = patchSettingsBodySchema.safeParse(body);
+    if (!parsed.success) {
+      throw new BadRequestException(formatZodIssuesForBadRequest(parsed.error));
     }
     const touched: string[] = [];
-    for (const [key, value] of Object.entries(body)) {
-      if (!isSettingKey(key)) {
-        throw new BadRequestException(`Unknown setting key: ${key}`);
-      }
-      if (typeof value !== 'string') {
-        throw new BadRequestException(`Setting ${key} must be a string`);
-      }
-      await this.settings.setValue(key, value);
+    for (const [key, value] of Object.entries(parsed.data)) {
+      await this.settings.setValue(key as SettingKey, value);
       touched.push(key);
     }
     await this.settings.refreshCache();

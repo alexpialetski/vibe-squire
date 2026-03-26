@@ -10,6 +10,7 @@ export const SCHEDULER_UI_KEYS: readonly SettingKey[] = [
 
 /** GitHub PR source fields on `/ui/github` (when `source_type === github`). */
 export const GITHUB_SOURCE_UI_KEYS: readonly SettingKey[] = [
+  'pr_ignore_author_logins',
   'pr_review_body_template',
 ];
 

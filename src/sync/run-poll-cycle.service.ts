@@ -21,7 +21,10 @@ import type { GithubPrCandidate } from '../scout/github-pr-scout.service';
 import { SetupEvaluationService } from '../setup/setup-evaluation.service';
 import { PollRunHistoryService } from './poll-run-history.service';
 import { POLL_RUN_ITEM_DECISION } from './poll-run-decisions';
-import { isIgnoredBotAuthor } from './ignored-pr-authors';
+import {
+  isIgnoredAuthorLogin,
+  parsePrIgnoreAuthorLogins,
+} from './pr-ignore-author-logins';
 
 type EnsureIssueOutcome =
   | { kind: 'created'; kanbanIssueId: string }
@@ -141,6 +144,19 @@ export class RunPollCycleService {
       const candidates = this.scout.listReviewRequestedForMe();
       const urlsNow = new Set(candidates.map((c) => c.url));
 
+      const ignoreParsed = parsePrIgnoreAuthorLogins(
+        this.settings.getEffective('pr_ignore_author_logins'),
+      );
+      let ignoredAuthorLogins: Set<string>;
+      if (ignoreParsed.ok) {
+        ignoredAuthorLogins = ignoreParsed.set;
+      } else {
+        this.logger.warn(
+          `Invalid pr_ignore_author_logins (${ignoreParsed.message}); treating as empty`,
+        );
+        ignoredAuthorLogins = new Set();
+      }
+
       let created = 0;
       let skippedUnmapped = 0;
       let skippedBot = 0;
@@ -148,16 +164,14 @@ export class RunPollCycleService {
       let skippedLinkedExisting = 0;
 
       for (const pr of candidates) {
-        if (isIgnoredBotAuthor(pr.authorLogin)) {
+        if (isIgnoredAuthorLogin(pr.authorLogin, ignoredAuthorLogins)) {
           skippedBot += 1;
           await this.appendPollRunItem(
             runId,
             pr,
             POLL_RUN_ITEM_DECISION.skippedBot,
             {
-              detail: pr.authorLogin
-                ? `Author ${pr.authorLogin}`
-                : 'Bot author (login unknown)',
+              detail: `Author ${pr.authorLogin}`,
             },
           );
           continue;

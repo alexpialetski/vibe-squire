@@ -18,6 +18,8 @@ export const SETTING_LABELS: Record<SettingKey, string> = {
   vk_workspace_executor:
     'Executor for start_workspace (e.g. cursor_agent, claude-code)',
   kanban_done_status: 'Kanban “done” status name',
+  pr_ignore_author_logins:
+    'Ignore authors (login, exact match): semicolon-separated; case-insensitive',
   pr_review_body_template: 'PR review body template',
 };
 
