@@ -68,9 +68,6 @@ export function validateStatusSnapshot(body: unknown): string | null {
   if (typeof cfg.vk_mcp_configured !== 'boolean') {
     return 'configuration.vk_mcp_configured must be boolean';
   }
-  if (typeof cfg.gh_host_override !== 'boolean') {
-    return 'configuration.gh_host_override must be boolean';
-  }
 
   if (!Array.isArray(o.destinations)) {
     return 'destinations must be an array';

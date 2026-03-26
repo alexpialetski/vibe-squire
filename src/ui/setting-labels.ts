@@ -7,7 +7,6 @@ export const SETTING_LABELS: Record<SettingKey, string> = {
     'Work board / destination (vibe_kanban only for now; more later)',
   vk_mcp_stdio_json:
     'Vibe Kanban MCP stdio: JSON array [command, ...args] to spawn the MCP server',
-  gh_host: 'GitHub host override (GH_HOST)',
   poll_interval_minutes:
     'Poll interval (minutes, min 5; manual Sync now ignores)',
   jitter_max_seconds: 'Jitter max (seconds)',

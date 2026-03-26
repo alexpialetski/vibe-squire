@@ -6,7 +6,6 @@ export const SETTING_KEYS = [
   'source_type',
   'destination_type',
   'vk_mcp_stdio_json',
-  'gh_host',
   'poll_interval_minutes',
   'jitter_max_seconds',
   'run_now_cooldown_seconds',
@@ -45,7 +44,6 @@ export const SETTING_DEFINITIONS: Record<SettingKey, Def> = {
     envVar: 'VK_MCP_STDIO_JSON',
     defaultValue: '["npx","-y","vibe-kanban@latest","--mcp"]',
   },
-  gh_host: { envVar: 'GH_HOST', defaultValue: '' },
   poll_interval_minutes: {
     envVar: 'POLL_INTERVAL_MINUTES',
     defaultValue: '5',
