@@ -8,7 +8,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
 import { LoggerModule } from 'nestjs-pino';
 import { AppController } from './app.controller';
 import { EnvModule } from './config/env.module';
-import { parseAppEnv, type AppEnv } from './config/env-schema';
+import type { AppEnv } from './config/env-schema';
 import { createLoggerModuleParams } from './logging/create-logger-params';
 import { PrismaModule } from './prisma/prisma.module';
 import { SettingsModule } from './settings/settings.module';
@@ -31,18 +31,16 @@ import { UiController } from './ui/ui.controller';
 @Module({})
 export class AppModule implements NestModule {
   /**
-   * @param env Parsed application environment. Omit to call {@link parseAppEnv} (reads current
-   * `process.env`). Tests should pass an explicit env snapshot when they mutate `process.env` or
-   * need a frozen config — see `test/testing-app-module.ts`.
+   * @param env Parsed application environment from {@link parseAppEnv} (e.g. in `main.ts`).
+   * Tests should pass an explicit env snapshot when they mutate `process.env` or need a frozen
+   * config — see `test/testing-app-module.ts`.
    */
-  static forRoot(env?: AppEnv): DynamicModule {
-    const resolved = env ?? parseAppEnv();
-
+  static forRoot(env: AppEnv): DynamicModule {
     return {
       module: AppModule,
       imports: [
-        EnvModule.forRoot(resolved),
-        LoggerModule.forRoot(createLoggerModuleParams(resolved)),
+        EnvModule.forRoot(env),
+        LoggerModule.forRoot(createLoggerModuleParams(env)),
         EventEmitterModule.forRoot(),
         StatusEventsModule,
         PrismaModule,
