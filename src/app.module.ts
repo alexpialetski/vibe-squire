@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { LoggerModule } from 'nestjs-pino';
 import { AppController } from './app.controller';
+import { createLoggerModuleParams } from './logging/create-logger-params';
 import { PrismaModule } from './prisma/prisma.module';
 import { SettingsModule } from './settings/settings.module';
 import { GhModule } from './gh/gh.module';
@@ -18,23 +19,7 @@ import { UiController } from './ui/ui.controller';
 
 @Module({
   imports: [
-    LoggerModule.forRoot({
-      pinoHttp: {
-        level: process.env.LOG_LEVEL ?? 'info',
-        redact: {
-          paths: ['req.headers.authorization', 'req.headers.cookie'],
-          remove: true,
-        },
-        ...(process.env.NODE_ENV !== 'production'
-          ? {
-              transport: {
-                target: 'pino-pretty',
-                options: { singleLine: true, colorize: true },
-              },
-            }
-          : {}),
-      },
-    }),
+    LoggerModule.forRoot(createLoggerModuleParams()),
     ConfigModule.forRoot({
       isGlobal: true,
     }),
