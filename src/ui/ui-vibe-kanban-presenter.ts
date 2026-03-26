@@ -24,7 +24,7 @@ export async function buildVibeKanbanPageLocals(deps: {
   err?: string;
 }): Promise<Record<string, unknown>> {
   const { settings, setupEvaluation, vk, saved, err } = deps;
-  const values = settings.listStoredNonSecret();
+  const values = settings.listEffectiveNonSecret();
   const ev = await setupEvaluation.evaluate();
   const mcpBoardPicker = isVibeKanbanMcpConfigured(settings);
   const orgError = !mcpBoardPicker ? VK_PAGE_ORG_ERROR_NO_MCP : null;

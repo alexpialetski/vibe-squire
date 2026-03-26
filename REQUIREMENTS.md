@@ -163,9 +163,9 @@ Persist at least:
 
 All of the above have **code defaults**; SQLite rows may be created lazily on first edit or seeded by migration.
 
-### 5.5 NestJS modules: `ConfigModule` vs `SettingsService` (not CLS)
+### 5.5 NestJS modules: process env (`parseAppEnv` / `APP_ENV`) vs `SettingsService` (not CLS)
 
-- **`@nestjs/config` (`ConfigModule`)** — Load and **validate** environment variables (URLs, paths, ports). **Do not** use **CLS** (continuation-local storage) for **global** application settings; CLS is for **per-request** context (e.g. correlation IDs), not process-wide config.
+- **Process environment** — **`parseAppEnv`** (Zod in `src/config/env-schema.ts`) validates env at bootstrap (e.g. `DATABASE_URL`, `PORT`, `LOG_LEVEL`), produces a typed **`AppEnv`**, and registers it for DI via the **`APP_ENV`** token (`EnvModule.forRoot`). **`AppModule.forRoot(env?)`** must be used to wire the graph (the `AppModule` class alone has no feature imports). **Do not** use **CLS** (continuation-local storage) for **global** application settings; CLS is for **per-request** context (e.g. correlation IDs), not process-wide config.
 - **`SettingsModule` + `SettingsService`** — Read settings from SQLite on startup, keep an **in-memory cache** of resolved **effective** values, expose `getEffective(key)` (or equivalent) using **§5.3** precedence.
 - **On settings write** (REST from UI): update SQLite, **refresh cache**, emit a **`SettingsChanged`** (or domain) **event** so **schedulers** re-read interval/jitter and **recompute `nextPollAt`** (§12), and **SSE** pushes an updated status snapshot (§9).
 
@@ -336,7 +336,7 @@ The operator UI includes a **sync schedule** area (dedicated page or dashboard s
 
 ## 15. Implementation pointer (non-normative)
 
-Suggested Nest layout: **`CoreModule`** (domain + application services + port tokens), **`InfrastructureModule`** (SQLite path §5.7, **migrate on bootstrap** §7, `gh` runner), **`DestinationsModule`** (Vibe Kanban MCP HTTP adapter + future adapters), **`ConfigModule`** (env validation), **`SettingsModule`** (`SettingsService`, effective config §5, mapping CRUD, setup validation), **`ApiModule`** (REST: status, settings, mappings + **POST sync-now** + SSE + reinit). Schedulers invoke **application** use cases only; **sync-now** should call the **same** use case as the timer-driven poll; subscribe to **settings changed** to **reschedule**. **npm:** `bin` → compiled entry; publish **`dist`** per **§13.1**.
+Suggested Nest layout: **`CoreModule`** (domain + application services + port tokens), **`InfrastructureModule`** (SQLite path §5.7, **migrate on bootstrap** §7, `gh` runner), **`DestinationsModule`** (Vibe Kanban MCP HTTP adapter + future adapters), **`EnvModule` / `parseAppEnv`** (typed env + **`APP_ENV`** injection), **`SettingsModule`** (`SettingsService`, effective config §5, mapping CRUD, setup validation), **`ApiModule`** (REST: status, settings, mappings + **POST sync-now** + SSE + reinit). Schedulers invoke **application** use cases only; **sync-now** should call the **same** use case as the timer-driven poll; subscribe to **settings changed** to **reschedule**. **npm:** `bin` → compiled entry; publish **`dist`** per **§13.1**.
 
 ---
 
@@ -351,7 +351,7 @@ Testing prioritizes **fast, deterministic** suites. **Real `gh` and real Vibe Ka
 
 ### 16.2 Integration tests (Nest + SQLite)
 
-- **Scope:** Boot **`AppModule`** (or a **test slice**) with **SQLite** (`:memory:` or temp file) and migrations applied.
+- **Scope:** Boot the app via **`testingAppModule()`** from `test/testing-app-module.ts` (or **`AppModule.forRoot(...)`** with an explicit **`AppEnv`** / env snapshot), not the bare **`AppModule`** class — see §5.5. Use **SQLite** (`:memory:` or temp file) and migrations applied.
 - **Driving:** **HTTP** via **`supertest`**: status JSON, mapping CRUD, **settings CRUD**, **POST sync-now**, **POST reinit** — assert responses and persisted state.
 - **SSE:** Prefer testing the **service that emits** status events in isolation; optionally one test that consumes the **SSE stream** if maintenance cost is acceptable.
 - **Adapters:** Register **fake** `gh` runner and **fake** work-board implementations (see §16.3).

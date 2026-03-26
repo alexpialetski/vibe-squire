@@ -6,16 +6,21 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { Logger } from 'nestjs-pino';
 import { AppModule } from './app.module';
 import { configureExpressApp } from './configure-express-app';
+import { parseAppEnv } from './config/env-schema';
 import { ensureDatabaseUrlFromEnv } from './database/resolve-database-url';
 import { runPrismaMigrateDeploy } from './database/prisma-migrate';
 
 async function bootstrap() {
   ensureDatabaseUrlFromEnv();
   runPrismaMigrateDeploy();
+  const env = parseAppEnv();
 
-  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
-    bufferLogs: true,
-  });
+  const app = await NestFactory.create<NestExpressApplication>(
+    AppModule.forRoot(env),
+    {
+      bufferLogs: true,
+    },
+  );
   configureExpressApp(app);
   app.enableCors({ origin: true });
   app.useLogger(app.get(Logger));
@@ -26,7 +31,7 @@ async function bootstrap() {
     }),
   );
 
-  if (process.env.OPENAPI_ENABLED !== 'false') {
+  if (env.openapiEnabled) {
     const swaggerConfig = new DocumentBuilder()
       .setTitle('vibe-squire')
       .setDescription(
@@ -38,9 +43,7 @@ async function bootstrap() {
     SwaggerModule.setup('api/docs', app, document);
   }
 
-  const host = process.env.HOST ?? '127.0.0.1';
-  const port = parseInt(process.env.PORT ?? '3000', 10);
-  await app.listen(port, host);
+  await app.listen(env.port, env.host);
 }
 
 void bootstrap();

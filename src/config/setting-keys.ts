@@ -34,30 +34,33 @@ export type VibeKanbanUiSettingKey = (typeof VIBE_KANBAN_UI_KEYS)[number];
 /** Omit `envVar` when the key has no process-env override (DB + code default only). */
 type Def = { envVar?: string; defaultValue: string };
 
-export const SETTING_DEFINITIONS: Record<SettingKey, Def> = {
+export const SETTING_DEFINITIONS = {
   source_type: {
-    envVar: 'SOURCE_TYPE',
+    envVar: 'SOURCE_TYPE' as const,
     defaultValue: 'github',
   },
   destination_type: {
-    envVar: 'DESTINATION_TYPE',
+    envVar: 'DESTINATION_TYPE' as const,
     defaultValue: 'vibe_kanban',
   },
   vk_mcp_stdio_json: {
-    envVar: 'VK_MCP_STDIO_JSON',
+    envVar: 'VK_MCP_STDIO_JSON' as const,
     defaultValue: '["npx","-y","vibe-kanban@latest","--mcp"]',
   },
   scheduled_sync_enabled: {
-    envVar: 'SCHEDULED_SYNC_ENABLED',
+    envVar: 'SCHEDULED_SYNC_ENABLED' as const,
     defaultValue: 'true',
   },
   poll_interval_minutes: {
-    envVar: 'POLL_INTERVAL_MINUTES',
+    envVar: 'POLL_INTERVAL_MINUTES' as const,
     defaultValue: '5',
   },
-  jitter_max_seconds: { envVar: 'JITTER_MAX_SECONDS', defaultValue: '30' },
+  jitter_max_seconds: {
+    envVar: 'JITTER_MAX_SECONDS' as const,
+    defaultValue: '30',
+  },
   run_now_cooldown_seconds: {
-    envVar: 'RUN_NOW_COOLDOWN_SECONDS',
+    envVar: 'RUN_NOW_COOLDOWN_SECONDS' as const,
     defaultValue: '90',
   },
   max_board_pr_count: {
@@ -81,7 +84,18 @@ export const SETTING_DEFINITIONS: Record<SettingKey, Def> = {
     defaultValue:
       'Examine the diff for PR {prUrl}. Highlight architectural risks and logic bugs. Provide a summary report in the workspace.',
   },
-};
+} satisfies Record<SettingKey, Def>;
+
+/** Process env names that can override a setting (see {@link SETTING_DEFINITIONS}). */
+export type SettingEnvVarName = {
+  [K in SettingKey]: (typeof SETTING_DEFINITIONS)[K] extends {
+    envVar: infer V;
+  }
+    ? V extends string
+      ? V
+      : never
+    : never;
+}[SettingKey];
 
 export function isSettingKey(key: string): key is SettingKey {
   return (SETTING_KEYS as readonly string[]).includes(key);

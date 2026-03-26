@@ -3,6 +3,7 @@ import type { Params } from 'nestjs-pino';
 import pino from 'pino';
 import type { LevelWithSilent } from 'pino';
 import pinoPretty from 'pino-pretty';
+import type { AppEnv } from '../config/env-schema';
 
 const REDACT = {
   paths: ['req.headers.authorization', 'req.headers.cookie'],
@@ -14,14 +15,15 @@ function defaultLogFilePath(): string {
 }
 
 /**
- * When unset or empty, logs to `logs/app.log` under cwd. Set `LOG_TO_FILE=false`
- * to disable file logging (console only).
+ * When file logging is on and path unset, uses `logs/app.log` under cwd.
  */
-function resolveLogFilePath(): string | null {
-  if (process.env.LOG_TO_FILE === 'false' || process.env.LOG_TO_FILE === '0') {
+function resolveLogFilePath(
+  env: Pick<AppEnv, 'logToFile' | 'logFilePath'>,
+): string | null {
+  if (!env.logToFile) {
     return null;
   }
-  const raw = process.env.LOG_FILE_PATH?.trim();
+  const raw = env.logFilePath;
   if (!raw) {
     return defaultLogFilePath();
   }
@@ -32,10 +34,12 @@ function resolveLogFilePath(): string | null {
  * nestjs-pino / pino-http options. Kept out of AppModule to avoid clutter.
  * Writes JSON lines to a file (default `logs/app.log`) in addition to the console.
  */
-export function createLoggerModuleParams(): Params {
-  const level = (process.env.LOG_LEVEL ?? 'info') as LevelWithSilent;
-  const isProd = process.env.NODE_ENV === 'production';
-  const logFilePath = resolveLogFilePath();
+export function createLoggerModuleParams(
+  env: Pick<AppEnv, 'logLevel' | 'logToFile' | 'logFilePath' | 'nodeEnv'>,
+): Params {
+  const level = env.logLevel;
+  const isProd = env.nodeEnv === 'production';
+  const logFilePath = resolveLogFilePath(env);
 
   const baseOptions = {
     level,

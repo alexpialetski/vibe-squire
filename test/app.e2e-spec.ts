@@ -3,7 +3,7 @@ import { INestApplication } from '@nestjs/common';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import request from 'supertest';
 import { App } from 'supertest/types';
-import { AppModule } from './../src/app.module';
+import { testingAppModule } from './testing-app-module';
 import { validateStatusSnapshot } from './../src/status/status-snapshot.contract';
 import { configureExpressApp } from './../src/configure-express-app';
 
@@ -33,7 +33,7 @@ describe('AppController (e2e)', () => {
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
+      imports: [testingAppModule()],
     }).compile();
 
     const nestApp =

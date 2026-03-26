@@ -21,7 +21,7 @@ function baseEv(): SetupEvaluation {
 describe('buildVibeKanbanPageLocals', () => {
   it('sets orgError when MCP stdio is not configured', async () => {
     const settings = {
-      listStoredNonSecret: () => ({ kanban_done_status: '' }),
+      listEffectiveNonSecret: () => ({ kanban_done_status: '' }),
       getEffective: (key: string) => {
         if (key === 'destination_type') {
           return 'vibe_kanban';
@@ -62,7 +62,7 @@ describe('buildVibeKanbanPageLocals', () => {
 
   it('loads organizations and projects when MCP is configured', async () => {
     const settings = {
-      listStoredNonSecret: () => ({ kanban_done_status: 'Done' }),
+      listEffectiveNonSecret: () => ({ kanban_done_status: 'Done' }),
       getEffective: (key: string) => {
         if (key === 'destination_type') {
           return 'vibe_kanban';
@@ -110,7 +110,7 @@ describe('buildVibeKanbanPageLocals', () => {
 
   it('captures listOrganizations failure in vkBoardListError', async () => {
     const settings = {
-      listStoredNonSecret: () => ({}),
+      listEffectiveNonSecret: () => ({}),
       getEffective: (key: string) => {
         if (key === 'destination_type') {
           return 'vibe_kanban';

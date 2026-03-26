@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
 import { App } from 'supertest/types';
-import { AppModule } from '../src/app.module';
+import { testingAppModule } from './testing-app-module';
 import { GhCliService } from '../src/gh/gh-cli.service';
 import { GithubPrScoutService } from '../src/scout/github-pr-scout.service';
 import { VibeKanbanMcpService } from '../src/vibe-kanban/vibe-kanban-mcp.service';
@@ -94,7 +94,7 @@ describe('RunPollCycleService branches (integration)', () => {
 
     beforeAll(async () => {
       const moduleFixture: TestingModule = await Test.createTestingModule({
-        imports: [AppModule],
+        imports: [testingAppModule()],
       })
         .overrideProvider(GhCliService)
         .useValue({
@@ -227,7 +227,7 @@ describe('RunPollCycleService branches (integration)', () => {
 
     beforeAll(async () => {
       const moduleFixture: TestingModule = await Test.createTestingModule({
-        imports: [AppModule],
+        imports: [testingAppModule()],
       })
         .overrideProvider(GhCliService)
         .useValue({

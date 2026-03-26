@@ -1,5 +1,5 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { APP_ENV, type AppEnv } from '../config/env-schema';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   isSettingKey,
@@ -15,7 +15,7 @@ export class SettingsService implements OnModuleInit {
   private cache = new Map<SettingKey, string>();
 
   constructor(
-    private readonly config: ConfigService,
+    @Inject(APP_ENV) private readonly appEnv: AppEnv,
     private readonly prisma: PrismaService,
   ) {}
 
@@ -43,9 +43,7 @@ export class SettingsService implements OnModuleInit {
   getEffective(key: SettingKey): string {
     const def = SETTING_DEFINITIONS[key];
     const fromEnv =
-      def.envVar !== undefined
-        ? this.config.get<string>(def.envVar)
-        : undefined;
+      'envVar' in def ? this.appEnv.settingsEnv[def.envVar] : undefined;
     const hasDb = this.cache.has(key);
     const fromDb = hasDb ? this.cache.get(key) : undefined;
     return resolveEffectiveSetting(fromEnv, hasDb, fromDb, def.defaultValue);
@@ -87,8 +85,11 @@ export class SettingsService implements OnModuleInit {
     this.cache.set(key, value);
   }
 
-  /** Safe for API: no secrets beyond URLs hosts operators already set. */
-  listStoredNonSecret(): Record<string, string> {
+  /**
+   * Effective values for all defined settings (§5.3). Safe for API: no secrets beyond URL
+   * hosts operators already set.
+   */
+  listEffectiveNonSecret(): Record<string, string> {
     const out: Record<string, string> = {};
     for (const key of Object.keys(SETTING_DEFINITIONS) as SettingKey[]) {
       out[key] = this.getEffective(key);
