@@ -72,44 +72,6 @@ export function escapeForPre(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-/** Setup form `source_type` radio: `none` or missing → cleared. */
-export function parseSetupSourceType(raw: unknown): '' | 'github' | null {
-  if (raw === undefined || raw === null) {
-    return '';
-  }
-  if (typeof raw !== 'string') {
-    return null;
-  }
-  const t = raw.trim();
-  if (t === '' || t === 'none') {
-    return '';
-  }
-  if (t === 'github') {
-    return 'github';
-  }
-  return null;
-}
-
-/** Setup form `destination_type` radio: `none` or missing → cleared. */
-export function parseSetupDestinationType(
-  raw: unknown,
-): '' | 'vibe_kanban' | null {
-  if (raw === undefined || raw === null) {
-    return '';
-  }
-  if (typeof raw !== 'string') {
-    return null;
-  }
-  const t = raw.trim();
-  if (t === '' || t === 'none') {
-    return '';
-  }
-  if (t === 'vibe_kanban') {
-    return 'vibe_kanban';
-  }
-  return null;
-}
-
 export function destinationTypeLabel(t: string): string {
   if (t === 'vibe_kanban') {
     return 'Vibe Kanban';
@@ -125,9 +87,7 @@ export function sourceTypeLabel(t: string): string {
 }
 
 export function showNavVkToolsFrom(ev: SetupEvaluation): boolean {
-  return (
-    ev.integrationsConfigured && ev.destinationType.trim() === 'vibe_kanban'
-  );
+  return ev.destinationType.trim() === 'vibe_kanban';
 }
 
 export type SetupChecklistRow = {
@@ -137,7 +97,7 @@ export type SetupChecklistRow = {
 };
 
 export function buildSetupChecklist(ev: SetupEvaluation): SetupChecklistRow[] {
-  if (ev.complete || !ev.integrationsConfigured) {
+  if (ev.complete) {
     return [];
   }
   const rows: SetupChecklistRow[] = [];
@@ -171,21 +131,20 @@ export function uiNavLocals(ev: SetupEvaluation): {
   showNavGithubSettings: boolean;
 } {
   return {
-    navMinimal: !ev.integrationsConfigured,
+    navMinimal: false,
     showNavVkTools: showNavVkToolsFrom(ev),
-    showNavGithubSettings:
-      ev.integrationsConfigured && ev.sourceType.trim() === 'github',
+    showNavGithubSettings: ev.sourceType.trim() === 'github',
   };
 }
 
 export function githubNotSourceRedirectUrl(): string {
   return `/ui/settings?err=${encodeURIComponent(
-    'The GitHub page applies only when GitHub is selected as the PR source (Settings → General).',
-  )}#integration`;
+    'The GitHub page applies when SOURCE_TYPE is github (default). Change SOURCE_TYPE in the process environment and restart.',
+  )}`;
 }
 
 export function vibeKanbanNotDestinationRedirectUrl(): string {
   return `/ui/settings?err=${encodeURIComponent(
-    'The Vibe Kanban page applies only when Vibe Kanban is selected as the work board (Settings → General).',
-  )}#integration`;
+    'The Vibe Kanban page applies when DESTINATION_TYPE is vibe_kanban (default). Change DESTINATION_TYPE in the process environment and restart.',
+  )}`;
 }

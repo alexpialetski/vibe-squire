@@ -2,8 +2,6 @@ import {
   buildSetupChecklist,
   destinationTypeLabel,
   escapeForPre,
-  parseSetupDestinationType,
-  parseSetupSourceType,
   presentActivityRunsForView,
   sourceTypeLabel,
   uiNavLocals,
@@ -14,7 +12,6 @@ import type { SetupEvaluation } from '../../setup/setup-evaluation.service';
 function baseEv(over: Partial<SetupEvaluation> = {}): SetupEvaluation {
   return {
     complete: false,
-    integrationsConfigured: false,
     mappingCount: 0,
     sourceType: '',
     destinationType: '',
@@ -31,32 +28,6 @@ describe('ui-presenter', () => {
     });
   });
 
-  describe('parseSetupSourceType', () => {
-    it('returns empty for undefined, null, empty, none', () => {
-      expect(parseSetupSourceType(undefined)).toBe('');
-      expect(parseSetupSourceType(null)).toBe('');
-      expect(parseSetupSourceType('')).toBe('');
-      expect(parseSetupSourceType('  ')).toBe('');
-      expect(parseSetupSourceType('none')).toBe('');
-    });
-    it('returns github for github', () => {
-      expect(parseSetupSourceType('github')).toBe('github');
-    });
-    it('returns null for invalid', () => {
-      expect(parseSetupSourceType(1)).toBe(null);
-      expect(parseSetupSourceType('gitlab')).toBe(null);
-    });
-  });
-
-  describe('parseSetupDestinationType', () => {
-    it('returns vibe_kanban when set', () => {
-      expect(parseSetupDestinationType('vibe_kanban')).toBe('vibe_kanban');
-    });
-    it('returns null for unknown', () => {
-      expect(parseSetupDestinationType('jira')).toBe(null);
-    });
-  });
-
   describe('sourceTypeLabel / destinationTypeLabel', () => {
     it('maps known types', () => {
       expect(sourceTypeLabel('github')).toBe('GitHub');
@@ -69,16 +40,12 @@ describe('ui-presenter', () => {
   });
 
   describe('buildSetupChecklist', () => {
-    it('returns empty when complete or integrations not configured', () => {
+    it('returns empty when setup is complete', () => {
       expect(buildSetupChecklist(baseEv({ complete: true }))).toEqual([]);
-      expect(
-        buildSetupChecklist(baseEv({ integrationsConfigured: false })),
-      ).toEqual([]);
     });
     it('includes MCP row when VK destination and MCP not ready', () => {
       const rows = buildSetupChecklist(
         baseEv({
-          integrationsConfigured: true,
           destinationType: 'vibe_kanban',
           vkMcpReady: false,
         }),
@@ -129,16 +96,15 @@ describe('ui-presenter', () => {
   });
 
   describe('uiNavLocals', () => {
-    it('minimal nav when integrations not configured', () => {
-      const l = uiNavLocals(baseEv({ integrationsConfigured: false }));
-      expect(l.navMinimal).toBe(true);
+    it('never uses minimal nav; VK tools follow destination', () => {
+      const l = uiNavLocals(baseEv({ destinationType: '', sourceType: '' }));
+      expect(l.navMinimal).toBe(false);
       expect(l.showNavVkTools).toBe(false);
       expect(l.showNavGithubSettings).toBe(false);
     });
-    it('shows GitHub nav when github source', () => {
+    it('shows GitHub and VK nav when github source and vibe_kanban destination', () => {
       const l = uiNavLocals(
         baseEv({
-          integrationsConfigured: true,
           sourceType: 'github',
           destinationType: 'vibe_kanban',
         }),

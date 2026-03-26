@@ -3,35 +3,35 @@ jest.mock('../../settings/settings.service', () => ({
 }));
 
 import { SyncPrScoutFacade } from '../sync-pr-scout.facade';
-import type { SettingsService } from '../../settings/settings.service';
+import type { AppEnv } from '../../config/env-schema';
 import type { GithubPrScoutPort } from '../../ports/github-scout.port';
 
+function envWithSource(sourceType: AppEnv['sourceType']): AppEnv {
+  return { sourceType } as AppEnv;
+}
+
 describe('SyncPrScoutFacade', () => {
-  it('delegates listReviewRequestedForMe to GitHub scout when source_type is github', () => {
+  it('delegates listReviewRequestedForMe to GitHub scout when sourceType is github', () => {
     const listReviewRequestedForMe = jest.fn().mockReturnValue([]);
     const github = {
       listReviewRequestedForMe,
     } as unknown as GithubPrScoutPort;
-    const settings = {
-      getEffective: (key: string) => (key === 'source_type' ? 'github' : ''),
-    } as Pick<SettingsService, 'getEffective'>;
-
-    const facade = new SyncPrScoutFacade(settings as SettingsService, github);
+    const facade = new SyncPrScoutFacade(envWithSource('github'), github);
     facade.listReviewRequestedForMe();
 
     expect(listReviewRequestedForMe).toHaveBeenCalledTimes(1);
   });
 
-  it('throws when source_type is not supported', () => {
+  it('throws when sourceType is not supported (future types)', () => {
     const listReviewRequestedForMe = jest.fn();
     const github = {
       listReviewRequestedForMe,
     } as unknown as GithubPrScoutPort;
-    const settings = {
-      getEffective: (key: string) => (key === 'source_type' ? 'gitlab' : ''),
-    } as Pick<SettingsService, 'getEffective'>;
 
-    const facade = new SyncPrScoutFacade(settings as SettingsService, github);
+    const facade = new SyncPrScoutFacade(
+      envWithSource('gitlab' as AppEnv['sourceType']),
+      github,
+    );
 
     let caught: unknown;
     try {

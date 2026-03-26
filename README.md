@@ -40,16 +40,18 @@ After `npm run start:dev`, open `/ui/dashboard` in the browser. CORS remains ena
 
 Effective precedence where an env var exists for a key: **env (non-empty) → SQLite → code default**. Keys listed above without env mapping use **SQLite → code default** only (`SettingsService`, `resolveEffectiveSetting`).
 
-### Sync orchestration (`source_type` / `destination_type`)
+### Sync orchestration (`SOURCE_TYPE` / `DESTINATION_TYPE`)
 
-Runtime settings choose **which adapter** runs the poll pipeline and MCP integration (see `REFACTORING-PLAN.md` §G). Today only **GitHub** (`source_type`) and **Vibe Kanban** (`destination_type` `vibe_kanban`) are implemented.
+**Boot-time environment** (validated when the process starts via `parseAppEnv` in `src/config/env-schema.ts`) chooses **which adapter** runs the poll pipeline and MCP wiring (see `REFACTORING-PLAN.md` §G). Defaults: **`SOURCE_TYPE=github`**, **`DESTINATION_TYPE=vibe_kanban`**. Changing adapters requires updating env and **restarting** the process; they are not stored in SQLite.
 
-| Role | Setting | Orchestration token (internal) | Adapter today |
-|------|---------|-------------------------------|---------------|
-| PR scout | `source_type` | `SYNC_PR_SCOUT_PORT` | GitHub `gh` scout via `GITHUB_PR_SCOUT_PORT` |
-| Destination board | `destination_type` | `SYNC_DESTINATION_BOARD_PORT` | Vibe Kanban MCP via `VIBE_KANBAN_BOARD_PORT` |
+`GET /api/settings` and status payloads still expose **`source_type`** and **`destination_type`** as strings for a stable JSON shape — those fields reflect **`AppEnv`**, not rows in the `Setting` table.
 
-If you set an unsupported value, sync calls that need that side throw at runtime (e.g. `Sync source not supported: …`). The operator UI should keep you on supported pairs; this matters if you edit SQLite or API settings directly.
+| Role | Env var (default) | Orchestration token (internal) | Adapter today |
+|------|-------------------|-------------------------------|---------------|
+| PR scout | `SOURCE_TYPE` (`github`) | `SYNC_PR_SCOUT_PORT` | GitHub `gh` scout via `GITHUB_PR_SCOUT_PORT` |
+| Destination board | `DESTINATION_TYPE` (`vibe_kanban`) | `SYNC_DESTINATION_BOARD_PORT` | Vibe Kanban MCP via `VIBE_KANBAN_BOARD_PORT` |
+
+Unsupported **`SOURCE_TYPE`** / **`DESTINATION_TYPE`** values **fail at startup** (Zod). After boot, if a future code path delegates to an adapter that does not match the configured type, sync may still throw (e.g. `Sync source not supported: …`).
 
 ## HTTP surface (summary)
 

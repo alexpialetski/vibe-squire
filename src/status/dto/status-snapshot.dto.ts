@@ -20,11 +20,8 @@ export class StatusDatabaseDto {
 export class StatusSetupDto {
   @ApiProperty({
     description:
-      'True when a supported source and destination are configured (operator UI unlocked)',
+      'True when MCP, default board, and mappings are ready for sync (see reason when false)',
   })
-  integrationsConfigured!: boolean;
-
-  @ApiProperty()
   complete!: boolean;
 
   @ApiPropertyOptional()

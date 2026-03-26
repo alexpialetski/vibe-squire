@@ -9,7 +9,9 @@ import {
   Res,
   Render,
   Redirect,
+  Inject,
 } from '@nestjs/common';
+import { APP_ENV, type AppEnv } from '../config/env-schema';
 import type { Response } from 'express';
 import { StatusService } from '../status/status.service';
 import { SettingsService } from '../settings/settings.service';
@@ -39,8 +41,6 @@ import {
   destinationTypeLabel,
   escapeForPre,
   githubNotSourceRedirectUrl,
-  parseSetupDestinationType,
-  parseSetupSourceType,
   presentActivityRunsForView,
   sourceTypeLabel,
   uiNavLocals,
@@ -59,57 +59,13 @@ export class UiController {
     private readonly integrationEmitter: IntegrationSettingsEmitterService,
     private readonly setupEvaluation: SetupEvaluationService,
     private readonly pollRunHistory: PollRunHistoryService,
+    @Inject(APP_ENV) private readonly appEnv: AppEnv,
   ) {}
 
   @Get()
   @Redirect('/ui/dashboard', 302)
   redirectUiRoot(): void {
     void 0;
-  }
-
-  @Post('setup/integration')
-  async postSetupIntegration(
-    @Body() body: Record<string, string>,
-    @Res() res: Response,
-  ): Promise<void> {
-    const parsedSource = parseSetupSourceType(body.source_type);
-    if (parsedSource === null) {
-      res.redirect(
-        302,
-        `/ui/settings?err=${encodeURIComponent('Invalid PR source selection')}`,
-      );
-      return;
-    }
-    const parsedDestination = parseSetupDestinationType(body.destination_type);
-    if (parsedDestination === null) {
-      res.redirect(
-        302,
-        `/ui/settings?err=${encodeURIComponent('Invalid destination selection')}`,
-      );
-      return;
-    }
-    const sourceType = parsedSource;
-    const destinationType = parsedDestination;
-    try {
-      await this.settings.setValue('source_type', sourceType);
-      await this.settings.setValue('destination_type', destinationType);
-      await this.settings.refreshCache();
-      await this.integrationEmitter.emitIntegrationSettingsChanged([
-        'source_type',
-        'destination_type',
-      ]);
-      const evAfter = await this.setupEvaluation.evaluate();
-      this.statusEvents.emitChanged();
-      this.statusEvents.emitScheduleRefresh();
-      if (evAfter.integrationsConfigured) {
-        res.redirect(302, '/ui/dashboard');
-      } else {
-        res.redirect(302, '/ui/settings?integration_saved=1');
-      }
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      res.redirect(302, `/ui/settings?err=${encodeURIComponent(msg)}`);
-    }
   }
 
   @Get('activity')
@@ -149,7 +105,6 @@ export class UiController {
   @Render('settings')
   async settingsPage(
     @Query('saved') saved?: string,
-    @Query('integration_saved') integrationSaved?: string,
     @Query('err') err?: string,
   ): Promise<Record<string, unknown>> {
     const values = this.settings.listEffectiveNonSecret();
@@ -162,13 +117,9 @@ export class UiController {
       fields: schedulerTextFieldsForUi(values),
       scheduledSyncEnabled,
       saved: saved === '1',
-      integrationSaved: integrationSaved === '1',
       error: err ? decodeURIComponent(err) : null,
-      sourceTypeLabel: sourceTypeLabel(ev.sourceType),
-      destinationTypeLabel: destinationTypeLabel(ev.destinationType),
-      sourceTypeChoice: ev.sourceType.trim() === 'github' ? 'github' : 'none',
-      destinationTypeChoice:
-        ev.destinationType.trim() === 'vibe_kanban' ? 'vibe_kanban' : 'none',
+      resolvedSourceLabel: sourceTypeLabel(ev.sourceType),
+      resolvedDestinationLabel: destinationTypeLabel(ev.destinationType),
     };
   }
 
@@ -219,8 +170,7 @@ export class UiController {
     @Query('saved') saved?: string,
     @Query('err') err?: string,
   ): Promise<void> {
-    const src = this.settings.getEffective('source_type').trim();
-    if (src !== 'github') {
+    if (this.appEnv.sourceType !== 'github') {
       res.redirect(302, githubNotSourceRedirectUrl());
       return;
     }
@@ -239,8 +189,7 @@ export class UiController {
     @Body() body: Record<string, string>,
     @Res() res: Response,
   ): Promise<void> {
-    const src = this.settings.getEffective('source_type').trim();
-    if (src !== 'github') {
+    if (this.appEnv.sourceType !== 'github') {
       res.redirect(302, githubNotSourceRedirectUrl());
       return;
     }
@@ -281,7 +230,10 @@ export class UiController {
       ...uiNavLocals(ev),
       rows,
       error: err ? decodeURIComponent(err) : null,
-      kanbanMcpPicker: isVibeKanbanMcpConfigured(this.settings),
+      kanbanMcpPicker: isVibeKanbanMcpConfigured(
+        this.settings,
+        this.appEnv.destinationType,
+      ),
     };
   }
 
@@ -336,13 +288,13 @@ export class UiController {
     @Query('saved') saved?: string,
     @Query('err') err?: string,
   ): Promise<void> {
-    const dest = this.settings.getEffective('destination_type').trim();
-    if (dest !== 'vibe_kanban') {
+    if (this.appEnv.destinationType !== 'vibe_kanban') {
       res.redirect(302, vibeKanbanNotDestinationRedirectUrl());
       return;
     }
     const locals = await buildVibeKanbanPageLocals({
       settings: this.settings,
+      destinationType: this.appEnv.destinationType,
       setupEvaluation: this.setupEvaluation,
       vk: this.vk,
       saved,
@@ -356,8 +308,7 @@ export class UiController {
     @Body() body: Record<string, string>,
     @Res() res: Response,
   ): Promise<void> {
-    const dest = this.settings.getEffective('destination_type').trim();
-    if (dest !== 'vibe_kanban') {
+    if (this.appEnv.destinationType !== 'vibe_kanban') {
       res.redirect(302, vibeKanbanNotDestinationRedirectUrl());
       return;
     }
@@ -398,8 +349,7 @@ export class UiController {
     @Body() body: Record<string, string>,
     @Res() res: Response,
   ): Promise<void> {
-    const dest = this.settings.getEffective('destination_type').trim();
-    if (dest !== 'vibe_kanban') {
+    if (this.appEnv.destinationType !== 'vibe_kanban') {
       res.redirect(302, vibeKanbanNotDestinationRedirectUrl());
       return;
     }

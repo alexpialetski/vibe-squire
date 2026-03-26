@@ -1,6 +1,7 @@
-import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
+import { Inject, Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
+import { APP_ENV, type AppEnv } from '../config/env-schema';
 import { SettingsService } from '../settings/settings.service';
 import {
   isVibeKanbanDestination,
@@ -25,11 +26,14 @@ export class VkMcpStdioSessionService
   /** Serialize all MCP operations on the shared client. */
   private chain: Promise<unknown> = Promise.resolve();
 
-  constructor(private readonly settings: SettingsService) {}
+  constructor(
+    private readonly settings: SettingsService,
+    @Inject(APP_ENV) private readonly appEnv: AppEnv,
+  ) {}
 
   private buildConfigKey(): string {
     return JSON.stringify({
-      dest: this.settings.getEffective('destination_type'),
+      dest: this.appEnv.destinationType,
       stdio: this.settings.getEffective('vk_mcp_stdio_json'),
     });
   }
@@ -75,9 +79,9 @@ export class VkMcpStdioSessionService
   }
 
   private async ensureConnected(): Promise<void> {
-    if (!isVibeKanbanDestination(this.settings)) {
+    if (!isVibeKanbanDestination(this.appEnv.destinationType)) {
       throw new Error(
-        'Vibe Kanban MCP (stdio): destination_type is not vibe_kanban',
+        'Vibe Kanban MCP (stdio): DESTINATION_TYPE is not vibe_kanban',
       );
     }
     const key = this.buildConfigKey();

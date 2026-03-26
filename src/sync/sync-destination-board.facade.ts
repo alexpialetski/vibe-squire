@@ -1,29 +1,28 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { SettingsService } from '../settings/settings.service';
+import { APP_ENV, type AppEnv } from '../config/env-schema';
 import { VIBE_KANBAN_BOARD_PORT } from '../ports/injection-tokens';
 import type { VibeKanbanBoardPort } from '../ports/vibe-kanban-board.port';
 import type { SyncDestinationBoardPort } from '../ports/sync-destination-board.port';
 
 /**
- * Delegates sync board operations to the adapter for the current `destination_type`.
- * v1: only `vibe_kanban` is wired; other values throw at call time.
+ * Delegates sync board operations to the adapter for the process `AppEnv.destinationType` (`DESTINATION_TYPE` at boot).
+ * v1: only `vibe_kanban` is wired; other values throw at call time (unknown types cannot boot today).
  */
 @Injectable()
 export class SyncDestinationBoardFacade implements SyncDestinationBoardPort {
   constructor(
-    private readonly settings: SettingsService,
+    @Inject(APP_ENV) private readonly appEnv: AppEnv,
     @Inject(VIBE_KANBAN_BOARD_PORT)
     private readonly vibeKanbanBoard: VibeKanbanBoardPort,
   ) {}
 
   private adapter(): SyncDestinationBoardPort {
-    const d = this.settings.getEffective('destination_type').trim();
+    const d = this.appEnv.destinationType;
     if (d === 'vibe_kanban') {
       return this.vibeKanbanBoard;
     }
-    throw new Error(
-      `Sync destination not supported: ${d.length > 0 ? JSON.stringify(d) : '(empty)'}`,
-    );
+    const label = JSON.stringify(d as string);
+    throw new Error(`Sync destination not supported: ${label}`);
   }
 
   probe(): Promise<void> {

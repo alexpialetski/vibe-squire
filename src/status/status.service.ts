@@ -1,4 +1,5 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
+import { APP_ENV, type AppEnv } from '../config/env-schema';
 import { PrismaService } from '../prisma/prisma.service';
 import { GhCliService } from '../gh/gh-cli.service';
 import { SettingsService } from '../settings/settings.service';
@@ -18,6 +19,7 @@ export class StatusService {
     private readonly syncRunState: SyncRunStateService,
     private readonly sync: SyncService,
     private readonly setupEvaluation: SetupEvaluationService,
+    @Inject(APP_ENV) private readonly appEnv: AppEnv,
   ) {}
 
   async getSnapshot() {
@@ -68,7 +70,6 @@ export class StatusService {
         ...(databaseMessage ? { message: databaseMessage } : {}),
       },
       setup: {
-        integrationsConfigured: setupEval.integrationsConfigured,
         complete: setupEval.complete,
         ...(setupEval.reason ? { reason: setupEval.reason } : {}),
         mappingCount: setupEval.mappingCount,
@@ -76,7 +77,10 @@ export class StatusService {
       configuration: {
         source_type: setupEval.sourceType,
         destination_type: setupEval.destinationType,
-        vk_mcp_configured: isVibeKanbanMcpConfigured(this.settings),
+        vk_mcp_configured: isVibeKanbanMcpConfigured(
+          this.settings,
+          this.appEnv.destinationType,
+        ),
       },
       destinations,
       scouts: [

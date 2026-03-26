@@ -3,20 +3,22 @@ jest.mock('../../settings/settings.service', () => ({
 }));
 
 import { SyncDestinationBoardFacade } from '../sync-destination-board.facade';
-import type { SettingsService } from '../../settings/settings.service';
+import type { AppEnv } from '../../config/env-schema';
 import type { VibeKanbanBoardPort } from '../../ports/vibe-kanban-board.port';
 
+function envWithDestination(
+  destinationType: AppEnv['destinationType'],
+): AppEnv {
+  return { destinationType } as AppEnv;
+}
+
 describe('SyncDestinationBoardFacade', () => {
-  it('delegates probe to Vibe Kanban adapter when destination_type is vibe_kanban', async () => {
+  it('delegates probe to Vibe Kanban adapter when destinationType is vibe_kanban', async () => {
     const probe = jest.fn().mockResolvedValue(undefined);
     const vk = { probe } as unknown as VibeKanbanBoardPort;
-    const settings = {
-      getEffective: (key: string) =>
-        key === 'destination_type' ? 'vibe_kanban' : '',
-    } as Pick<SettingsService, 'getEffective'>;
 
     const facade = new SyncDestinationBoardFacade(
-      settings as SettingsService,
+      envWithDestination('vibe_kanban'),
       vk,
     );
     await facade.probe();
@@ -24,16 +26,12 @@ describe('SyncDestinationBoardFacade', () => {
     expect(probe).toHaveBeenCalledTimes(1);
   });
 
-  it('throws when destination_type is not supported', async () => {
+  it('throws when destinationType is not supported (future types)', async () => {
     const probe = jest.fn();
     const vk = { probe } as unknown as VibeKanbanBoardPort;
-    const settings = {
-      getEffective: (key: string) =>
-        key === 'destination_type' ? 'linear' : '',
-    } as Pick<SettingsService, 'getEffective'>;
 
     const facade = new SyncDestinationBoardFacade(
-      settings as SettingsService,
+      envWithDestination('linear' as AppEnv['destinationType']),
       vk,
     );
 

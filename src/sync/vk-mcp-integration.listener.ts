@@ -5,6 +5,7 @@ import {
   OnApplicationBootstrap,
 } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
+import { APP_ENV, type AppEnv } from '../config/env-schema';
 import { SettingsService } from '../settings/settings.service';
 import { VibeKanbanMcpService } from '../vibe-kanban/vibe-kanban-mcp.service';
 import { VK_MCP_STDIO_SESSION_PORT } from '../ports/injection-tokens';
@@ -30,6 +31,7 @@ export class VkMcpIntegrationListener implements OnApplicationBootstrap {
 
   constructor(
     private readonly settings: SettingsService,
+    @Inject(APP_ENV) private readonly appEnv: AppEnv,
     @Inject(VK_MCP_STDIO_SESSION_PORT)
     private readonly stdioSession: VkMcpStdioSessionPort,
     private readonly vk: VibeKanbanMcpService,
@@ -54,8 +56,11 @@ export class VkMcpIntegrationListener implements OnApplicationBootstrap {
   }
 
   private async reconcile(source: 'bootstrap' | 'event'): Promise<void> {
-    const vkDest = isVibeKanbanDestination(this.settings);
-    const mcpOk = isVibeKanbanMcpConfigured(this.settings);
+    const vkDest = isVibeKanbanDestination(this.appEnv.destinationType);
+    const mcpOk = isVibeKanbanMcpConfigured(
+      this.settings,
+      this.appEnv.destinationType,
+    );
 
     if (!vkDest || !mcpOk) {
       await this.stdioSession.shutdown();

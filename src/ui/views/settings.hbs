@@ -7,64 +7,18 @@
     {{#if error}}
       <div class="banner banner-error">{{error}}</div>
     {{/if}}
-    {{#if integrationSaved}}
-      <div class="banner banner-ok">Integration choices saved.</div>
-    {{/if}}
     {{#if saved}}
       <div class="banner banner-ok">Poll schedule saved. Scheduler refreshed if the interval changed.</div>
     {{/if}}
 
-    <div class="card" id="integration">
-      <h2>Source &amp; destination</h2>
+    <div class="card">
+      <h2>Sync adapters</h2>
       <p class="muted">
-        Choose one PR source and one work board. Select <strong>Not configured</strong> to clear that side.
+        PR source and work board are set at <strong>process start</strong> via environment variables
+        <code>SOURCE_TYPE</code> and <code>DESTINATION_TYPE</code> (defaults: <code>github</code> → <code>vibe_kanban</code>).
+        They are not stored in the database. Change env and restart to switch adapters.
       </p>
-      <form method="post" action="/ui/setup/integration" class="form-stack">
-        <fieldset class="fieldset-plain">
-          <legend class="field-label">PR source</legend>
-          <label class="check-row">
-            <input
-              type="radio"
-              name="source_type"
-              value="none"
-              {{#if (eq sourceTypeChoice 'none')}}checked{{/if}}
-            />
-            <span>Not configured</span>
-          </label>
-          <label class="check-row">
-            <input
-              type="radio"
-              name="source_type"
-              value="github"
-              {{#if (eq sourceTypeChoice 'github')}}checked{{/if}}
-            />
-            <span>GitHub</span>
-          </label>
-        </fieldset>
-        <fieldset class="fieldset-plain">
-          <legend class="field-label">Work board (destination)</legend>
-          <label class="check-row">
-            <input
-              type="radio"
-              name="destination_type"
-              value="none"
-              {{#if (eq destinationTypeChoice 'none')}}checked{{/if}}
-            />
-            <span>Not configured</span>
-          </label>
-          <label class="check-row">
-            <input
-              type="radio"
-              name="destination_type"
-              value="vibe_kanban"
-              {{#if (eq destinationTypeChoice 'vibe_kanban')}}checked{{/if}}
-            />
-            <span>Vibe Kanban</span>
-          </label>
-        </fieldset>
-        <p class="muted"><strong>Current:</strong> {{sourceTypeLabel}} → {{destinationTypeLabel}}</p>
-        <button type="submit" class="btn primary">Save integration</button>
-      </form>
+      <p class="muted"><strong>Resolved for this process:</strong> {{resolvedSourceLabel}} → {{resolvedDestinationLabel}}</p>
     </div>
 
     <div class="card">

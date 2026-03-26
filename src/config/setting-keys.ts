@@ -3,8 +3,6 @@ export const MIN_POLL_INTERVAL_MINUTES = 5;
 
 /** Logical keys stored in `Setting` and resolved via `SettingsService.getEffective`. */
 export const SETTING_KEYS = [
-  'source_type',
-  'destination_type',
   'vk_mcp_stdio_json',
   'scheduled_sync_enabled',
   'poll_interval_minutes',
@@ -35,14 +33,6 @@ export type VibeKanbanUiSettingKey = (typeof VIBE_KANBAN_UI_KEYS)[number];
 type Def = { envVar?: string; defaultValue: string };
 
 export const SETTING_DEFINITIONS = {
-  source_type: {
-    envVar: 'SOURCE_TYPE' as const,
-    defaultValue: 'github',
-  },
-  destination_type: {
-    envVar: 'DESTINATION_TYPE' as const,
-    defaultValue: 'vibe_kanban',
-  },
   vk_mcp_stdio_json: {
     envVar: 'VK_MCP_STDIO_JSON' as const,
     defaultValue: '["npx","-y","vibe-kanban@latest","--mcp"]',

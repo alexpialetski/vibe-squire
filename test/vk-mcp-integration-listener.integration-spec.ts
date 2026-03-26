@@ -67,12 +67,7 @@ describe('VkMcpIntegrationListener (integration)', () => {
     await prisma.setting.deleteMany({
       where: {
         key: {
-          in: [
-            'vk_mcp_stdio_json',
-            'destination_type',
-            'source_type',
-            'scheduled_sync_enabled',
-          ],
+          in: ['vk_mcp_stdio_json', 'scheduled_sync_enabled'],
         },
       },
     });
@@ -133,13 +128,10 @@ describe('VkMcpIntegrationListener (integration)', () => {
     expect(h.lastOkAt).toBeDefined();
   });
 
-  it('PATCH destination away from vibe_kanban tears down stdio and clears health to unknown', async () => {
+  it('PATCH destination_type is rejected (not a persisted setting key)', async () => {
     await request(app.getHttpServer())
       .patch('/api/settings')
       .send({ destination_type: '' })
-      .expect(200);
-
-    expect(stdioShutdown).toHaveBeenCalled();
-    expect(runState.getVibeKanbanHealth().state).toBe('unknown');
+      .expect(400);
   });
 });

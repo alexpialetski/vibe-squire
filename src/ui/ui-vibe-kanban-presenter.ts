@@ -1,3 +1,4 @@
+import type { SupportedDestinationType } from '../config/integration-types';
 import type { SettingsService } from '../settings/settings.service';
 import type { SetupEvaluationService } from '../setup/setup-evaluation.service';
 import type { VibeKanbanMcpService } from '../vibe-kanban/vibe-kanban-mcp.service';
@@ -18,15 +19,16 @@ export const VK_PAGE_ORG_ERROR_NO_MCP =
  */
 export async function buildVibeKanbanPageLocals(deps: {
   settings: SettingsService;
+  destinationType: SupportedDestinationType;
   setupEvaluation: Pick<SetupEvaluationService, 'evaluate'>;
   vk: Pick<VibeKanbanMcpService, 'listOrganizations' | 'listProjects'>;
   saved?: string;
   err?: string;
 }): Promise<Record<string, unknown>> {
-  const { settings, setupEvaluation, vk, saved, err } = deps;
+  const { settings, destinationType, setupEvaluation, vk, saved, err } = deps;
   const values = settings.listEffectiveNonSecret();
   const ev = await setupEvaluation.evaluate();
-  const mcpBoardPicker = isVibeKanbanMcpConfigured(settings);
+  const mcpBoardPicker = isVibeKanbanMcpConfigured(settings, destinationType);
   const orgError = !mcpBoardPicker ? VK_PAGE_ORG_ERROR_NO_MCP : null;
   const boardOrg = settings.getEffective('default_organization_id');
   const boardProj = settings.getEffective('default_project_id');

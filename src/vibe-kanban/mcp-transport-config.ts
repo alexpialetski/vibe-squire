@@ -1,3 +1,4 @@
+import type { SupportedDestinationType } from '../config/integration-types';
 import type { SettingsService } from '../settings/settings.service';
 import { parseVkStdioCommand } from './vk-stdio-command.schema';
 
@@ -6,8 +7,10 @@ export { parseVkStdioCommand };
 /** Any object that can resolve effective settings (MCP / destination checks). */
 export type EffectiveSettings = Pick<SettingsService, 'getEffective'>;
 
-export function isVibeKanbanDestination(settings: EffectiveSettings): boolean {
-  return settings.getEffective('destination_type').trim() === 'vibe_kanban';
+export function isVibeKanbanDestination(
+  destinationType: SupportedDestinationType,
+): boolean {
+  return destinationType === 'vibe_kanban';
 }
 
 /**
@@ -15,8 +18,9 @@ export function isVibeKanbanDestination(settings: EffectiveSettings): boolean {
  */
 export function isVibeKanbanMcpConfigured(
   settings: EffectiveSettings,
+  destinationType: SupportedDestinationType,
 ): boolean {
-  if (!isVibeKanbanDestination(settings)) {
+  if (!isVibeKanbanDestination(destinationType)) {
     return false;
   }
   return (

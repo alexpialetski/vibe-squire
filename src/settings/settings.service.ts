@@ -5,6 +5,7 @@ import {
   isSettingKey,
   MIN_POLL_INTERVAL_MINUTES,
   SETTING_DEFINITIONS,
+  SETTING_KEYS,
   type SettingKey,
 } from '../config/setting-keys';
 import { resolveEffectiveSetting } from '../config/resolve-effective-setting';
@@ -26,7 +27,7 @@ export class SettingsService implements OnModuleInit {
   /** Reload all known keys from DB into memory (call after writes). */
   async refreshCache(): Promise<void> {
     const rows = await this.prisma.setting.findMany({
-      where: { key: { in: [...Object.keys(SETTING_DEFINITIONS)] } },
+      where: { key: { in: [...SETTING_KEYS] } },
     });
     this.cache.clear();
     for (const row of rows) {
@@ -87,11 +88,14 @@ export class SettingsService implements OnModuleInit {
 
   /**
    * Effective values for all defined settings (§5.3). Safe for API: no secrets beyond URL
-   * hosts operators already set.
+   * hosts operators already set. Includes `source_type` / `destination_type` from {@link AppEnv}.
    */
   listEffectiveNonSecret(): Record<string, string> {
-    const out: Record<string, string> = {};
-    for (const key of Object.keys(SETTING_DEFINITIONS) as SettingKey[]) {
+    const out: Record<string, string> = {
+      source_type: this.appEnv.sourceType,
+      destination_type: this.appEnv.destinationType,
+    };
+    for (const key of SETTING_KEYS) {
       out[key] = this.getEffective(key);
     }
     return out;

@@ -129,7 +129,12 @@ describe('Vibe Kanban context when destination not configured (integration)', ()
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [testingAppModule()],
+      imports: [
+        testingAppModule({
+          ...process.env,
+          VK_MCP_STDIO_JSON: '[]',
+        }),
+      ],
     }).compile();
 
     app = moduleFixture.createNestApplication();
@@ -137,13 +142,6 @@ describe('Vibe Kanban context when destination not configured (integration)', ()
       new ValidationPipe({ whitelist: true, transform: true }),
     );
     await app.init();
-
-    const prisma = app.get(PrismaService);
-    await prisma.setting.deleteMany();
-    await request(app.getHttpServer())
-      .patch('/api/settings')
-      .send({ destination_type: '' })
-      .expect(200);
   });
 
   afterAll(async () => {

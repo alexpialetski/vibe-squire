@@ -1,9 +1,4 @@
-import {
-  DynamicModule,
-  MiddlewareConsumer,
-  Module,
-  NestModule,
-} from '@nestjs/common';
+import { DynamicModule, Module } from '@nestjs/common';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { LoggerModule } from 'nestjs-pino';
 import { AppController } from './app.controller';
@@ -20,8 +15,6 @@ import { SyncModule } from './sync/sync.module';
 import { ReinitModule } from './reinit/reinit.module';
 import { UiModule } from './ui/ui.module';
 import { SetupModule } from './setup/setup.module';
-import { UiSetupRedirectMiddleware } from './setup/ui-setup-redirect.middleware';
-import { UiController } from './ui/ui.controller';
 
 /**
  * Root Nest module. The class decorator is intentionally empty: **all** wiring lives in
@@ -29,7 +22,7 @@ import { UiController } from './ui/ui.controller';
  * `imports: [AppModule]` without `.forRoot()` — you would get an empty module graph.
  */
 @Module({})
-export class AppModule implements NestModule {
+export class AppModule {
   /**
    * @param env Parsed application environment from {@link parseAppEnv} (e.g. in `main.ts`).
    * Tests should pass an explicit env snapshot when they mutate `process.env` or need a frozen
@@ -55,9 +48,5 @@ export class AppModule implements NestModule {
       ],
       controllers: [AppController],
     };
-  }
-
-  configure(consumer: MiddlewareConsumer) {
-    consumer.apply(UiSetupRedirectMiddleware).forRoutes(UiController);
   }
 }
