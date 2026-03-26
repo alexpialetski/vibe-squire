@@ -6,13 +6,16 @@ import {
   isVibeKanbanDestination,
   parseVkStdioCommand,
 } from './mcp-transport-config';
+import type { VkMcpStdioSessionPort } from '../ports/vk-mcp-stdio-session.port';
 
 /**
  * One long-lived MCP client over stdio (spawned `npx vibe-kanban --mcp` or custom command).
  * Lazy start on first use; serializes calls; tears down on transport/config change or shutdown.
  */
 @Injectable()
-export class VkMcpStdioSessionService implements OnModuleDestroy {
+export class VkMcpStdioSessionService
+  implements OnModuleDestroy, VkMcpStdioSessionPort
+{
   private readonly logger = new Logger(VkMcpStdioSessionService.name);
   private client: Client | null = null;
   private transport: StdioClientTransport | null = null;

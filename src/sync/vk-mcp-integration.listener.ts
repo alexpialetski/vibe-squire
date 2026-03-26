@@ -1,8 +1,14 @@
-import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  Logger,
+  OnApplicationBootstrap,
+} from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import { SettingsService } from '../settings/settings.service';
 import { VibeKanbanMcpService } from '../vibe-kanban/vibe-kanban-mcp.service';
-import { VkMcpStdioSessionService } from '../vibe-kanban/vk-mcp-stdio-session.service';
+import { VK_MCP_STDIO_SESSION_PORT } from '../ports/injection-tokens';
+import type { VkMcpStdioSessionPort } from '../ports/vk-mcp-stdio-session.port';
 import {
   isVibeKanbanDestination,
   isVibeKanbanMcpConfigured,
@@ -24,7 +30,8 @@ export class VkMcpIntegrationListener implements OnApplicationBootstrap {
 
   constructor(
     private readonly settings: SettingsService,
-    private readonly stdioSession: VkMcpStdioSessionService,
+    @Inject(VK_MCP_STDIO_SESSION_PORT)
+    private readonly stdioSession: VkMcpStdioSessionPort,
     private readonly vk: VibeKanbanMcpService,
     private readonly runState: SyncRunStateService,
     private readonly statusEvents: StatusEventsService,

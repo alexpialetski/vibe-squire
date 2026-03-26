@@ -99,7 +99,9 @@ export class PollSchedulerService implements OnModuleInit, OnModuleDestroy {
     }
     this.handle = null;
     if (!this.settings.getEffectiveBoolean('scheduled_sync_enabled')) {
-      this.logger.debug('Scheduled poll skipped: scheduled_sync_enabled is off');
+      this.logger.debug(
+        'Scheduled poll skipped: scheduled_sync_enabled is off',
+      );
       return;
     }
     this.chain = this.chain

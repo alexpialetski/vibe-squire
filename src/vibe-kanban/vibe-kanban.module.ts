@@ -1,6 +1,9 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { SettingsModule } from '../settings/settings.module';
-import { WORK_BOARD_PORT } from '../ports/injection-tokens';
+import {
+  VIBE_KANBAN_BOARD_PORT,
+  VK_MCP_STDIO_SESSION_PORT,
+} from '../ports/injection-tokens';
 import { VibeKanbanMcpService } from './vibe-kanban-mcp.service';
 import { VibeKanbanContextController } from './vibe-kanban-context.controller';
 import { VkMcpStdioSessionService } from './vk-mcp-stdio-session.service';
@@ -12,10 +15,19 @@ import { VkMcpStdioSessionService } from './vk-mcp-stdio-session.service';
     VkMcpStdioSessionService,
     VibeKanbanMcpService,
     {
-      provide: WORK_BOARD_PORT,
+      provide: VIBE_KANBAN_BOARD_PORT,
       useExisting: VibeKanbanMcpService,
     },
+    {
+      provide: VK_MCP_STDIO_SESSION_PORT,
+      useExisting: VkMcpStdioSessionService,
+    },
   ],
-  exports: [VibeKanbanMcpService, VkMcpStdioSessionService, WORK_BOARD_PORT],
+  exports: [
+    VibeKanbanMcpService,
+    VkMcpStdioSessionService,
+    VIBE_KANBAN_BOARD_PORT,
+    VK_MCP_STDIO_SESSION_PORT,
+  ],
 })
 export class VibeKanbanModule {}

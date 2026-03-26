@@ -35,8 +35,7 @@ describe('vk-mcp list_issues / get_issue response schemas', () => {
       id: 'fc01fd36-cdbc-41a1-be0c-acc84c523d3a',
       title: `${VIBE_SQUIRE_TITLE_MARKER} PR #5167: Example`,
       simple_id: 'ALI-14',
-      description:
-        `${buildVibeSquirePrDescriptionMarker('https://example.com/org/repo/pull/5167')}\n\nBody`,
+      description: `${buildVibeSquirePrDescriptionMarker('https://example.com/org/repo/pull/5167')}\n\nBody`,
       status: 'In progress',
       status_id: 'de48bd8e-c6b6-49ec-af62-c4f6c413dfb6',
       priority: null,
@@ -70,7 +69,6 @@ describe('vk-mcp list_issues / get_issue response schemas', () => {
     expect(r).not.toBeNull();
     expect((r!.issues[0] as { future_field?: number }).future_field).toBe(1);
   });
-
 });
 
 describe('buildVibeSquirePrDescriptionMarker', () => {

@@ -1,0 +1,89 @@
+import type { SettingsService } from '../settings/settings.service';
+import type { SetupEvaluationService } from '../setup/setup-evaluation.service';
+import type { VibeKanbanMcpService } from '../vibe-kanban/vibe-kanban-mcp.service';
+import { isVibeKanbanMcpConfigured } from '../vibe-kanban/mcp-transport-config';
+import {
+  normalizeVkWorkspaceExecutor,
+  VK_WORKSPACE_EXECUTOR_OPTIONS,
+} from '../config/vk-workspace-executors';
+import { SETTING_LABELS } from './setting-labels';
+import { uiNavLocals } from './ui-presenter';
+
+export const VK_PAGE_ORG_ERROR_NO_MCP =
+  'Vibe Kanban MCP is not configured (set VK_MCP_STDIO_JSON or patch vk_mcp_stdio_json via API).';
+
+/**
+ * Template locals for `/ui/vibe-kanban` (board picker, executor, labels).
+ * Async only for MCP list calls and setup evaluation.
+ */
+export async function buildVibeKanbanPageLocals(deps: {
+  settings: SettingsService;
+  setupEvaluation: Pick<SetupEvaluationService, 'evaluate'>;
+  vk: Pick<VibeKanbanMcpService, 'listOrganizations' | 'listProjects'>;
+  saved?: string;
+  err?: string;
+}): Promise<Record<string, unknown>> {
+  const { settings, setupEvaluation, vk, saved, err } = deps;
+  const values = settings.listStoredNonSecret();
+  const ev = await setupEvaluation.evaluate();
+  const mcpBoardPicker = isVibeKanbanMcpConfigured(settings);
+  const orgError = !mcpBoardPicker ? VK_PAGE_ORG_ERROR_NO_MCP : null;
+  const boardOrg = settings.getEffective('default_organization_id');
+  const boardProj = settings.getEffective('default_project_id');
+
+  let vkBoardOrganizations: { id: string; name?: string }[] = [];
+  let vkBoardProjects: { id: string; name?: string }[] = [];
+  let vkBoardListError: string | null = null;
+
+  if (mcpBoardPicker) {
+    try {
+      vkBoardOrganizations = await vk.listOrganizations();
+    } catch (e) {
+      vkBoardListError = e instanceof Error ? e.message : String(e);
+    }
+    if (vkBoardListError === null) {
+      const oid = boardOrg.trim();
+      if (oid.length > 0 && vkBoardOrganizations.some((o) => o.id === oid)) {
+        try {
+          vkBoardProjects = await vk.listProjects(oid);
+        } catch (e) {
+          vkBoardListError = e instanceof Error ? e.message : String(e);
+        }
+      }
+    }
+  }
+
+  const hasVkProjectPick =
+    mcpBoardPicker &&
+    boardOrg.trim().length > 0 &&
+    vkBoardOrganizations.some((o) => o.id === boardOrg.trim());
+  const vkBoardProjectsEmpty = hasVkProjectPick && vkBoardProjects.length === 0;
+
+  const vkExecutorRaw = settings.getEffective('vk_workspace_executor').trim();
+  const normalizedEx = normalizeVkWorkspaceExecutor(vkExecutorRaw);
+  const vkExecutor =
+    normalizedEx ?? VK_WORKSPACE_EXECUTOR_OPTIONS[0]?.value ?? 'cursor_agent';
+
+  return {
+    ...uiNavLocals(ev),
+    saved: saved === '1',
+    error: err ? decodeURIComponent(err) : null,
+    mcpBoardPicker,
+    boardOrg,
+    boardProj,
+    kanbanDoneStatus: values.kanban_done_status ?? '',
+    vkExecutor,
+    executorOptions: VK_WORKSPACE_EXECUTOR_OPTIONS.map((o) => ({ ...o })),
+    vkLabels: {
+      default_organization_id: SETTING_LABELS.default_organization_id,
+      vk_workspace_executor: SETTING_LABELS.vk_workspace_executor,
+      kanban_done_status: SETTING_LABELS.kanban_done_status,
+    },
+    orgError,
+    vkBoardOrganizations,
+    vkBoardProjects,
+    vkBoardListError,
+    hasVkProjectPick,
+    vkBoardProjectsEmpty,
+  };
+}

@@ -5,8 +5,12 @@ import type {
   VkRepoRef,
 } from '../vibe-kanban/vk-entities';
 
-/** Work-board destination port for Vibe Kanban–style MCP tools (§2.1, §6). */
-export interface WorkBoardPort {
+/**
+ * Board / issue-tracker port used by sync orchestration (`RunPollCycleService`, `poll-cycle/*`).
+ * Resolved at call time from `destination_type` (see `SyncDestinationBoardFacade`).
+ * v1 surface matches Vibe Kanban; narrow or split when a second destination differs.
+ */
+export interface SyncDestinationBoardPort {
   probe(): Promise<void>;
   listOrganizations(): Promise<VkOrgRef[]>;
   listProjects(organizationId: string): Promise<VkProjectRef[]>;

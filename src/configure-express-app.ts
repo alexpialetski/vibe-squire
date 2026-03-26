@@ -45,44 +45,6 @@ export function configureExpressApp(app: NestExpressApplication): void {
     readFileSync(join(partialsDir, 'nav.hbs'), 'utf8'),
   );
   hbs.registerHelper('eq', (a: unknown, b: unknown) => a === b);
-  hbs.registerHelper('pollDecisionLabel', (d: unknown) => {
-    if (typeof d !== 'string') {
-      return '';
-    }
-    switch (d) {
-      case 'created':
-        return 'Created Kanban issue';
-      case 'already_tracked':
-        return 'Already tracked';
-      case 'linked_existing':
-        return 'Linked existing issue';
-      case 'skipped_unmapped':
-        return 'Skipped (unmapped)';
-      case 'skipped_bot':
-        return 'Skipped (bot author)';
-      case 'skipped_board_limit':
-        return 'Skipped (board limit)';
-      default:
-        return d;
-    }
-  });
-  hbs.registerHelper('pollPhaseLabel', (p: unknown) => {
-    if (typeof p !== 'string') {
-      return '';
-    }
-    switch (p) {
-      case 'completed':
-        return 'Completed';
-      case 'aborted':
-        return 'Aborted';
-      case 'failed':
-        return 'Failed';
-      case 'running':
-        return 'Running';
-      default:
-        return p;
-    }
-  });
   /**
    * Handlebars invokes @partial-block via `lambda`, which only sets `this` and
    * does not pass the layout context as the first argument. The inner program

@@ -1,7 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { SettingsService } from '../settings/settings.service';
-import type { WorkBoardPort } from '../ports/work-board.port';
+import type { VibeKanbanBoardPort } from '../ports/vibe-kanban-board.port';
 import type {
   VkIssueRef,
   VkOrgRef,
@@ -9,7 +9,8 @@ import type {
   VkRepoRef,
 } from './vk-entities';
 import { isVibeKanbanDestination } from './mcp-transport-config';
-import { VkMcpStdioSessionService } from './vk-mcp-stdio-session.service';
+import { VK_MCP_STDIO_SESSION_PORT } from '../ports/injection-tokens';
+import type { VkMcpStdioSessionPort } from '../ports/vk-mcp-stdio-session.port';
 import {
   isGetIssueNotFoundMcpResult,
   summarizeMcpToolErrorText,
@@ -206,12 +207,13 @@ function pickCreatedIssueId(parsed: unknown): string | null {
 }
 
 @Injectable()
-export class VibeKanbanMcpService implements WorkBoardPort {
+export class VibeKanbanMcpService implements VibeKanbanBoardPort {
   private readonly logger = new Logger(VibeKanbanMcpService.name);
 
   constructor(
     private readonly settings: SettingsService,
-    private readonly stdioSession: VkMcpStdioSessionService,
+    @Inject(VK_MCP_STDIO_SESSION_PORT)
+    private readonly stdioSession: VkMcpStdioSessionPort,
   ) {}
 
   /**

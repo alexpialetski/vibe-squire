@@ -3,14 +3,19 @@ import { parseVkStdioCommand } from './vk-stdio-command.schema';
 
 export { parseVkStdioCommand };
 
-export function isVibeKanbanDestination(settings: SettingsService): boolean {
+/** Any object that can resolve effective settings (MCP / destination checks). */
+export type EffectiveSettings = Pick<SettingsService, 'getEffective'>;
+
+export function isVibeKanbanDestination(settings: EffectiveSettings): boolean {
   return settings.getEffective('destination_type').trim() === 'vibe_kanban';
 }
 
 /**
  * True when MCP can be used for Vibe Kanban (stdio command JSON valid).
  */
-export function isVibeKanbanMcpConfigured(settings: SettingsService): boolean {
+export function isVibeKanbanMcpConfigured(
+  settings: EffectiveSettings,
+): boolean {
   if (!isVibeKanbanDestination(settings)) {
     return false;
   }
