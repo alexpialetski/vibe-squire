@@ -50,9 +50,7 @@ describe('runPollPrerequisites', () => {
     const r = await runPollPrerequisites(
       setupSvc(true),
       ghSvc('ok'),
-      board(async () => {
-        throw new Error('boom');
-      }),
+      board(() => Promise.reject(new Error('boom'))),
       onOk,
       onFail,
     );

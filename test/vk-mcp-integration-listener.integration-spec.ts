@@ -82,7 +82,7 @@ describe('VkMcpIntegrationListener (integration)', () => {
     await settings.refreshCache();
 
     const scheduler = app.get(PollSchedulerService);
-    await scheduler.onModuleDestroy();
+    scheduler.onModuleDestroy();
 
     expect(vkStub.probe).toHaveBeenCalled();
     expect(runState.getVibeKanbanHealth().state).toBe('ok');

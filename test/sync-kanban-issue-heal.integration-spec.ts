@@ -25,7 +25,7 @@ describe('Sync heal deleted Kanban issue (integration)', () => {
     listRepos: jest.fn().mockResolvedValue([]),
     listIssues: jest.fn().mockResolvedValue([]),
     countActiveVibeSquireIssues: jest.fn().mockResolvedValue(0),
-    getIssue: jest.fn().mockImplementation(async (issueId: string) => {
+    getIssue: jest.fn().mockImplementation((issueId: string) => {
       if (kanbanIssueGone) {
         return null;
       }
@@ -107,7 +107,7 @@ describe('Sync heal deleted Kanban issue (integration)', () => {
     vkStub.countActiveVibeSquireIssues.mockReset();
     vkStub.countActiveVibeSquireIssues.mockResolvedValue(0);
     vkStub.getIssue.mockReset();
-    vkStub.getIssue.mockImplementation(async (issueId: string) => {
+    vkStub.getIssue.mockImplementation((issueId: string) => {
       if (kanbanIssueGone) {
         return null;
       }

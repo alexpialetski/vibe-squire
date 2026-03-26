@@ -25,7 +25,8 @@ describe('SyncDestinationBoardFacade', () => {
   });
 
   it('throws when destination_type is not supported', async () => {
-    const vk = { probe: jest.fn() } as unknown as VibeKanbanBoardPort;
+    const probe = jest.fn();
+    const vk = { probe } as unknown as VibeKanbanBoardPort;
     const settings = {
       getEffective: (key: string) =>
         key === 'destination_type' ? 'linear' : '',
@@ -46,6 +47,6 @@ describe('SyncDestinationBoardFacade', () => {
     expect((caught as Error).message).toBe(
       'Sync destination not supported: "linear"',
     );
-    expect(vk.probe).not.toHaveBeenCalled();
+    expect(probe).not.toHaveBeenCalled();
   });
 });

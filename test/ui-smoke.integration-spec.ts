@@ -48,7 +48,7 @@ describe('UI smoke (integration)', () => {
     await app.init();
 
     const scheduler = app.get(PollSchedulerService);
-    await scheduler.onModuleDestroy();
+    scheduler.onModuleDestroy();
   });
 
   afterAll(async () => {

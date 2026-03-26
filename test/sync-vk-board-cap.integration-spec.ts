@@ -24,9 +24,9 @@ describe('Sync VK-first board cap (integration)', () => {
     listIssues: jest.fn().mockResolvedValue([]),
     countActiveVibeSquireIssues: jest.fn().mockResolvedValue(4),
     getIssue: jest.fn().mockResolvedValue(null),
-    createIssue: jest.fn().mockImplementation(async () => {
+    createIssue: jest.fn().mockImplementation(() => {
       createSeq += 1;
-      return `new-issue-${createSeq}`;
+      return Promise.resolve(`new-issue-${createSeq}`);
     }),
     updateIssue: jest.fn().mockResolvedValue(undefined),
     startWorkspace: jest.fn().mockResolvedValue('ws-stub-id'),

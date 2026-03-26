@@ -23,8 +23,9 @@ describe('SyncPrScoutFacade', () => {
   });
 
   it('throws when source_type is not supported', () => {
+    const listReviewRequestedForMe = jest.fn();
     const github = {
-      listReviewRequestedForMe: jest.fn(),
+      listReviewRequestedForMe,
     } as unknown as GithubPrScoutPort;
     const settings = {
       getEffective: (key: string) => (key === 'source_type' ? 'gitlab' : ''),
@@ -42,6 +43,6 @@ describe('SyncPrScoutFacade', () => {
     expect((caught as Error).message).toBe(
       'Sync source not supported: "gitlab"',
     );
-    expect(github.listReviewRequestedForMe).not.toHaveBeenCalled();
+    expect(listReviewRequestedForMe).not.toHaveBeenCalled();
   });
 });

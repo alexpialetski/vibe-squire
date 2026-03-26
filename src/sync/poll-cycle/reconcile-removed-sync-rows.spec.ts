@@ -48,10 +48,11 @@ describe('reconcileRemovedSyncRows', () => {
       prNumber: 1,
       kanbanIssueId: 'i1',
     };
+    const deleteMany = jest.fn();
     const prisma = {
       syncedPullRequest: {
         findMany: jest.fn().mockResolvedValue([row]),
-        delete: jest.fn(),
+        delete: deleteMany,
       },
     } as unknown as PrismaService;
 
@@ -66,6 +67,6 @@ describe('reconcileRemovedSyncRows', () => {
       warn: jest.fn(),
     });
 
-    expect(prisma.syncedPullRequest.delete).not.toHaveBeenCalled();
+    expect(deleteMany).not.toHaveBeenCalled();
   });
 });

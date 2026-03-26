@@ -60,12 +60,12 @@ describe('upsertScoutStateAfterSuccessfulPoll', () => {
         lastPollCandidatesCount: 5,
         lastPollSkippedUnmapped: 2,
         lastPollIssuesCreated: 1,
-      }),
+      }) as unknown,
       update: expect.objectContaining({
         lastPollCandidatesCount: 5,
         lastPollSkippedUnmapped: 2,
         lastPollIssuesCreated: 1,
-      }),
+      }) as unknown,
     });
   });
 });
