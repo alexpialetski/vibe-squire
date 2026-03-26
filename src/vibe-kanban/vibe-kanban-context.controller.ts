@@ -1,4 +1,11 @@
-import { BadRequestException, Controller, Get, Query } from '@nestjs/common';
+import {
+  BadRequestException,
+  Controller,
+  Get,
+  Inject,
+  Query,
+} from '@nestjs/common';
+import { APP_ENV, type AppEnv } from '../config/env-schema';
 import {
   ApiBadRequestResponse,
   ApiOkResponse,
@@ -17,10 +24,13 @@ export class VibeKanbanContextController {
   constructor(
     private readonly settings: SettingsService,
     private readonly vk: VibeKanbanMcpService,
+    @Inject(APP_ENV) private readonly appEnv: AppEnv,
   ) {}
 
   private assertMcpConfigured(): void {
-    if (!isVibeKanbanMcpConfigured(this.settings)) {
+    if (
+      !isVibeKanbanMcpConfigured(this.settings, this.appEnv.destinationType)
+    ) {
       throw new BadRequestException(
         'Vibe Kanban MCP is not configured (valid vk_mcp_stdio_json for stdio spawn)',
       );

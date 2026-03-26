@@ -25,7 +25,6 @@ export const statusSnapshotSchema = z.object({
     message: z.string().optional(),
   }),
   setup: z.looseObject({
-    integrationsConfigured: z.boolean(),
     complete: z.boolean(),
     mappingCount: z.number(),
     reason: z.string().optional(),

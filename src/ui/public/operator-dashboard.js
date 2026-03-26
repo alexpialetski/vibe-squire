@@ -28,12 +28,6 @@
   }
 
   function setupReasonHuman(reason) {
-    if (reason === 'source_type_invalid') {
-      return 'Choose a PR source (e.g. GitHub) on Setup.';
-    }
-    if (reason === 'destination_type_invalid') {
-      return 'Choose a work board (e.g. Vibe Kanban) on Setup.';
-    }
     if (reason === 'vk_mcp_stdio_invalid') {
       return 'Set stdio MCP command via VK_MCP_STDIO_JSON or PATCH vk_mcp_stdio_json (/api/settings).';
     }
@@ -131,12 +125,10 @@
           'Board: ' + String(cfg.destination_type ?? '—'),
           'Mappings: ' + String(setup.mappingCount ?? 0),
         ]
-      : setup.integrationsConfigured
-        ? [
-            'Integration saved; finish MCP and routing (see checklist on dashboard).',
-            setupReasonHuman(setup.reason),
-          ]
-        : [setupReasonHuman(setup.reason)];
+      : [
+          'Finish MCP and routing (see checklist on dashboard).',
+          setupReasonHuman(setup.reason),
+        ];
     parts.push(card('Setup', setupDot, setupLines));
 
     const dest = (snap.destinations && snap.destinations[0]) || {};

@@ -102,7 +102,6 @@ describe('AppController (e2e)', () => {
         database: { state: string };
         setup: {
           complete: boolean;
-          integrationsConfigured: boolean;
           reason?: string;
         };
         configuration: {
@@ -119,7 +118,6 @@ describe('AppController (e2e)', () => {
       expect(typeof body.gh.state).toBe('string');
       expect(typeof body.database.state).toBe('string');
       expect(typeof body.setup.complete).toBe('boolean');
-      expect(typeof body.setup.integrationsConfigured).toBe('boolean');
       expect(typeof body.configuration.source_type).toBe('string');
       expect(typeof body.configuration.destination_type).toBe('string');
       expect(typeof body.configuration.vk_mcp_configured).toBe('boolean');
@@ -151,12 +149,12 @@ describe('AppController (e2e)', () => {
     });
   });
 
-  describe('setup gate (incomplete configuration)', () => {
+  describe('incomplete setup without integration UI gate (invalid MCP config)', () => {
     let prev: Record<string, string | undefined>;
 
     beforeAll(() => {
       prev = snapshotEnv();
-      process.env.SOURCE_TYPE = 'unsupported_scm';
+      delete process.env.SOURCE_TYPE;
       process.env.VK_MCP_STDIO_JSON = '[]';
     });
 
@@ -164,22 +162,22 @@ describe('AppController (e2e)', () => {
       restoreEnv(prev);
     });
 
-    it('GET /ui/dashboard redirects to settings', async () => {
+    it('GET /ui/dashboard still renders (no integration gate redirect)', async () => {
       const res = await request(app.getHttpServer())
         .get('/ui/dashboard')
-        .expect(302);
-      expect(res.headers.location).toBe('/ui/settings');
+        .expect(200);
+      expect(res.text).toContain('Dashboard');
     });
 
     it('GET /ui/setup is not a route', async () => {
       await request(app.getHttpServer()).get('/ui/setup').expect(404);
     });
 
-    it('GET /ui/activity redirects to settings', async () => {
+    it('GET /ui/activity still renders', async () => {
       const res = await request(app.getHttpServer())
         .get('/ui/activity')
-        .expect(302);
-      expect(res.headers.location).toBe('/ui/settings');
+        .expect(200);
+      expect(res.text).toContain('Activity');
     });
 
     it('POST /api/sync/run returns 409 when setup incomplete', async () => {

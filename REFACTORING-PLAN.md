@@ -18,13 +18,13 @@ Draw or document three layers:
 | **Ingress** | HTTP, UI, DTOs | `ui.controller.ts`, API controllers, guards |
 | **Orchestration / domain** | Rules and workflows | `RunPollCycleService`, setup evaluation, sync manual run |
 | **Adapters** | IO and external systems | `GhCliService`, `VkMcpStdioSessionService` (`VK_MCP_STDIO_SESSION_PORT`), `VibeKanbanMcpService`, Prisma |
-| **Orchestration ports (target)** | Role-based DI tokens resolved from `source_type` / `destination_type` | Generic “sync destination board” + factory (see §G); per-vendor adapters behind it |
+| **Orchestration ports (target)** | Role-based DI tokens resolved from `AppEnv` (`SOURCE_TYPE` / `DESTINATION_TYPE` at boot) | Generic “sync destination board” + factory (see §G); per-vendor adapters behind it |
 
 **Look for:** controllers or services that mix layers (e.g. heavy business logic in `ui.controller.ts`), duplicate validation, or settings reads scattered without going through one refresh/emit path.
 
 Deliverable: a short note or diagram in this file’s appendix, or a linked doc—whatever you will actually maintain.
 
-**Appendix — layer map (Phase 0):** **Ingress** talks HTTP/SSE and renders UI. **Orchestration** (`RunPollCycleService`, setup guards, listeners) applies rules and calls **orchestration ports** (`SYNC_PR_SCOUT_PORT`, `SYNC_DESTINATION_BOARD_PORT`) whose facades read `source_type` / `destination_type`. **Adapters** implement vendor IO: `GhCliService`, `GithubPrScoutService`, `VibeKanbanMcpService`, `VkMcpStdioSessionService` (exposed as `VK_MCP_STDIO_SESSION_PORT`), Prisma. Cross-cutting: `SettingsService`, events (`StatusEventsService`, integration-settings emitter).
+**Appendix — layer map (Phase 0):** **Ingress** talks HTTP/SSE and renders UI. **Orchestration** (`RunPollCycleService`, setup guards, listeners) applies rules and calls **orchestration ports** (`SYNC_PR_SCOUT_PORT`, `SYNC_DESTINATION_BOARD_PORT`) whose facades read `AppEnv.sourceType` / `AppEnv.destinationType` (from `SOURCE_TYPE` / `DESTINATION_TYPE`). **Adapters** implement vendor IO: `GhCliService`, `GithubPrScoutService`, `VibeKanbanMcpService`, `VkMcpStdioSessionService` (exposed as `VK_MCP_STDIO_SESSION_PORT`), Prisma. Cross-cutting: `SettingsService`, events (`StatusEventsService`, integration-settings emitter).
 
 ## Phase 1 — Stabilize critical paths with tests
 
@@ -84,20 +84,20 @@ This stays useful for **VK-only** wiring (MCP stdio, `VkMcpIntegrationListener`,
 
 ### G. Generic orchestration port + factory — destination + source (v1 done)
 
-**Goal:** `RunPollCycleService` and `src/sync/poll-cycle/*` depend on **role-based** ports resolved from settings: sync destination board (`destination_type`) and PR scout (`source_type`), not concrete VK / GitHub services directly.
+**Goal:** `RunPollCycleService` and `src/sync/poll-cycle/*` depend on **role-based** ports resolved from **`AppEnv`**: sync destination board (`destinationType` / `DESTINATION_TYPE`) and PR scout (`sourceType` / `SOURCE_TYPE`), not concrete VK / GitHub services directly.
 
 **Principles (destination):**
 
 1. **Orchestration port** — `SyncDestinationBoardPort` in `src/ports/sync-destination-board.port.ts` (v1: same surface as VK; **narrow or split** when a second destination differs).
 2. **Adapters** — `VibeKanbanMcpService` implements `VibeKanbanBoardPort` (= `SyncDestinationBoardPort`). Future destinations: new services + branch in the facade.
-3. **Resolver** — `SyncDestinationBoardFacade` (`src/sync/sync-destination-board.facade.ts`) reads `destination_type` on **each call** and delegates to `VIBE_KANBAN_BOARD_PORT` when `vibe_kanban`; otherwise throws `Sync destination not supported: …`.
+3. **Resolver** — `SyncDestinationBoardFacade` (`src/sync/sync-destination-board.facade.ts`) reads `AppEnv.destinationType` on **each call** and delegates to `VIBE_KANBAN_BOARD_PORT` when `vibe_kanban`; otherwise throws `Sync destination not supported: …`.
 4. **Nest tokens** — `SYNC_DESTINATION_BOARD_PORT` → `useExisting: SyncDestinationBoardFacade` in `SyncModule`. Keep `VIBE_KANBAN_BOARD_PORT` for VK-only wiring (stdio, listener, context routes).
 
 **Principles (source, symmetric):**
 
 5. **Orchestration port** — `SyncPrScoutPort` in `src/ports/sync-pr-scout.port.ts` (v1: same surface as GitHub; narrow when a second SCM differs).
 6. **Adapters** — `GithubPrScoutService` implements `GithubPrScoutPort` (= `SyncPrScoutPort`). Future sources: new services + branch in `SyncPrScoutFacade`.
-7. **Resolver** — `SyncPrScoutFacade` reads `source_type` on **each call** and delegates to `GITHUB_PR_SCOUT_PORT` when `github`; otherwise throws `Sync source not supported: …`.
+7. **Resolver** — `SyncPrScoutFacade` reads `AppEnv.sourceType` on **each call** and delegates to `GITHUB_PR_SCOUT_PORT` when `github`; otherwise throws `Sync source not supported: …`.
 8. **Nest tokens** — `SYNC_PR_SCOUT_PORT` → `useExisting: SyncPrScoutFacade` in `SyncModule`. Keep `GITHUB_PR_SCOUT_PORT` for scout-module wiring.
 
 **Implementation checklist — destination**
@@ -118,7 +118,7 @@ This stays useful for **VK-only** wiring (MCP stdio, `VkMcpIntegrationListener`,
 
 **Roadmap note**
 
-- [x] Document in `README` — sync orchestration table (`source_type` / `destination_type`, tokens, unsupported values).
+- [x] Document in `README` — sync orchestration table (`SOURCE_TYPE` / `DESTINATION_TYPE`, `AppEnv`, tokens, boot validation).
 - [ ] **Deferred:** additional destination/source adapters + facade branches — **not planned for now**; revisit when product needs a second vendor.
 
 **Look for:** forcing every future destination to implement VK-only methods — prefer a **narrow** port or capability splits early (only when adding that second vendor).
@@ -127,7 +127,7 @@ This stays useful for **VK-only** wiring (MCP stdio, `VkMcpIntegrationListener`,
 
 `VkMcpStdioSessionService` centralizes lifecycle. **`VkMcpStdioSessionPort`** (`src/ports/vk-mcp-stdio-session.port.ts`) + **`VK_MCP_STDIO_SESSION_PORT`** wire `shutdown` + `runWithClient`; `VkMcpIntegrationListener` and `VibeKanbanMcpService` inject the port. Integration tests can still `overrideProvider(VkMcpStdioSessionService)` (`useExisting` resolves to the stub).
 
-**Progress:** `isVibeKanbanDestination` / `isVibeKanbanMcpConfigured` accept **`EffectiveSettings`** (`Pick<SettingsService, 'getEffective'>`) in `mcp-transport-config.ts` so call sites and tests do not need a full service shape.
+**Progress:** `isVibeKanbanDestination` / `isVibeKanbanMcpConfigured` live in `mcp-transport-config.ts` — MCP gating uses **`EffectiveSettings`** plus **`SupportedDestinationType`** from `AppEnv`.
 
 **Look for:** duplicated “is VK destination + MCP configured?” checks; consider one small helper or service used by listener + session + UI.
 
@@ -180,7 +180,7 @@ Fix failures before starting the next slice.
 - Boundaries (ingress / orchestration / adapters) are obvious from folder names or a one-page map.  
 - Names match reality (ports, modules, events).  
 - No single file blocks all understanding of “how does one poll cycle work?”  
-- **Orchestration** depends on **settings-resolved** destination/source ports (§G), not on a single vendor type, once §G is implemented.
+- **Orchestration** depends on **AppEnv-resolved** destination/source ports (§G), not on a single vendor type, once §G is implemented.
 
 ---
 

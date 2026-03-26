@@ -68,7 +68,8 @@ describe('UI smoke (integration)', () => {
       .get('/ui/settings')
       .expect(200);
     expect(res.text).toContain('General');
-    expect(res.text).toContain('Source &amp; destination');
+    expect(res.text).toContain('Sync adapters');
+    expect(res.text).toContain('Resolved for this process');
   });
 
   it('GET /ui/activity renders activity HTML', async () => {

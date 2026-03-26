@@ -18,7 +18,7 @@ export const SCHEDULER_TEXT_FIELD_KEYS: readonly SettingKey[] = [
   'max_board_pr_count',
 ];
 
-/** GitHub PR source fields on `/ui/github` (when `source_type === github`). */
+/** GitHub PR source fields on `/ui/github` (when effective SOURCE_TYPE is github). */
 export const GITHUB_SOURCE_UI_KEYS: readonly SettingKey[] = [
   'pr_ignore_author_logins',
   'pr_review_body_template',

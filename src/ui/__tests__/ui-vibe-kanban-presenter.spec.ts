@@ -11,7 +11,6 @@ import type {
 function baseEv(): SetupEvaluation {
   return {
     complete: true,
-    integrationsConfigured: true,
     mappingCount: 1,
     sourceType: 'github',
     destinationType: 'vibe_kanban',
@@ -25,9 +24,6 @@ describe('buildVibeKanbanPageLocals', () => {
     const settings = {
       listEffectiveNonSecret: () => ({ kanban_done_status: '' }),
       getEffective: (key: string) => {
-        if (key === 'destination_type') {
-          return 'vibe_kanban';
-        }
         if (key === 'vk_mcp_stdio_json') {
           return '';
         }
@@ -53,6 +49,7 @@ describe('buildVibeKanbanPageLocals', () => {
 
     const locals = await buildVibeKanbanPageLocals({
       settings,
+      destinationType: 'vibe_kanban',
       setupEvaluation,
       vk,
     });
@@ -66,9 +63,6 @@ describe('buildVibeKanbanPageLocals', () => {
     const settings = {
       listEffectiveNonSecret: () => ({ kanban_done_status: 'Done' }),
       getEffective: (key: string) => {
-        if (key === 'destination_type') {
-          return 'vibe_kanban';
-        }
         if (key === 'vk_mcp_stdio_json') {
           return '["npx","-y","x"]';
         }
@@ -96,6 +90,7 @@ describe('buildVibeKanbanPageLocals', () => {
 
     const locals = await buildVibeKanbanPageLocals({
       settings,
+      destinationType: 'vibe_kanban',
       setupEvaluation,
       vk,
     });
@@ -114,9 +109,6 @@ describe('buildVibeKanbanPageLocals', () => {
     const settings = {
       listEffectiveNonSecret: () => ({}),
       getEffective: (key: string) => {
-        if (key === 'destination_type') {
-          return 'vibe_kanban';
-        }
         if (key === 'vk_mcp_stdio_json') {
           return '["npx","x"]';
         }
@@ -142,6 +134,7 @@ describe('buildVibeKanbanPageLocals', () => {
 
     const locals = await buildVibeKanbanPageLocals({
       settings,
+      destinationType: 'vibe_kanban',
       setupEvaluation,
       vk,
     });

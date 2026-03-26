@@ -12,7 +12,7 @@ export class IntegrationSettingsEmitterService {
 
   /**
    * Notify listeners (e.g. MCP stdio lifecycle) to reconcile probe / teardown.
-   * Call after `refreshCache()` when source, destination, or MCP stdio JSON may have changed.
+   * Call after `refreshCache()` when persisted integration settings (e.g. MCP stdio JSON) may have changed.
    * Awaits async listeners so health/state is updated before HTTP redirects return.
    */
   async emitIntegrationSettingsChanged(keys: SettingKey[] = []): Promise<void> {

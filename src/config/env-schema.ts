@@ -1,10 +1,19 @@
 /**
  * Bootstrap env: Zod validates `process.env` (base keys + setting-related vars from
  * {@link SETTING_DEFINITIONS}), then {@link parseAppEnv} maps the result to {@link AppEnv}.
+ *
+ * PR source and work-board destination are first-class fields validated with
+ * {@link SUPPORTED_SOURCE_TYPES} / {@link SUPPORTED_DESTINATION_TYPES} (not DB settings).
  */
 import type { LevelWithSilent } from 'pino';
 import { z } from 'zod';
 import { SETTING_DEFINITIONS, type SettingEnvVarName } from './setting-keys';
+import {
+  SUPPORTED_DESTINATION_TYPES,
+  SUPPORTED_SOURCE_TYPES,
+  type SupportedDestinationType,
+  type SupportedSourceType,
+} from './integration-types';
 
 /** Allowed `LOG_LEVEL` values (Pino {@link LevelWithSilent}). */
 const PINO_LOG_LEVELS = [
@@ -48,6 +57,36 @@ function trimEnvString(v: string | undefined): string | undefined {
   const t = v.trim();
   return t === '' ? undefined : t;
 }
+
+const sourceTypeEnvSchema = z
+  .union([z.string(), z.undefined()])
+  .transform((s) => trimEnvString(s))
+  .pipe(
+    z
+      .enum(
+        SUPPORTED_SOURCE_TYPES as unknown as [
+          SupportedSourceType,
+          ...SupportedSourceType[],
+        ],
+      )
+      .optional()
+      .default('github'),
+  );
+
+const destinationTypeEnvSchema = z
+  .union([z.string(), z.undefined()])
+  .transform((s) => trimEnvString(s))
+  .pipe(
+    z
+      .enum(
+        SUPPORTED_DESTINATION_TYPES as unknown as [
+          SupportedDestinationType,
+          ...SupportedDestinationType[],
+        ],
+      )
+      .optional()
+      .default('vibe_kanban'),
+  );
 
 /** On when unset or empty; off only for `false` or `0` (case-insensitive). */
 function envOptOutFlag(raw: string | undefined): boolean {
@@ -98,6 +137,8 @@ const appEnvInputSchema = z
       .pipe(z.enum(PINO_LOG_LEVELS).optional()),
     LOG_TO_FILE: z.string().optional(),
     LOG_FILE_PATH: z.string().optional(),
+    SOURCE_TYPE: sourceTypeEnvSchema,
+    DESTINATION_TYPE: destinationTypeEnvSchema,
     ...settingsEnvZodShape,
   })
   .superRefine((val, ctx) => {
@@ -121,6 +162,10 @@ export type AppEnv = {
   logLevel: LevelWithSilent;
   logToFile: boolean;
   logFilePath: string | undefined;
+  /** PR / SCM adapter key (from `SOURCE_TYPE` + default). Invalid env fails at boot. */
+  sourceType: SupportedSourceType;
+  /** Work-board adapter key (from `DESTINATION_TYPE` + default). Invalid env fails at boot. */
+  destinationType: SupportedDestinationType;
   /** Non-empty trimmed values for setting keys that map to `envVar` in {@link SETTING_DEFINITIONS}. */
   settingsEnv: Partial<Record<SettingEnvVarName, string>>;
 };
@@ -162,6 +207,8 @@ export function parseAppEnv(env: NodeJS.ProcessEnv = process.env): AppEnv {
     logLevel: resolvedLogLevel(parsed.LOG_LEVEL),
     logToFile: envOptOutFlag(parsed.LOG_TO_FILE),
     logFilePath: trimEnvString(parsed.LOG_FILE_PATH),
+    sourceType: parsed.SOURCE_TYPE,
+    destinationType: parsed.DESTINATION_TYPE,
     settingsEnv,
   };
 }

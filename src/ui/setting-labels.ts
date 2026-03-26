@@ -2,9 +2,6 @@ import { SETTING_KEYS, type SettingKey } from '../config/setting-keys';
 import { SCHEDULER_TEXT_FIELD_KEYS } from './integration-ui-registry';
 
 export const SETTING_LABELS: Record<SettingKey, string> = {
-  source_type: 'PR / SCM source (github only for now)',
-  destination_type:
-    'Work board / destination (vibe_kanban only for now; more later)',
   vk_mcp_stdio_json:
     'Vibe Kanban MCP stdio: JSON array [command, ...args] to spawn the MCP server',
   scheduled_sync_enabled:

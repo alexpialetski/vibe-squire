@@ -7,7 +7,7 @@ import type {
 
 /**
  * Board / issue-tracker port used by sync orchestration (`RunPollCycleService`, `poll-cycle/*`).
- * Resolved at call time from `destination_type` (see `SyncDestinationBoardFacade`).
+ * Resolved at call time from `AppEnv.destinationType` (see `SyncDestinationBoardFacade`).
  * v1 surface matches Vibe Kanban; narrow or split when a second destination differs.
  */
 export interface SyncDestinationBoardPort {

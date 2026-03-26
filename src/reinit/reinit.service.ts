@@ -1,4 +1,5 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
+import { APP_ENV, type AppEnv } from '../config/env-schema';
 import { PrismaService } from '../prisma/prisma.service';
 import { GhCliService } from '../gh/gh-cli.service';
 import { VibeKanbanMcpService } from '../vibe-kanban/vibe-kanban-mcp.service';
@@ -21,6 +22,7 @@ export class ReinitService {
     private readonly statusEvents: StatusEventsService,
     private readonly pollScheduler: PollSchedulerService,
     private readonly runState: SyncRunStateService,
+    @Inject(APP_ENV) private readonly appEnv: AppEnv,
   ) {}
 
   /**
@@ -57,7 +59,7 @@ export class ReinitService {
       message: 'Vibe Kanban MCP not configured (valid vk_mcp_stdio_json)',
     };
 
-    if (isVibeKanbanMcpConfigured(this.settings)) {
+    if (isVibeKanbanMcpConfigured(this.settings, this.appEnv.destinationType)) {
       try {
         await this.vk.probe();
         this.runState.setVibeKanbanHealth({

@@ -6,7 +6,6 @@ describe('validateStatusSnapshot', () => {
     gh: { state: 'ok' as const },
     database: { state: 'ok' as const },
     setup: {
-      integrationsConfigured: true,
       complete: true,
       mappingCount: 0,
     },

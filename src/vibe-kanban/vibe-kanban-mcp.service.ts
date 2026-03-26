@@ -1,5 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { APP_ENV, type AppEnv } from '../config/env-schema';
 import { SettingsService } from '../settings/settings.service';
 import type { VibeKanbanBoardPort } from '../ports/vibe-kanban-board.port';
 import type {
@@ -212,6 +213,7 @@ export class VibeKanbanMcpService implements VibeKanbanBoardPort {
 
   constructor(
     private readonly settings: SettingsService,
+    @Inject(APP_ENV) private readonly appEnv: AppEnv,
     @Inject(VK_MCP_STDIO_SESSION_PORT)
     private readonly stdioSession: VkMcpStdioSessionPort,
   ) {}
@@ -233,9 +235,9 @@ export class VibeKanbanMcpService implements VibeKanbanBoardPort {
 
   /** Stdio: lazy long-lived child + serialized access. */
   async withClient<T>(fn: (client: Client) => Promise<T>): Promise<T> {
-    if (!isVibeKanbanDestination(this.settings)) {
+    if (!isVibeKanbanDestination(this.appEnv.destinationType)) {
       throw new Error(
-        'Vibe Kanban MCP: destination_type must be vibe_kanban for this adapter',
+        'Vibe Kanban MCP: DESTINATION_TYPE must be vibe_kanban for this adapter',
       );
     }
     return this.stdioSession.runWithClient(fn);
