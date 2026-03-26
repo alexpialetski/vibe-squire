@@ -171,18 +171,15 @@ describe('AppController (e2e)', () => {
       expect(res.headers.location).toBe('/ui/settings');
     });
 
-    it('GET /ui/setup redirects to settings', async () => {
-      const res = await request(app.getHttpServer())
-        .get('/ui/setup')
-        .expect(302);
-      expect(res.headers.location).toBe('/ui/settings');
+    it('GET /ui/setup is not a route', async () => {
+      await request(app.getHttpServer()).get('/ui/setup').expect(404);
     });
 
-    it('GET /ui/setup?saved=1 maps to integration_saved on settings', async () => {
+    it('GET /ui/activity redirects to settings', async () => {
       const res = await request(app.getHttpServer())
-        .get('/ui/setup?saved=1')
+        .get('/ui/activity')
         .expect(302);
-      expect(res.headers.location).toBe('/ui/settings?integration_saved=1');
+      expect(res.headers.location).toBe('/ui/settings');
     });
 
     it('POST /api/sync/run returns 409 when setup incomplete', async () => {

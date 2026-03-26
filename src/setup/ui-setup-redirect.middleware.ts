@@ -3,20 +3,31 @@ import type { NextFunction, Request, Response } from 'express';
 import { SetupEvaluationService } from './setup-evaluation.service';
 
 /**
- * Redirects the operator dashboard to `/ui/settings` until a valid PR source and
- * work board are chosen. Further gaps (MCP stdio, routing) are shown on the
- * dashboard checklist.
+ * Keeps the operator on `/ui/settings` until valid PR source and work board
+ * types are chosen (`integrationsConfigured`). Allows `POST /ui/setup/integration`
+ * to save that choice. Further gaps (MCP stdio, routing) are shown on the
+ * dashboard checklist after this gate.
  */
 @Injectable()
 export class UiSetupRedirectMiddleware implements NestMiddleware {
   constructor(private readonly setup: SetupEvaluationService) {}
 
+  private allowedBeforeIntegrationsConfigured(
+    path: string,
+    method: string,
+  ): boolean {
+    if (path === '/ui/settings') {
+      return true;
+    }
+    return path === '/ui/setup/integration' && method === 'POST';
+  }
+
   async use(req: Request, res: Response, next: NextFunction): Promise<void> {
     const raw = (req.originalUrl ?? req.url ?? '').split('?')[0];
     const path = raw.replace(/\/+$/, '') || '/';
-    const isDashboard = path === '/ui' || path === '/ui/dashboard';
+    const method = (req.method ?? 'GET').toUpperCase();
 
-    if (!isDashboard) {
+    if (this.allowedBeforeIntegrationsConfigured(path, method)) {
       next();
       return;
     }
