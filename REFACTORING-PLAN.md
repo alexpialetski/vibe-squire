@@ -66,15 +66,15 @@ Do these in any order that unblocks you, but **prefer completing Phase 1 tests f
 
 **Progress:** Prerequisites (setup → `gh` auth → board `probe`) live in `run-poll-prerequisites.ts`. Aborted / error scout rows: `persistScoutSkippedAfterPoll` + `persistScoutErrorAfterPoll` in `persist-scout-run-outcome.ts` (with specs); `RunPollCycleService` still calls `completeAborted` / `completeFailed` on `PollRunHistoryService`.
 
-Scout phase (candidates, `urlsNow`, board cap vs `countActiveVibeSquireIssues`, `pr_ignore_author_logins`) is `buildPollScoutContext()` in `src/sync/poll-cycle/poll-scout-context.ts` with `poll-scout-context.spec.ts`. `VkCreateQuota` is defined there and re-exported from `run-poll-cycle.service.ts` for compatibility.
+Scout phase (candidates, `urlsNow`, board cap vs `countActiveVibeSquireIssues`, `pr_ignore_author_logins`) is `buildPollScoutContext()` in `src/sync/poll-cycle/poll-scout-context.ts` with `src/sync/poll-cycle/__tests__/poll-scout-context.spec.ts`. `VkCreateQuota` is defined there and re-exported from `run-poll-cycle.service.ts` for compatibility.
 
 Per-PR loop: `processPollCandidatesLoop()` (`process-poll-candidates.ts`). `EnsureIssueOutcome`: `ensure-issue-outcome.ts`.
 
 **Post-loop success path:** `reconcileRemovedSyncRows()` (`reconcile-removed-sync-rows.ts`), `isTerminalKanbanStatus()` (`kanban-terminal-status.ts`), `upsertScoutStateAfterSuccessfulPoll()` + `formatPollSuccessLog()` (`finalize-successful-poll-cycle.ts`), each with specs. `RunPollCycleService.execute` still calls `pollRunHistory.completeSuccess` and `markPollCompleted` (Nest wiring).
 
-**Kanban copy (titles / workspace names):** `issueTitleForPr`, `workspaceNameForPr`, `isValidVkRepoId` live in `poll-cycle/poll-pr-kanban-copy.ts` with `poll-pr-kanban-copy.spec.ts`. `PLACEHOLDER_VK_REPO_ID` is in `sync-constants.ts`.
+**Kanban copy (titles / workspace names):** `issueTitleForPr`, `workspaceNameForPr`, `isValidVkRepoId` live in `poll-cycle/poll-pr-kanban-copy.ts` with `src/sync/poll-cycle/__tests__/poll-pr-kanban-copy.spec.ts`. `PLACEHOLDER_VK_REPO_ID` is in `sync-constants.ts`.
 
-**Ensure issue per PR:** `ensureIssueForPr` + `buildPollIssueDescription` in `poll-cycle/ensure-issue-for-pr.ts` (`ensure-issue-for-pr.spec.ts` for description builder). **`looksLikeMcpOrNetworkError`** in `poll-cycle/mcp-network-error-heuristic.ts`. `RunPollCycleService` keeps scheduling, prerequisites, loop wiring, `appendPollRunItem`, `kanbanDoneStatus`, and destination failure side-effects only.
+**Ensure issue per PR:** `ensureIssueForPr` + `buildPollIssueDescription` in `poll-cycle/ensure-issue-for-pr.ts` (`src/sync/poll-cycle/__tests__/ensure-issue-for-pr.spec.ts` for description builder). **`looksLikeMcpOrNetworkError`** in `poll-cycle/mcp-network-error-heuristic.ts`. `RunPollCycleService` keeps scheduling, prerequisites, loop wiring, `appendPollRunItem`, `kanbanDoneStatus`, and destination failure side-effects only.
 
 ### B. VK-specific adapter port — done (adapter layer)
 
@@ -105,7 +105,7 @@ This stays useful for **VK-only** wiring (MCP stdio, `VkMcpIntegrationListener`,
 - [x] Orchestration interface `SyncDestinationBoardPort` + token `SYNC_DESTINATION_BOARD_PORT`.
 - [x] `SyncDestinationBoardFacade` registered in `SyncModule`; `RunPollCycleService` injects orchestration token.
 - [x] `poll-cycle/*` + `RunPollCycleService` use `SyncDestinationBoardPort` / `destinationBoard` deps.
-- [x] Unit tests: `sync-destination-board.facade.spec.ts` (VK delegate + unsupported destination).
+- [x] Unit tests: `src/sync/__tests__/sync-destination-board.facade.spec.ts` (VK delegate + unsupported destination).
 - [x] Integration tests: still override `VibeKanbanMcpService` — facade receives the stub via `VIBE_KANBAN_BOARD_PORT`.
 
 **Implementation checklist — source**
@@ -113,7 +113,7 @@ This stays useful for **VK-only** wiring (MCP stdio, `VkMcpIntegrationListener`,
 - [x] Orchestration interface `SyncPrScoutPort` + token `SYNC_PR_SCOUT_PORT`.
 - [x] `SyncPrScoutFacade` registered in `SyncModule`; `RunPollCycleService` injects orchestration token.
 - [x] `buildPollScoutContext` takes `prScout: SyncPrScoutPort`.
-- [x] Unit tests: `sync-pr-scout.facade.spec.ts` (GitHub delegate + unsupported source).
+- [x] Unit tests: `src/sync/__tests__/sync-pr-scout.facade.spec.ts` (GitHub delegate + unsupported source).
 - [x] Integration tests: still override `GithubPrScoutService` — facade receives the stub via `GITHUB_PR_SCOUT_PORT`.
 
 **Roadmap note**
@@ -151,7 +151,7 @@ Zod is used in several places; class-validator appears on Nest DTOs. Pick a **bo
 
 `ui.controller.ts` should become mostly **wiring**: extract form parsers, checklist builders, and label maps to dedicated modules or “presenter” helpers (`integration-ui-registry.ts` / `setting-labels.ts` are a start).
 
-**Progress:** Pure helpers live in `src/ui/ui-presenter.ts` (`escapeForPre`, setup type parsers, labels, `buildSetupChecklist`, `uiNavLocals`, integration guard redirect URLs). Covered by `ui-presenter.spec.ts`. **`buildVibeKanbanPageLocals`** — `src/ui/ui-vibe-kanban-presenter.ts` + `ui-vibe-kanban-presenter.spec.ts` (MCP gate, org/project lists, executor labels). Controller wires HTTP + services only.
+**Progress:** Pure helpers live in `src/ui/ui-presenter.ts` (`escapeForPre`, setup type parsers, labels, `buildSetupChecklist`, `uiNavLocals`, integration guard redirect URLs). Covered by `src/ui/__tests__/ui-presenter.spec.ts`. **`buildVibeKanbanPageLocals`** — `src/ui/ui-vibe-kanban-presenter.ts` + `src/ui/__tests__/ui-vibe-kanban-presenter.spec.ts` (MCP gate, org/project lists, executor labels). Controller wires HTTP + services only.
 
 **Look for:** functions that do not need `Request`/`Response`—move them out and unit test.
 
