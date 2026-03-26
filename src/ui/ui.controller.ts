@@ -67,24 +67,6 @@ export class UiController {
     void 0;
   }
 
-  /** Legacy URL; bookmarks and old links land on the unified Settings page. */
-  @Get('setup')
-  setupLegacyRedirect(
-    @Res() res: Response,
-    @Query('saved') saved?: string,
-    @Query('err') err?: string,
-  ): void {
-    const params = new URLSearchParams();
-    if (err) {
-      params.set('err', err);
-    }
-    if (saved === '1') {
-      params.set('integration_saved', '1');
-    }
-    const qs = params.toString();
-    res.redirect(302, `/ui/settings${qs ? `?${qs}` : ''}`);
-  }
-
   @Post('setup/integration')
   async postSetupIntegration(
     @Body() body: Record<string, string>,
