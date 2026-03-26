@@ -32,7 +32,6 @@ export class StatusService {
       databaseMessage = e instanceof Error ? e.message : String(e);
     }
 
-    const ghHost = this.settings.getEffective('gh_host');
     const setupEval = await this.setupEvaluation.evaluate();
 
     const scoutRow = await this.prisma.scoutState.findUnique({
@@ -75,7 +74,6 @@ export class StatusService {
         source_type: setupEval.sourceType,
         destination_type: setupEval.destinationType,
         vk_mcp_configured: isVibeKanbanMcpConfigured(this.settings),
-        gh_host_override: ghHost.length > 0,
       },
       destinations,
       scouts: [

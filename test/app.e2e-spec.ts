@@ -109,7 +109,6 @@ describe('AppController (e2e)', () => {
           source_type: string;
           destination_type: string;
           vk_mcp_configured: boolean;
-          gh_host_override: boolean;
         };
         destinations: Array<{ id: string; state: string }>;
         scouts: Array<{ id: string; state: string }>;
@@ -123,7 +122,6 @@ describe('AppController (e2e)', () => {
       expect(typeof body.configuration.source_type).toBe('string');
       expect(typeof body.configuration.destination_type).toBe('string');
       expect(typeof body.configuration.vk_mcp_configured).toBe('boolean');
-      expect(typeof body.configuration.gh_host_override).toBe('boolean');
       expect(Array.isArray(body.destinations)).toBe(true);
       expect(body.destinations.length).toBeGreaterThanOrEqual(1);
       expect(typeof body.destinations[0].state).toBe('string');

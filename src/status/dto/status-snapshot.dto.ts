@@ -50,9 +50,6 @@ export class StatusConfigurationDto {
       'True when Vibe Kanban MCP is configured (valid stdio spawn command JSON)',
   })
   vk_mcp_configured!: boolean;
-
-  @ApiProperty()
-  gh_host_override!: boolean;
 }
 
 export class StatusManualSyncDto {

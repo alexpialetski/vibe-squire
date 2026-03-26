@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { spawnSync } from 'node:child_process';
-import { SettingsService } from '../settings/settings.service';
 
 export type GhHealthState =
   | 'ok'
@@ -10,10 +9,9 @@ export type GhHealthState =
 
 @Injectable()
 export class GhCliService {
-  constructor(private readonly settings: SettingsService) {}
-
   /**
    * Non-interactive check: `gh` on PATH and `gh auth status` succeeds.
+   * Uses the default host from `gh` configuration (see `gh auth status`).
    */
   checkAuth(): { state: GhHealthState; message?: string } {
     const version = spawnSync('gh', ['--version'], {
@@ -26,15 +24,9 @@ export class GhCliService {
       };
     }
 
-    const ghHost = this.settings.getEffective('gh_host');
-    const env = { ...process.env } as NodeJS.ProcessEnv;
-    if (ghHost) {
-      env.GH_HOST = ghHost;
-    }
-
     const auth = spawnSync('gh', ['auth', 'status'], {
       encoding: 'utf-8',
-      env,
+      env: { ...process.env } as NodeJS.ProcessEnv,
     });
 
     if (auth.status === 0) {
