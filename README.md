@@ -76,13 +76,13 @@ After `npm run build`, the package exposes `vibe-squire` via `bin/vibe-squire.js
 |--------|---------|
 | `npm run build` | `nest build` |
 | `npm run start:prod` | `node dist/main` |
-| `npm run test` | Unit tests (`src/**/*.spec.ts`) |
+| `npm run test` | Unit tests (`src/**/__tests__/**/*.spec.ts`) |
 | `npm run test:e2e` | Supertest against bootstrapped app |
 | `npm run test:integration` | Fakes for `gh` / scout / MCP; DB in temp dir per worker |
 
 ## Tests (§16)
 
-- **Unit:** setting precedence (`resolve-effective-setting.spec.ts`), poll backoff (`poll-backoff.spec.ts`).
+- **Unit:** setting precedence (`config/__tests__/resolve-effective-setting.spec.ts`), poll backoff (`sync/__tests__/poll-backoff.spec.ts`).
 - **Integration:** happy path + idempotency (`sync-with-fakes.integration-spec.ts`), reconciliation (`sync-reconcile.integration-spec.ts`), VK-first board cap (`sync-vk-board-cap.integration-spec.ts`), Kanban heal / quota (`sync-kanban-issue-heal.integration-spec.ts`), settings / mappings / Kanban context (`settings-mappings-vk.integration-spec.ts`), poll-cycle branches (`run-poll-cycle-branches.integration-spec.ts`), VK MCP listener + settings emit (`vk-mcp-integration-listener.integration-spec.ts`), UI smoke (`ui-smoke.integration-spec.ts`).
 - **Contract:** `validateStatusSnapshot` on `GET /api/status` in e2e.
 

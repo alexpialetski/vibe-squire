@@ -96,12 +96,14 @@
       "ts"
     ],
     "rootDir": "src",
-    "testRegex": ".*\\.spec\\.ts$",
+    "testMatch": ["**/__tests__/**/*.spec.ts"],
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"
     },
     "collectCoverageFrom": [
-      "**/*.(t|j)s"
+      "**/*.(t|j)s",
+      "!**/*.spec.ts",
+      "!**/generated/**"
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"
