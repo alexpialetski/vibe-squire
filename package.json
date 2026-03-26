@@ -40,7 +40,6 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.27.1",
     "@nestjs/common": "^11.0.1",
-    "@nestjs/config": "^4.0.3",
     "@nestjs/core": "^11.0.1",
     "@nestjs/event-emitter": "^3.0.1",
     "@nestjs/platform-express": "^11.0.1",

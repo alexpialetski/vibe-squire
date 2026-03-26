@@ -152,7 +152,7 @@ export class UiController {
     @Query('integration_saved') integrationSaved?: string,
     @Query('err') err?: string,
   ): Promise<Record<string, unknown>> {
-    const values = this.settings.listStoredNonSecret();
+    const values = this.settings.listEffectiveNonSecret();
     const ev = await this.setupEvaluation.evaluate();
     const scheduledSyncEnabled = this.settings.getEffectiveBoolean(
       'scheduled_sync_enabled',
@@ -224,7 +224,7 @@ export class UiController {
       res.redirect(302, githubNotSourceRedirectUrl());
       return;
     }
-    const values = this.settings.listStoredNonSecret();
+    const values = this.settings.listEffectiveNonSecret();
     const ev = await this.setupEvaluation.evaluate();
     res.render('github', {
       ...uiNavLocals(ev),

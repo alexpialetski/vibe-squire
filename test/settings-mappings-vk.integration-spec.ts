@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
 import { App } from 'supertest/types';
-import { AppModule } from '../src/app.module';
+import { testingAppModule } from './testing-app-module';
 import { VibeKanbanMcpService } from '../src/vibe-kanban/vibe-kanban-mcp.service';
 import { PrismaService } from '../src/prisma/prisma.service';
 
@@ -27,7 +27,7 @@ describe('Settings, mappings, vibe-kanban (integration)', () => {
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
+      imports: [testingAppModule()],
     })
       .overrideProvider(VibeKanbanMcpService)
       .useValue(vkStub)
@@ -129,7 +129,7 @@ describe('Vibe Kanban context when destination not configured (integration)', ()
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
+      imports: [testingAppModule()],
     }).compile();
 
     app = moduleFixture.createNestApplication();

@@ -41,7 +41,7 @@ export class SettingsController {
     },
   })
   listEffective() {
-    return this.settings.listStoredNonSecret();
+    return this.settings.listEffectiveNonSecret();
   }
 
   /**

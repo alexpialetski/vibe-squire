@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
 import { App } from 'supertest/types';
-import { AppModule } from '../src/app.module';
+import { testingAppModule } from './testing-app-module';
 import { VibeKanbanMcpService } from '../src/vibe-kanban/vibe-kanban-mcp.service';
 import { VkMcpStdioSessionService } from '../src/vibe-kanban/vk-mcp-stdio-session.service';
 import { PrismaService } from '../src/prisma/prisma.service';
@@ -44,7 +44,7 @@ describe('VkMcpIntegrationListener (integration)', () => {
     stdioShutdown = jest.fn().mockResolvedValue(undefined);
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
+      imports: [testingAppModule()],
     })
       .overrideProvider(VibeKanbanMcpService)
       .useValue(vkStub)
