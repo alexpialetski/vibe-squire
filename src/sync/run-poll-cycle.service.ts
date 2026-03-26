@@ -16,10 +16,7 @@ import type { GithubPrCandidate } from '../scout/github-pr-scout.service';
 import { SetupEvaluationService } from '../setup/setup-evaluation.service';
 import { PollRunHistoryService } from './poll-run-history.service';
 import { runPollPrerequisites } from './poll-cycle/run-poll-prerequisites';
-import {
-  buildPollScoutContext,
-  type VkCreateQuota,
-} from './poll-cycle/poll-scout-context';
+import { buildPollScoutContext } from './poll-cycle/poll-scout-context';
 import { processPollCandidatesLoop } from './poll-cycle/process-poll-candidates';
 import { reconcileRemovedSyncRows } from './poll-cycle/reconcile-removed-sync-rows';
 import {

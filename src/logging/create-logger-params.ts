@@ -1,7 +1,6 @@
 import path from 'node:path';
 import type { Params } from 'nestjs-pino';
 import pino from 'pino';
-import type { LevelWithSilent } from 'pino';
 import pinoPretty from 'pino-pretty';
 import type { AppEnv } from '../config/env-schema';
 

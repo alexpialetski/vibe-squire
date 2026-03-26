@@ -119,7 +119,7 @@ describe('RunPollCycleService branches (integration)', () => {
       runPoll = app.get(RunPollCycleService);
 
       const scheduler = app.get(PollSchedulerService);
-      await scheduler.onModuleDestroy();
+      scheduler.onModuleDestroy();
     });
 
     afterAll(async () => {
@@ -255,7 +255,7 @@ describe('RunPollCycleService branches (integration)', () => {
       runPoll = app.get(RunPollCycleService);
 
       const scheduler = app.get(PollSchedulerService);
-      await scheduler.onModuleDestroy();
+      scheduler.onModuleDestroy();
     });
 
     afterAll(async () => {

@@ -36,8 +36,8 @@ describe('processPollCandidatesLoop', () => {
       expect.anything(),
       POLL_RUN_ITEM_DECISION.skippedBot,
       expect.objectContaining({
-        detail: expect.stringContaining('dependabot'),
-      }),
+        detail: expect.stringContaining('dependabot') as unknown,
+      }) as unknown,
     );
     expect(quota.remaining).toBe(5);
   });
@@ -63,8 +63,8 @@ describe('processPollCandidatesLoop', () => {
       expect.anything(),
       POLL_RUN_ITEM_DECISION.skippedBoardLimit,
       expect.objectContaining({
-        detail: expect.stringContaining('Board limit 3'),
-      }),
+        detail: expect.stringContaining('Board limit 3') as unknown,
+      }) as unknown,
     );
   });
 

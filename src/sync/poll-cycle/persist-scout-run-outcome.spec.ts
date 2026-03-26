@@ -28,8 +28,8 @@ describe('persistScoutSkippedAfterPoll', () => {
         create: expect.objectContaining({
           lastError: 'skipped: setup_incomplete',
           failureStreak: 0,
-        }),
-      }),
+        }) as unknown,
+      }) as unknown,
     );
     expect(markPollCompleted).toHaveBeenCalledTimes(1);
   });
@@ -65,8 +65,8 @@ describe('persistScoutErrorAfterPoll', () => {
         create: expect.objectContaining({
           lastError: 'boom',
           failureStreak: 3,
-        }),
-      }),
+        }) as unknown,
+      }) as unknown,
     );
     expect(markPollCompleted).toHaveBeenCalledTimes(1);
   });
