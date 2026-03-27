@@ -84,12 +84,8 @@ export class SettingsService implements OnModuleInit {
   getEffective(key: SettingKey): string {
     const def = this.definitionFor(key);
     const envKey = 'envVar' in def ? def.envVar : undefined;
-    const fromEnv: string | undefined =
-      envKey !== undefined
-        ? (this.appEnv.settingsEnv as Record<string, string | undefined>)[
-            envKey
-          ]
-        : undefined;
+    const raw = envKey !== undefined ? process.env[envKey] : undefined;
+    const fromEnv = raw?.trim() || undefined;
     const hasDb = this.cache.has(key);
     const fromDb = hasDb ? this.cache.get(key) : undefined;
     return resolveEffectiveSetting(fromEnv, hasDb, fromDb, def.defaultValue);

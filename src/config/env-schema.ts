@@ -1,22 +1,16 @@
 /**
- * Bootstrap env: Zod validates `process.env` (base keys + setting-related vars from
- * {@link SETTING_DEFINITIONS}), then {@link parseAppEnv} maps the result to {@link AppEnv}.
+ * Bootstrap env: Zod validates `process.env`, then {@link parseAppEnv} maps the
+ * result to {@link AppEnv}.
  *
- * PR source and work-board destination are first-class fields validated with
- * {@link SUPPORTED_SOURCE_TYPES} / {@link SUPPORTED_DESTINATION_TYPES} (not DB settings).
+ * Setting-level env overrides (e.g. `POLL_INTERVAL_MINUTES`) are **not** part of
+ * {@link AppEnv}; {@link SettingsService} reads `process.env` directly for those.
  */
 import type { LevelWithSilent } from 'pino';
 import { z } from 'zod';
 import type { AppEnv } from './app-env.token';
 import {
-  SETTING_DEFINITIONS,
-  type SettingEnvVarName,
-} from '../settings/setting-keys';
-import {
   SUPPORTED_DESTINATION_TYPES,
   SUPPORTED_SOURCE_TYPES,
-  type SupportedDestinationType,
-  type SupportedSourceType,
 } from './integration-types';
 
 /** Allowed `LOG_LEVEL` values (Pino {@link LevelWithSilent}). */
@@ -30,164 +24,37 @@ const PINO_LOG_LEVELS = [
   'silent',
 ] as const satisfies readonly LevelWithSilent[];
 
-type PinoLogLevel = (typeof PINO_LOG_LEVELS)[number];
-
-function buildSettingEnvZodAndNames(): {
-  zodShape: Partial<Record<SettingEnvVarName, z.ZodType<string | undefined>>>;
-  envVarNames: readonly SettingEnvVarName[];
-} {
-  const zodShape: Partial<
-    Record<SettingEnvVarName, z.ZodType<string | undefined>>
-  > = {};
-  const envVarNames: SettingEnvVarName[] = [];
-  for (const def of Object.values(SETTING_DEFINITIONS)) {
-    if (!('envVar' in def)) {
-      continue;
-    }
-    const name = def.envVar;
-    envVarNames.push(name);
-    zodShape[name] = z.string().optional();
-  }
-  return { zodShape, envVarNames };
-}
-
-const { zodShape: settingsEnvZodShape, envVarNames: SETTING_ENV_VAR_NAMES } =
-  buildSettingEnvZodAndNames();
-
-function trimEnvString(v: string | undefined): string | undefined {
-  if (v === undefined) {
-    return undefined;
-  }
-  const t = v.trim();
-  return t === '' ? undefined : t;
-}
-
-const sourceTypeEnvSchema = z
-  .union([z.string(), z.undefined()])
-  .transform((s) => trimEnvString(s))
-  .pipe(
-    z
-      .enum(
-        SUPPORTED_SOURCE_TYPES as unknown as [
-          SupportedSourceType,
-          ...SupportedSourceType[],
-        ],
-      )
-      .optional()
-      .default('github'),
-  );
-
-const destinationTypeEnvSchema = z
-  .union([z.string(), z.undefined()])
-  .transform((s) => trimEnvString(s))
-  .pipe(
-    z
-      .enum(
-        SUPPORTED_DESTINATION_TYPES as unknown as [
-          SupportedDestinationType,
-          ...SupportedDestinationType[],
-        ],
-      )
-      .optional()
-      .default('vibe_kanban'),
-  );
-
-/** On when unset or empty; off only for `false` or `0` (case-insensitive). */
-function envOptOutFlag(raw: string | undefined): boolean {
-  const s = trimEnvString(raw)?.toLowerCase();
-  if (s === undefined) {
-    return true;
-  }
-  return s !== 'false' && s !== '0';
-}
-
-type ParsePortResult =
-  | { ok: true; port: number }
-  | { ok: false; displayInput: string | undefined };
-
-/** Shared PORT parsing: default `3000`, range 1–65535. */
-function parsePortFromEnv(raw: string | undefined): ParsePortResult {
-  const portStr = trimEnvString(raw) ?? '3000';
-  const port = parseInt(portStr, 10);
-  if (!Number.isFinite(port) || port < 1 || port > 65535) {
-    return { ok: false, displayInput: raw };
-  }
-  return { ok: true, port };
-}
-
-function resolvedLogLevel(parsed: PinoLogLevel | undefined): LevelWithSilent {
-  return (parsed ?? 'info') as LevelWithSilent;
-}
-
-const appEnvInputSchema = z
-  .looseObject({
-    NODE_ENV: z.string().optional(),
-    DATABASE_URL: z.preprocess(
-      (v) => (typeof v === 'string' ? v.trim() : v),
-      z.string().min(1, 'DATABASE_URL is required'),
-    ),
-    HOST: z.string().optional(),
-    PORT: z.string().optional(),
-    OPENAPI_ENABLED: z.string().optional(),
-    LOG_LEVEL: z
-      .union([z.string(), z.undefined()])
-      .transform((s) => {
-        if (s === undefined) {
-          return undefined;
-        }
-        const t = s.trim().toLowerCase();
-        return t === '' ? undefined : t;
-      })
-      .pipe(z.enum(PINO_LOG_LEVELS).optional()),
-    LOG_TO_FILE: z.string().optional(),
-    LOG_FILE_PATH: z.string().optional(),
-    SOURCE_TYPE: sourceTypeEnvSchema,
-    DESTINATION_TYPE: destinationTypeEnvSchema,
-    ...settingsEnvZodShape,
-  })
-  .superRefine((val, ctx) => {
-    const pr = parsePortFromEnv(val.PORT);
-    if (!pr.ok) {
-      ctx.addIssue({
-        code: 'custom',
-        message: `Invalid PORT: ${pr.displayInput ?? '(unset)'}`,
-        path: ['PORT'],
-        input: val.PORT,
-      });
-    }
-  });
+const appEnvInputSchema = z.looseObject({
+  NODE_ENV: z.string().optional(),
+  DATABASE_URL: z.string().trim().min(1, 'DATABASE_URL is required'),
+  HOST: z.union([z.hostname(), z.ipv4()]).optional().default('127.0.0.1'),
+  PORT: z.number().int().min(1).max(65535).default(3000),
+  OPENAPI_ENABLED: z.stringbool().optional().default(true),
+  LOG_LEVEL: z.enum(PINO_LOG_LEVELS).optional().default('info'),
+  LOG_TO_FILE: z.stringbool().optional().default(true),
+  LOG_FILE_PATH: z.string().optional().default('logs/app.log'),
+  SOURCE_TYPE: z.enum(SUPPORTED_SOURCE_TYPES).optional().default('github'),
+  DESTINATION_TYPE: z
+    .enum(SUPPORTED_DESTINATION_TYPES)
+    .optional()
+    .default('vibe_kanban'),
+});
 
 export type AppEnvInput = z.input<typeof appEnvInputSchema>;
 
 export function parseAppEnv(env: NodeJS.ProcessEnv = process.env): AppEnv {
   const parsed = appEnvInputSchema.parse(env);
-  const record = parsed as Record<string, unknown>;
-
-  const portStr = trimEnvString(parsed.PORT) ?? '3000';
-  const port = parseInt(portStr, 10);
-
-  const settingsEnv: Partial<Record<SettingEnvVarName, string>> = {};
-  for (const envVar of SETTING_ENV_VAR_NAMES) {
-    const raw = record[envVar];
-    if (typeof raw === 'string') {
-      const t = trimEnvString(raw);
-      if (t !== undefined) {
-        settingsEnv[envVar] = t;
-      }
-    }
-  }
 
   return {
     nodeEnv: parsed.NODE_ENV,
     databaseUrl: parsed.DATABASE_URL,
-    host: trimEnvString(parsed.HOST) ?? '127.0.0.1',
-    port,
-    openapiEnabled: envOptOutFlag(parsed.OPENAPI_ENABLED),
-    logLevel: resolvedLogLevel(parsed.LOG_LEVEL),
-    logToFile: envOptOutFlag(parsed.LOG_TO_FILE),
-    logFilePath: trimEnvString(parsed.LOG_FILE_PATH),
+    host: parsed.HOST,
+    port: parsed.PORT,
+    openapiEnabled: parsed.OPENAPI_ENABLED,
+    logLevel: parsed.LOG_LEVEL,
+    logToFile: parsed.LOG_TO_FILE,
+    logFilePath: parsed.LOG_FILE_PATH,
     sourceType: parsed.SOURCE_TYPE,
     destinationType: parsed.DESTINATION_TYPE,
-    settingsEnv,
   };
 }

@@ -2,7 +2,7 @@ import { DynamicModule, Module, type Provider } from '@nestjs/common';
 import type { AppEnv } from '../config/app-env.token';
 import { IntegrationsModule } from '../integrations/integrations.module';
 import { PrismaModule } from '../prisma/prisma.module';
-import { CoreIntegrationSettingsProvider } from '../config/core-integration-settings.provider';
+import { CoreIntegrationSettingsProvider } from './core-integration-settings.provider';
 import { INTEGRATION_SETTINGS_PROVIDERS } from '../ports/injection-tokens';
 import { SettingsService } from './settings.service';
 import { SettingsController } from './settings.controller';

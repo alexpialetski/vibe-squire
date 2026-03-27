@@ -3,7 +3,6 @@ import type {
   SupportedSourceType,
   SupportedDestinationType,
 } from './integration-types';
-import type { SettingEnvVarName } from '../settings/setting-keys';
 
 export type AppEnv = {
   nodeEnv: string | undefined;
@@ -18,8 +17,6 @@ export type AppEnv = {
   sourceType: SupportedSourceType;
   /** Work-board adapter key (from `DESTINATION_TYPE` + default). Invalid env fails at boot. */
   destinationType: SupportedDestinationType;
-  /** Non-empty trimmed values for setting keys that map to `envVar` in {@link SETTING_DEFINITIONS}. */
-  settingsEnv: Partial<Record<SettingEnvVarName, string>>;
 };
 
 /** Nest injection token for parsed application environment ({@link AppEnv}). */
