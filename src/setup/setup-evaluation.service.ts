@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { APP_ENV, type AppEnv } from '../config/env-schema';
+import { APP_ENV, type AppEnv } from '../config/app-env.token';
 import { DESTINATION_STATUS_PORT } from '../ports/injection-tokens';
 import type { DestinationStatusProvider } from '../ports/destination-status.port';
 

@@ -5,7 +5,7 @@ import {
   Inject,
   Query,
 } from '@nestjs/common';
-import { APP_ENV, type AppEnv } from '../config/env-schema';
+import { APP_ENV, type AppEnv } from '../config/app-env.token';
 import {
   ApiBadRequestResponse,
   ApiOkResponse,

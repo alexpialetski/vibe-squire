@@ -1,5 +1,5 @@
 import { DynamicModule, Module } from '@nestjs/common';
-import type { AppEnv } from '../config/env-schema';
+import type { AppEnv } from '../config/app-env.token';
 import { GithubSourceModule } from './github/github-source.module';
 import { VibeKanbanDestinationModule } from './vibe-kanban/vibe-kanban-destination.module';
 

@@ -1,7 +1,7 @@
 import { Inject, Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
-import { APP_ENV, type AppEnv } from '../config/env-schema';
+import { APP_ENV, type AppEnv } from '../config/app-env.token';
 import { SettingsService } from '../settings/settings.service';
 import {
   isVibeKanbanDestination,

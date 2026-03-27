@@ -1,4 +1,4 @@
-import { SETTING_KEYS } from '../../config/setting-keys';
+import { SETTING_KEYS } from '../setting-keys';
 
 const example: Record<string, string> = {
   scheduled_sync_enabled: 'true',

@@ -1,13 +1,13 @@
 import { Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-import { APP_ENV, type AppEnv } from '../config/env-schema';
+import { APP_ENV, type AppEnv } from '../config/app-env.token';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   isSettingKey,
   MIN_POLL_INTERVAL_MINUTES,
   type SettingKey,
-} from '../config/setting-keys';
-import { resolveEffectiveSetting } from '../config/resolve-effective-setting';
+} from './setting-keys';
+import { resolveEffectiveSetting } from './resolve-effective-setting';
 import type { IntegrationSettingsProvider } from '../ports/integration-settings.port';
 import { INTEGRATION_SETTINGS_PROVIDERS } from '../ports/injection-tokens';
 

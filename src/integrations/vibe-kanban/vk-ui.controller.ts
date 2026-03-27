@@ -8,7 +8,7 @@ import {
   Redirect,
   Inject,
 } from '@nestjs/common';
-import { APP_ENV, type AppEnv } from '../../config/env-schema';
+import { APP_ENV, type AppEnv } from '../../config/app-env.token';
 import type { Response } from 'express';
 import { SettingsService } from '../../settings/settings.service';
 import { VibeKanbanMcpService } from '../../vibe-kanban/vibe-kanban-mcp.service';
@@ -17,8 +17,8 @@ import { IntegrationSettingsEmitterService } from '../../events/integration-sett
 import {
   type SettingKey,
   VIBE_KANBAN_UI_KEYS,
-} from '../../config/setting-keys';
-import { normalizeVkWorkspaceExecutor } from '../../config/vk-workspace-executors';
+} from '../../settings/setting-keys';
+import { normalizeVkWorkspaceExecutor } from './vk-workspace-executors';
 import { SetupEvaluationService } from '../../setup/setup-evaluation.service';
 import { vibeKanbanNotDestinationRedirectUrl } from '../../ui/ui-presenter';
 import { buildVibeKanbanPageLocals } from '../../ui/ui-vibe-kanban-presenter';

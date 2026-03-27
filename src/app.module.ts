@@ -3,7 +3,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
 import { LoggerModule } from 'nestjs-pino';
 import { AppController } from './app.controller';
 import { EnvModule } from './config/env.module';
-import type { AppEnv } from './config/env-schema';
+import type { AppEnv } from './config/app-env.token';
 import { createLoggerModuleParams } from './logging/create-logger-params';
 import { PrismaModule } from './prisma/prisma.module';
 import { SettingsModule } from './settings/settings.module';

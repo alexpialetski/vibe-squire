@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import type { SettingKey } from '../config/setting-keys';
+import type { SettingKey } from '../settings/setting-keys';
 import {
   INTEGRATION_SETTINGS_CHANGED,
   type IntegrationSettingsChangedPayload,

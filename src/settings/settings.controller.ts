@@ -13,7 +13,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { SettingsService } from './settings.service';
-import { type SettingKey } from '../config/setting-keys';
+import { type SettingKey } from './setting-keys';
 import { StatusEventsService } from '../events/status-events.service';
 import { IntegrationSettingsEmitterService } from '../events/integration-settings-emitter.service';
 import { PATCH_SETTINGS_SCHEMA } from './dto/patch-settings.dto';

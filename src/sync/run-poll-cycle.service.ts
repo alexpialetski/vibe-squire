@@ -1,7 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { SettingsService } from '../settings/settings.service';
-import { APP_ENV, type AppEnv } from '../config/env-schema';
+import { APP_ENV, type AppEnv } from '../config/app-env.token';
 import { StatusEventsService } from '../events/status-events.service';
 import {
   SOURCE_STATUS_PORT,

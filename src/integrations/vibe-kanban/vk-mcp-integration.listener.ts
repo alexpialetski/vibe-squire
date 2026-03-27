@@ -5,7 +5,7 @@ import {
   OnApplicationBootstrap,
 } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
-import { APP_ENV, type AppEnv } from '../../config/env-schema';
+import { APP_ENV, type AppEnv } from '../../config/app-env.token';
 import { SettingsService } from '../../settings/settings.service';
 import { VibeKanbanMcpService } from '../../vibe-kanban/vibe-kanban-mcp.service';
 import { VK_MCP_STDIO_SESSION_PORT } from '../../ports/injection-tokens';
