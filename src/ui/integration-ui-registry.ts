@@ -1,5 +1,5 @@
-import type { SettingKey } from '../config/setting-keys';
-import { VIBE_KANBAN_UI_KEYS } from '../config/setting-keys';
+import type { SettingKey } from '../settings/setting-keys';
+import { VIBE_KANBAN_UI_KEYS } from '../settings/setting-keys';
 
 /** Poll / scheduler fields on `/ui/settings` (general). */
 export const SCHEDULER_UI_KEYS: readonly SettingKey[] = [

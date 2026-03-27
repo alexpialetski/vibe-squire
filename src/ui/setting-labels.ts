@@ -1,4 +1,4 @@
-import { SETTING_KEYS, type SettingKey } from '../config/setting-keys';
+import { SETTING_KEYS, type SettingKey } from '../settings/setting-keys';
 import { SCHEDULER_TEXT_FIELD_KEYS } from './integration-ui-registry';
 
 export const SETTING_LABELS: Record<SettingKey, string> = {

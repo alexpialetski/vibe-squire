@@ -1,4 +1,4 @@
-import type { SettingKey } from '../config/setting-keys';
+import type { SettingKey } from '../settings/setting-keys';
 
 /** Emitted after integration-affecting settings are persisted and cache is refreshed. */
 export const INTEGRATION_SETTINGS_CHANGED =

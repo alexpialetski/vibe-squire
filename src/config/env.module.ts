@@ -1,5 +1,5 @@
 import { Global, Module, type DynamicModule } from '@nestjs/common';
-import { APP_ENV, type AppEnv } from './env-schema';
+import { APP_ENV, type AppEnv } from './app-env.token';
 
 @Global()
 @Module({})

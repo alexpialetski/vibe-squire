@@ -1,5 +1,5 @@
 import { DynamicModule, Module, type Provider } from '@nestjs/common';
-import type { AppEnv } from '../config/env-schema';
+import type { AppEnv } from '../config/app-env.token';
 import { IntegrationsModule } from '../integrations/integrations.module';
 import { PrismaModule } from '../prisma/prisma.module';
 import { CoreIntegrationSettingsProvider } from '../config/core-integration-settings.provider';

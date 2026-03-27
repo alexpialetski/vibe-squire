@@ -1,7 +1,7 @@
 import {
   CORE_SETTING_DEFINITIONS,
   CORE_SETTING_KEYS,
-} from './core-setting-keys';
+} from '../config/core-setting-keys';
 import {
   GITHUB_INTEGRATION_SETTING_DEFINITIONS,
   GITHUB_INTEGRATION_SETTING_KEYS,
@@ -11,7 +11,7 @@ import {
   VK_SETTING_KEYS,
 } from '../integrations/vibe-kanban/vk-setting-definitions';
 
-export { MIN_POLL_INTERVAL_MINUTES } from './core-setting-keys';
+export { MIN_POLL_INTERVAL_MINUTES } from '../config/core-setting-keys';
 export {
   VIBE_KANBAN_UI_KEYS,
   type VibeKanbanUiSettingKey,

@@ -7,13 +7,13 @@ import {
   Res,
   Inject,
 } from '@nestjs/common';
-import { APP_ENV, type AppEnv } from '../../config/env-schema';
+import { APP_ENV, type AppEnv } from '../../config/app-env.token';
 import type { Response } from 'express';
 import { SettingsService } from '../../settings/settings.service';
 import { StatusEventsService } from '../../events/status-events.service';
 import { IntegrationSettingsEmitterService } from '../../events/integration-settings-emitter.service';
 import { parsePrIgnoreAuthorLogins } from '../../sync/pr-ignore-author-logins';
-import { type SettingKey } from '../../config/setting-keys';
+import { type SettingKey } from '../../settings/setting-keys';
 import { integrationFieldsForUi } from '../../ui/setting-labels';
 import { GITHUB_SOURCE_UI_KEYS } from '../../ui/integration-ui-registry';
 import { SetupEvaluationService } from '../../setup/setup-evaluation.service';

@@ -6,7 +6,7 @@ import { isVibeKanbanMcpConfigured } from '../vibe-kanban/mcp-transport-config';
 import {
   normalizeVkWorkspaceExecutor,
   VK_WORKSPACE_EXECUTOR_OPTIONS,
-} from '../config/vk-workspace-executors';
+} from '../integrations/vibe-kanban/vk-workspace-executors';
 import type { UiNavEntry } from '../ports/ui-nav.types';
 import { SETTING_LABELS } from './setting-labels';
 import { uiNavLocals } from './ui-presenter';

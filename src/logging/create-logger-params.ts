@@ -2,7 +2,7 @@ import path from 'node:path';
 import type { Params } from 'nestjs-pino';
 import pino from 'pino';
 import pinoPretty from 'pino-pretty';
-import type { AppEnv } from '../config/env-schema';
+import type { AppEnv } from '../config/app-env.token';
 
 const REDACT = {
   paths: ['req.headers.authorization', 'req.headers.cookie'],

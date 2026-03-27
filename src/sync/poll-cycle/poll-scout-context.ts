@@ -3,7 +3,7 @@ import type { DestinationBoardPort } from '../../ports/destination-board.port';
 import type { SettingsService } from '../../settings/settings.service';
 import type { GithubPrCandidate } from '../../scout/github-pr-scout.service';
 import { parsePrIgnoreAuthorLogins } from '../pr-ignore-author-logins';
-import { resolveMaxBoardPrCount } from '../../config/max-board-pr-count';
+import { resolveMaxBoardPrCount } from '../../settings/max-board-pr-count';
 import { redactHttpUrls } from '../../logging/redact-urls';
 
 /** Mutable create quota for one poll; only `createIssue` decrements. */

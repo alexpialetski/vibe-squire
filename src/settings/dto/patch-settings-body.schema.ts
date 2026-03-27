@@ -1,7 +1,7 @@
 import { z } from 'zod';
-import { isSettingKey } from '../../config/setting-keys';
-import { isValidMaxBoardPrCountInput } from '../../config/max-board-pr-count';
-import { isValidScheduledSyncEnabledInput } from '../../config/scheduled-sync-enabled';
+import { isSettingKey } from '../setting-keys';
+import { isValidMaxBoardPrCountInput } from '../max-board-pr-count';
+import { isValidScheduledSyncEnabledInput } from '../scheduled-sync-enabled';
 import { parsePrIgnoreAuthorLogins } from '../../sync/pr-ignore-author-logins';
 
 /**

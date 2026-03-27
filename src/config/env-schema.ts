@@ -7,7 +7,11 @@
  */
 import type { LevelWithSilent } from 'pino';
 import { z } from 'zod';
-import { SETTING_DEFINITIONS, type SettingEnvVarName } from './setting-keys';
+import type { AppEnv } from './app-env.token';
+import {
+  SETTING_DEFINITIONS,
+  type SettingEnvVarName,
+} from '../settings/setting-keys';
 import {
   SUPPORTED_DESTINATION_TYPES,
   SUPPORTED_SOURCE_TYPES,
@@ -153,39 +157,14 @@ const appEnvInputSchema = z
     }
   });
 
-export type AppEnv = {
-  nodeEnv: string | undefined;
-  databaseUrl: string;
-  host: string;
-  port: number;
-  openapiEnabled: boolean;
-  logLevel: LevelWithSilent;
-  logToFile: boolean;
-  logFilePath: string | undefined;
-  /** PR / SCM adapter key (from `SOURCE_TYPE` + default). Invalid env fails at boot. */
-  sourceType: SupportedSourceType;
-  /** Work-board adapter key (from `DESTINATION_TYPE` + default). Invalid env fails at boot. */
-  destinationType: SupportedDestinationType;
-  /** Non-empty trimmed values for setting keys that map to `envVar` in {@link SETTING_DEFINITIONS}. */
-  settingsEnv: Partial<Record<SettingEnvVarName, string>>;
-};
-
-/** Nest injection token for parsed application environment ({@link AppEnv}). */
-export const APP_ENV = Symbol('APP_ENV');
-
 export type AppEnvInput = z.input<typeof appEnvInputSchema>;
 
 export function parseAppEnv(env: NodeJS.ProcessEnv = process.env): AppEnv {
   const parsed = appEnvInputSchema.parse(env);
   const record = parsed as Record<string, unknown>;
 
-  const portResult = parsePortFromEnv(parsed.PORT);
-  if (!portResult.ok) {
-    throw new Error(
-      `PORT invalid after Zod validation: ${portResult.displayInput ?? '(unset)'}`,
-    );
-  }
-  const port = portResult.port;
+  const portStr = trimEnvString(parsed.PORT) ?? '3000';
+  const port = parseInt(portStr, 10);
 
   const settingsEnv: Partial<Record<SettingEnvVarName, string>> = {};
   for (const envVar of SETTING_ENV_VAR_NAMES) {
