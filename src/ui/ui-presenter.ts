@@ -1,5 +1,6 @@
 import type { SetupEvaluation } from '../setup/setup-evaluation.service';
 import type { PollRunHistoryService } from '../sync/poll-run-history.service';
+import type { UiNavEntry } from '../ports/ui-nav.types';
 import { pollDecisionLabel, pollPhaseLabel } from '../sync/poll-run-labels';
 
 export type PollRunRowForActivity = Awaited<
@@ -86,10 +87,6 @@ export function sourceTypeLabel(t: string): string {
   return t.length > 0 ? t : '(not set)';
 }
 
-export function showNavVkToolsFrom(ev: SetupEvaluation): boolean {
-  return ev.destinationType.trim() === 'vibe_kanban';
-}
-
 export type SetupChecklistRow = {
   text: string;
   linkHref?: string;
@@ -102,7 +99,7 @@ export function buildSetupChecklist(ev: SetupEvaluation): SetupChecklistRow[] {
   }
   const rows: SetupChecklistRow[] = [];
   if (ev.destinationType.trim() === 'vibe_kanban') {
-    if (!ev.vkMcpReady) {
+    if (!ev.destinationMcpConfigured) {
       rows.push({
         text: 'Configure Vibe Kanban MCP stdio (VK_MCP_STDIO_JSON env or PATCH vk_mcp_stdio_json via /api/settings).',
       });
@@ -125,15 +122,19 @@ export function buildSetupChecklist(ev: SetupEvaluation): SetupChecklistRow[] {
   return rows;
 }
 
-export function uiNavLocals(ev: SetupEvaluation): {
+/**
+ * Sidebar integration links come from {@link UiNavService} (aggregated per integration module).
+ */
+export function uiNavLocals(
+  _ev: SetupEvaluation,
+  integrationNavEntries: UiNavEntry[],
+): {
   navMinimal: boolean;
-  showNavVkTools: boolean;
-  showNavGithubSettings: boolean;
+  integrationNavEntries: UiNavEntry[];
 } {
   return {
     navMinimal: false,
-    showNavVkTools: showNavVkToolsFrom(ev),
-    showNavGithubSettings: ev.sourceType.trim() === 'github',
+    integrationNavEntries,
   };
 }
 

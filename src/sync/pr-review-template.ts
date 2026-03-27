@@ -1,4 +1,4 @@
-import type { GithubPrCandidate } from '../scout/github-pr-scout.service';
+import type { GithubPrCandidate } from '../ports/github-pr-candidate';
 
 /**
  * §3.2 — Body text for PR review issues. Placeholders: `{prUrl}`, `{title}`, `{number}`, `{githubRepo}`.

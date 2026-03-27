@@ -2,7 +2,6 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { APP_ENV, type AppEnv } from '../config/env-schema';
 import { SettingsService } from '../settings/settings.service';
-import type { VibeKanbanBoardPort } from '../ports/vibe-kanban-board.port';
 import type {
   VkIssueRef,
   VkOrgRef,
@@ -208,7 +207,7 @@ function pickCreatedIssueId(parsed: unknown): string | null {
 }
 
 @Injectable()
-export class VibeKanbanMcpService implements VibeKanbanBoardPort {
+export class VibeKanbanMcpService {
   private readonly logger = new Logger(VibeKanbanMcpService.name);
 
   constructor(

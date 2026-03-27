@@ -1,14 +1,21 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { APP_ENV, type AppEnv } from '../config/env-schema';
 import { PrismaService } from '../prisma/prisma.service';
-import { GhCliService } from '../gh/gh-cli.service';
-import { VibeKanbanMcpService } from '../vibe-kanban/vibe-kanban-mcp.service';
-import { isVibeKanbanMcpConfigured } from '../vibe-kanban/mcp-transport-config';
 import { SettingsService } from '../settings/settings.service';
 import { StatusEventsService } from '../events/status-events.service';
 import { PollSchedulerService } from '../sync/poll-scheduler.service';
 import { SyncRunStateService } from '../sync/sync-run-state.service';
 import { GITHUB_PR_SCOUT_ID } from '../sync/sync-constants';
+import {
+  DESTINATION_BOARD_PORT,
+  DESTINATION_STATUS_PORT,
+  SOURCE_STATUS_PORT,
+} from '../ports/injection-tokens';
+import type { SourceStatusProvider } from '../ports/source-status.port';
+import type { DestinationStatusProvider } from '../ports/destination-status.port';
+import type { DestinationBoardPort } from '../ports/destination-board.port';
+
+type SubsystemResult = { state: string; message?: string };
 
 @Injectable()
 export class ReinitService {
@@ -16,30 +23,31 @@ export class ReinitService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly gh: GhCliService,
-    private readonly vk: VibeKanbanMcpService,
     private readonly settings: SettingsService,
     private readonly statusEvents: StatusEventsService,
     private readonly pollScheduler: PollSchedulerService,
     private readonly runState: SyncRunStateService,
     @Inject(APP_ENV) private readonly appEnv: AppEnv,
+    @Inject(SOURCE_STATUS_PORT)
+    private readonly sourceStatus: SourceStatusProvider,
+    @Inject(DESTINATION_STATUS_PORT)
+    private readonly destinationStatus: DestinationStatusProvider,
+    @Inject(DESTINATION_BOARD_PORT)
+    private readonly destinationBoard: DestinationBoardPort,
   ) {}
 
   /**
-   * §10 — Soft reinit: DB ping, `gh` check, optional MCP probe, clear scout error/backoff flags, reschedule.
+   * Soft reinit: DB ping, source check, destination probe, clear scout error/backoff, reschedule.
    */
   async reinitialize(): Promise<{
     ok: true;
-    database: { state: 'ok' | 'error'; message?: string };
-    gh: ReturnType<GhCliService['checkAuth']>;
-    vibe_kanban: {
-      state: 'ok' | 'degraded' | 'error' | 'skipped';
-      message?: string;
-    };
+    database: SubsystemResult;
+    source: SubsystemResult;
+    destination: SubsystemResult;
   }> {
     await this.settings.refreshCache();
 
-    let database: { state: 'ok' | 'error'; message?: string } = { state: 'ok' };
+    let database: SubsystemResult = { state: 'ok' };
     try {
       await this.prisma.$queryRaw`SELECT 1`;
     } catch (e) {
@@ -49,37 +57,46 @@ export class ReinitService {
       };
     }
 
-    const gh = this.gh.checkAuth();
-
-    let vibe_kanban: {
-      state: 'ok' | 'degraded' | 'error' | 'skipped';
-      message?: string;
-    } = {
-      state: 'skipped',
-      message: 'Vibe Kanban MCP not configured (valid vk_mcp_stdio_json)',
+    const srcResult = this.sourceStatus.checkReadiness();
+    const source: SubsystemResult = {
+      state: srcResult.state,
+      ...(srcResult.message ? { message: srcResult.message } : {}),
     };
 
-    if (isVibeKanbanMcpConfigured(this.settings, this.appEnv.destinationType)) {
+    const destId = this.appEnv.destinationType;
+    const destReady = await this.destinationStatus.checkReadiness();
+    let destination: SubsystemResult;
+
+    const setupErrors = destReady.errors?.length ?? 0;
+    if (setupErrors > 0) {
+      destination = {
+        state: 'skipped',
+        message: destReady.errors![0].message,
+      };
+    } else {
       try {
-        await this.vk.probe();
-        this.runState.setVibeKanbanHealth({
+        await this.destinationBoard.probe();
+        this.runState.setDestinationHealth(destId, {
           state: 'ok',
           lastOkAt: new Date().toISOString(),
         });
-        vibe_kanban = { state: 'ok' };
+        destination = { state: 'ok' };
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
-        const prev = this.runState.getVibeKanbanHealth();
+        const prev = this.runState.getDestinationHealth(destId);
         if (prev.lastOkAt) {
-          this.runState.setVibeKanbanHealth({
+          this.runState.setDestinationHealth(destId, {
             state: 'degraded',
             message: msg,
             lastOkAt: prev.lastOkAt,
           });
-          vibe_kanban = { state: 'degraded', message: msg };
+          destination = { state: 'degraded', message: msg };
         } else {
-          this.runState.setVibeKanbanHealth({ state: 'error', message: msg });
-          vibe_kanban = { state: 'error', message: msg };
+          this.runState.setDestinationHealth(destId, {
+            state: 'error',
+            message: msg,
+          });
+          destination = { state: 'error', message: msg };
         }
       }
     }
@@ -106,6 +123,6 @@ export class ReinitService {
     this.statusEvents.emitScheduleRefresh();
 
     this.logger.log('Soft reinit completed');
-    return { ok: true, database, gh, vibe_kanban };
+    return { ok: true, database, source, destination };
   }
 }

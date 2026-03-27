@@ -11,7 +11,7 @@ export class SyncRunStateService {
   private running = false;
   /** Updated after every scheduled/manual poll attempt finishes (success, skip, or error). */
   private lastPollCompletedAtMs = 0;
-  private vk: DestinationHealth = { state: 'unknown' };
+  private readonly destinationHealthById = new Map<string, DestinationHealth>();
 
   setRunning(v: boolean): void {
     this.running = v;
@@ -29,11 +29,13 @@ export class SyncRunStateService {
     return this.lastPollCompletedAtMs;
   }
 
-  setVibeKanbanHealth(h: DestinationHealth): void {
-    this.vk = h;
+  setDestinationHealth(destinationId: string, h: DestinationHealth): void {
+    this.destinationHealthById.set(destinationId, h);
   }
 
-  getVibeKanbanHealth(): DestinationHealth {
-    return this.vk;
+  getDestinationHealth(destinationId: string): DestinationHealth {
+    return (
+      this.destinationHealthById.get(destinationId) ?? { state: 'unknown' }
+    );
   }
 }

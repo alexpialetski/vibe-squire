@@ -5,21 +5,23 @@ import {
   OnApplicationBootstrap,
 } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
-import { APP_ENV, type AppEnv } from '../config/env-schema';
-import { SettingsService } from '../settings/settings.service';
-import { VibeKanbanMcpService } from '../vibe-kanban/vibe-kanban-mcp.service';
-import { VK_MCP_STDIO_SESSION_PORT } from '../ports/injection-tokens';
-import type { VkMcpStdioSessionPort } from '../ports/vk-mcp-stdio-session.port';
+import { APP_ENV, type AppEnv } from '../../config/env-schema';
+import { SettingsService } from '../../settings/settings.service';
+import { VibeKanbanMcpService } from '../../vibe-kanban/vibe-kanban-mcp.service';
+import { VK_MCP_STDIO_SESSION_PORT } from '../../ports/injection-tokens';
+import type { VkMcpStdioSessionPort } from '../../ports/vk-mcp-stdio-session.port';
 import {
   isVibeKanbanDestination,
   isVibeKanbanMcpConfigured,
-} from '../vibe-kanban/mcp-transport-config';
-import { SyncRunStateService } from './sync-run-state.service';
-import { StatusEventsService } from '../events/status-events.service';
+} from '../../vibe-kanban/mcp-transport-config';
+import { SyncRunStateService } from '../../sync/sync-run-state.service';
+import { StatusEventsService } from '../../events/status-events.service';
 import {
   INTEGRATION_SETTINGS_CHANGED,
   type IntegrationSettingsChangedPayload,
-} from '../events/integration-settings.events';
+} from '../../events/integration-settings.events';
+
+const VK_DESTINATION_ID = 'vibe_kanban' as const;
 
 /**
  * Reacts to integration settings changes: tear down stdio MCP when VK/MCP is off,
@@ -64,7 +66,9 @@ export class VkMcpIntegrationListener implements OnApplicationBootstrap {
 
     if (!vkDest || !mcpOk) {
       await this.stdioSession.shutdown();
-      this.runState.setVibeKanbanHealth({ state: 'unknown' });
+      this.runState.setDestinationHealth(VK_DESTINATION_ID, {
+        state: 'unknown',
+      });
       this.statusEvents.emitChanged();
       if (source === 'event') {
         this.logger.debug('MCP stdio torn down (VK or stdio config inactive)');
@@ -74,22 +78,25 @@ export class VkMcpIntegrationListener implements OnApplicationBootstrap {
 
     try {
       await this.vk.probe();
-      this.runState.setVibeKanbanHealth({
+      this.runState.setDestinationHealth(VK_DESTINATION_ID, {
         state: 'ok',
         lastOkAt: new Date().toISOString(),
       });
       this.logger.log(`Vibe Kanban MCP probed OK (${source})`);
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
-      const prev = this.runState.getVibeKanbanHealth();
+      const prev = this.runState.getDestinationHealth(VK_DESTINATION_ID);
       if (prev.lastOkAt) {
-        this.runState.setVibeKanbanHealth({
+        this.runState.setDestinationHealth(VK_DESTINATION_ID, {
           state: 'degraded',
           message: msg,
           lastOkAt: prev.lastOkAt,
         });
       } else {
-        this.runState.setVibeKanbanHealth({ state: 'error', message: msg });
+        this.runState.setDestinationHealth(VK_DESTINATION_ID, {
+          state: 'error',
+          message: msg,
+        });
       }
       this.logger.warn(`MCP probe failed (${source}): ${msg}`);
     }

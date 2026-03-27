@@ -141,11 +141,13 @@ describe('AppController (e2e)', () => {
       const body = res.body as {
         ok: boolean;
         database: { state: string };
-        gh: { state: string };
+        source: { state: string };
+        destination: { state: string };
       };
       expect(body.ok).toBe(true);
       expect(body.database.state).toBe('ok');
-      expect(typeof body.gh.state).toBe('string');
+      expect(typeof body.source.state).toBe('string');
+      expect(typeof body.destination.state).toBe('string');
     });
   });
 
@@ -167,10 +169,6 @@ describe('AppController (e2e)', () => {
         .get('/ui/dashboard')
         .expect(200);
       expect(res.text).toContain('Dashboard');
-    });
-
-    it('GET /ui/setup is not a route', async () => {
-      await request(app.getHttpServer()).get('/ui/setup').expect(404);
     });
 
     it('GET /ui/activity still renders', async () => {

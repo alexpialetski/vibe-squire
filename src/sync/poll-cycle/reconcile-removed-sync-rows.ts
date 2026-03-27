@@ -1,5 +1,5 @@
 import type { PrismaService } from '../../prisma/prisma.service';
-import type { SyncDestinationBoardPort } from '../../ports/sync-destination-board.port';
+import type { DestinationBoardPort } from '../../ports/destination-board.port';
 import { redactHttpUrls } from '../../logging/redact-urls';
 import { isTerminalKanbanStatus } from './kanban-terminal-status';
 
@@ -8,7 +8,10 @@ import { isTerminalKanbanStatus } from './kanban-terminal-status';
  */
 export async function reconcileRemovedSyncRows(deps: {
   prisma: PrismaService;
-  destinationBoard: Pick<SyncDestinationBoardPort, 'getIssue' | 'updateIssue'>;
+  destinationBoard: Pick<
+    DestinationBoardPort,
+    'getIssue' | 'updateIssueStatus'
+  >;
   urlsNow: Set<string>;
   kanbanDoneStatus: () => string;
   warn: (msg: string) => void;
@@ -21,9 +24,10 @@ export async function reconcileRemovedSyncRows(deps: {
     try {
       const issue = await deps.destinationBoard.getIssue(row.kanbanIssueId);
       if (!isTerminalKanbanStatus(issue?.status)) {
-        await deps.destinationBoard.updateIssue(row.kanbanIssueId, {
-          status: deps.kanbanDoneStatus(),
-        });
+        await deps.destinationBoard.updateIssueStatus(
+          row.kanbanIssueId,
+          deps.kanbanDoneStatus(),
+        );
       }
     } catch (e) {
       const raw = e instanceof Error ? e.message : String(e);

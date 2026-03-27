@@ -1,6 +1,6 @@
 import { reconcileRemovedSyncRows } from '../reconcile-removed-sync-rows';
 import type { PrismaService } from '../../../prisma/prisma.service';
-import type { SyncDestinationBoardPort } from '../../../ports/sync-destination-board.port';
+import type { DestinationBoardPort } from '../../../ports/destination-board.port';
 
 describe('reconcileRemovedSyncRows', () => {
   it('updates non-terminal issue and deletes row when PR URL not in current scout set', async () => {
@@ -22,11 +22,11 @@ describe('reconcileRemovedSyncRows', () => {
     const getIssue = jest
       .fn()
       .mockResolvedValue({ id: 'issue-9', status: 'Open' });
-    const updateIssue = jest.fn().mockResolvedValue(undefined);
+    const updateIssueStatus = jest.fn().mockResolvedValue(undefined);
     const destinationBoard = {
       getIssue,
-      updateIssue,
-    } as Pick<SyncDestinationBoardPort, 'getIssue' | 'updateIssue'>;
+      updateIssueStatus,
+    } as Pick<DestinationBoardPort, 'getIssue' | 'updateIssueStatus'>;
 
     await reconcileRemovedSyncRows({
       prisma,
@@ -37,7 +37,7 @@ describe('reconcileRemovedSyncRows', () => {
     });
 
     expect(getIssue).toHaveBeenCalledWith('issue-9');
-    expect(updateIssue).toHaveBeenCalledWith('issue-9', { status: 'Done' });
+    expect(updateIssueStatus).toHaveBeenCalledWith('issue-9', 'Done');
     expect(deleteMany).toHaveBeenCalledWith({ where: { id: 'row-1' } });
   });
 
@@ -60,8 +60,8 @@ describe('reconcileRemovedSyncRows', () => {
       prisma,
       destinationBoard: {
         getIssue: jest.fn(),
-        updateIssue: jest.fn(),
-      } as Pick<SyncDestinationBoardPort, 'getIssue' | 'updateIssue'>,
+        updateIssueStatus: jest.fn(),
+      } as Pick<DestinationBoardPort, 'getIssue' | 'updateIssueStatus'>,
       urlsNow: new Set([row.prUrl]),
       kanbanDoneStatus: () => 'Done',
       warn: jest.fn(),

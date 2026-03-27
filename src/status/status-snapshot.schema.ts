@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-const ghState = z.enum(['ok', 'not_installed', 'not_authenticated', 'error']);
+const ghState = z.enum(['ok', 'error', 'unknown']);
 
 const dbState = z.enum(['ok', 'error']);
 

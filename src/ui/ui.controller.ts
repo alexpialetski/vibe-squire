@@ -9,44 +9,29 @@ import {
   Res,
   Render,
   Redirect,
-  Inject,
 } from '@nestjs/common';
-import { APP_ENV, type AppEnv } from '../config/env-schema';
 import type { Response } from 'express';
 import { StatusService } from '../status/status.service';
 import { SettingsService } from '../settings/settings.service';
 import { MappingsService } from '../mappings/mappings.service';
-import { VibeKanbanMcpService } from '../vibe-kanban/vibe-kanban-mcp.service';
 import { StatusEventsService } from '../events/status-events.service';
 import { IntegrationSettingsEmitterService } from '../events/integration-settings-emitter.service';
 import { isValidMaxBoardPrCountInput } from '../config/max-board-pr-count';
 import { isValidScheduledSyncEnabledInput } from '../config/scheduled-sync-enabled';
-import { parsePrIgnoreAuthorLogins } from '../sync/pr-ignore-author-logins';
 import { type SettingKey } from '../config/setting-keys';
-import { normalizeVkWorkspaceExecutor } from '../config/vk-workspace-executors';
-import {
-  schedulerTextFieldsForUi,
-  integrationFieldsForUi,
-} from './setting-labels';
-import {
-  generalSettingsPostKeys,
-  GITHUB_SOURCE_UI_KEYS,
-  VIBE_KANBAN_UI_KEYS,
-} from './integration-ui-registry';
+import { schedulerTextFieldsForUi } from './setting-labels';
+import { generalSettingsPostKeys } from './integration-ui-registry';
 import { SetupEvaluationService } from '../setup/setup-evaluation.service';
-import { isVibeKanbanMcpConfigured } from '../vibe-kanban/mcp-transport-config';
 import { PollRunHistoryService } from '../sync/poll-run-history.service';
 import {
   buildSetupChecklist,
   destinationTypeLabel,
   escapeForPre,
-  githubNotSourceRedirectUrl,
   presentActivityRunsForView,
   sourceTypeLabel,
   uiNavLocals,
-  vibeKanbanNotDestinationRedirectUrl,
 } from './ui-presenter';
-import { buildVibeKanbanPageLocals } from './ui-vibe-kanban-presenter';
+import { UiNavService } from './ui-nav.service';
 
 @Controller('ui')
 export class UiController {
@@ -54,12 +39,11 @@ export class UiController {
     private readonly status: StatusService,
     private readonly settings: SettingsService,
     private readonly mappings: MappingsService,
-    private readonly vk: VibeKanbanMcpService,
     private readonly statusEvents: StatusEventsService,
     private readonly integrationEmitter: IntegrationSettingsEmitterService,
     private readonly setupEvaluation: SetupEvaluationService,
     private readonly pollRunHistory: PollRunHistoryService,
-    @Inject(APP_ENV) private readonly appEnv: AppEnv,
+    private readonly uiNav: UiNavService,
   ) {}
 
   @Get()
@@ -74,7 +58,7 @@ export class UiController {
     const ev = await this.setupEvaluation.evaluate();
     const rows = await this.pollRunHistory.listRecentForUi(40);
     return {
-      ...uiNavLocals(ev),
+      ...uiNavLocals(ev, this.uiNav.getEntries()),
       runs: presentActivityRunsForView(rows),
     };
   }
@@ -91,7 +75,7 @@ export class UiController {
       'scheduled_sync_enabled',
     );
     return {
-      ...uiNavLocals(ev),
+      ...uiNavLocals(ev, this.uiNav.getEntries()),
       snapshotPretty,
       bootSnapshotJson,
       manualSync: snapshot.manual_sync as Record<string, unknown>,
@@ -113,7 +97,7 @@ export class UiController {
       'scheduled_sync_enabled',
     );
     return {
-      ...uiNavLocals(ev),
+      ...uiNavLocals(ev, this.uiNav.getEntries()),
       fields: schedulerTextFieldsForUi(values),
       scheduledSyncEnabled,
       saved: saved === '1',
@@ -164,61 +148,6 @@ export class UiController {
     }
   }
 
-  @Get('github')
-  async githubPage(
-    @Res() res: Response,
-    @Query('saved') saved?: string,
-    @Query('err') err?: string,
-  ): Promise<void> {
-    if (this.appEnv.sourceType !== 'github') {
-      res.redirect(302, githubNotSourceRedirectUrl());
-      return;
-    }
-    const values = this.settings.listEffectiveNonSecret();
-    const ev = await this.setupEvaluation.evaluate();
-    res.render('github', {
-      ...uiNavLocals(ev),
-      saved: saved === '1',
-      error: err ? decodeURIComponent(err) : null,
-      fields: integrationFieldsForUi(GITHUB_SOURCE_UI_KEYS, values),
-    });
-  }
-
-  @Post('github')
-  async postGithub(
-    @Body() body: Record<string, string>,
-    @Res() res: Response,
-  ): Promise<void> {
-    if (this.appEnv.sourceType !== 'github') {
-      res.redirect(302, githubNotSourceRedirectUrl());
-      return;
-    }
-    try {
-      const touched: SettingKey[] = [];
-      for (const key of GITHUB_SOURCE_UI_KEYS) {
-        if (Object.prototype.hasOwnProperty.call(body, key)) {
-          const value = String(body[key] ?? '');
-          if (key === 'pr_ignore_author_logins') {
-            const parsed = parsePrIgnoreAuthorLogins(value);
-            if (!parsed.ok) {
-              throw new Error(parsed.message);
-            }
-          }
-          await this.settings.setValue(key, value);
-          touched.push(key);
-        }
-      }
-      await this.settings.refreshCache();
-      await this.integrationEmitter.emitIntegrationSettingsChanged(touched);
-      this.statusEvents.emitChanged();
-      this.statusEvents.emitScheduleRefresh();
-      res.redirect(302, '/ui/github?saved=1');
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      res.redirect(302, `/ui/github?err=${encodeURIComponent(msg)}`);
-    }
-  }
-
   @Get('mappings')
   @Render('mappings')
   async mappingsPage(
@@ -227,13 +156,10 @@ export class UiController {
     const ev = await this.setupEvaluation.evaluate();
     const rows = await this.mappings.findAll();
     return {
-      ...uiNavLocals(ev),
+      ...uiNavLocals(ev, this.uiNav.getEntries()),
       rows,
       error: err ? decodeURIComponent(err) : null,
-      kanbanMcpPicker: isVibeKanbanMcpConfigured(
-        this.settings,
-        this.appEnv.destinationType,
-      ),
+      kanbanMcpPicker: ev.destinationMcpConfigured,
     };
   }
 
@@ -273,109 +199,6 @@ export class UiController {
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       res.redirect(302, `/ui/mappings?err=${encodeURIComponent(msg)}`);
-    }
-  }
-
-  @Get('kanban')
-  @Redirect('/ui/vibe-kanban', 302)
-  kanbanLegacyRedirect(): void {
-    void 0;
-  }
-
-  @Get('vibe-kanban')
-  async vibeKanbanPage(
-    @Res() res: Response,
-    @Query('saved') saved?: string,
-    @Query('err') err?: string,
-  ): Promise<void> {
-    if (this.appEnv.destinationType !== 'vibe_kanban') {
-      res.redirect(302, vibeKanbanNotDestinationRedirectUrl());
-      return;
-    }
-    const locals = await buildVibeKanbanPageLocals({
-      settings: this.settings,
-      destinationType: this.appEnv.destinationType,
-      setupEvaluation: this.setupEvaluation,
-      vk: this.vk,
-      saved,
-      err,
-    });
-    res.render('vibe-kanban', locals);
-  }
-
-  @Post('vibe-kanban')
-  async postVibeKanban(
-    @Body() body: Record<string, string>,
-    @Res() res: Response,
-  ): Promise<void> {
-    if (this.appEnv.destinationType !== 'vibe_kanban') {
-      res.redirect(302, vibeKanbanNotDestinationRedirectUrl());
-      return;
-    }
-    try {
-      const touched: SettingKey[] = [];
-      for (const key of VIBE_KANBAN_UI_KEYS) {
-        if (!Object.prototype.hasOwnProperty.call(body, key)) {
-          continue;
-        }
-        let v = String(body[key] ?? '');
-        if (key === 'vk_workspace_executor') {
-          const n = normalizeVkWorkspaceExecutor(v);
-          if (!n) {
-            res.redirect(
-              302,
-              `/ui/vibe-kanban?err=${encodeURIComponent('Invalid workspace executor')}`,
-            );
-            return;
-          }
-          v = n;
-        }
-        await this.settings.setValue(key, v);
-        touched.push(key);
-      }
-      await this.settings.refreshCache();
-      await this.integrationEmitter.emitIntegrationSettingsChanged(touched);
-      this.statusEvents.emitChanged();
-      this.statusEvents.emitScheduleRefresh();
-      res.redirect(302, '/ui/vibe-kanban?saved=1');
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      res.redirect(302, `/ui/vibe-kanban?err=${encodeURIComponent(msg)}`);
-    }
-  }
-
-  @Post('kanban/default-board')
-  async postKanbanDefaultBoard(
-    @Body() body: Record<string, string>,
-    @Res() res: Response,
-  ): Promise<void> {
-    if (this.appEnv.destinationType !== 'vibe_kanban') {
-      res.redirect(302, vibeKanbanNotDestinationRedirectUrl());
-      return;
-    }
-    try {
-      const organizationId = (body.organization_id ?? '').trim();
-      const projectId = (body.project_id ?? '').trim();
-      if (!organizationId || !projectId) {
-        res.redirect(
-          302,
-          `/ui/vibe-kanban?err=${encodeURIComponent('Organization and project UUIDs are required')}`,
-        );
-        return;
-      }
-      await this.settings.setValue('default_organization_id', organizationId);
-      await this.settings.setValue('default_project_id', projectId);
-      await this.settings.refreshCache();
-      await this.integrationEmitter.emitIntegrationSettingsChanged([
-        'default_organization_id',
-        'default_project_id',
-      ]);
-      this.statusEvents.emitChanged();
-      this.statusEvents.emitScheduleRefresh();
-      res.redirect(302, '/ui/vibe-kanban?saved=1');
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      res.redirect(302, `/ui/vibe-kanban?err=${encodeURIComponent(msg)}`);
     }
   }
 }

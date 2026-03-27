@@ -1,13 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
-import request from 'supertest';
-import { App } from 'supertest/types';
 import { testingAppModule } from './testing-app-module';
 import { GhCliService } from '../src/gh/gh-cli.service';
 import { GithubPrScoutService } from '../src/scout/github-pr-scout.service';
 import { VibeKanbanMcpService } from '../src/vibe-kanban/vibe-kanban-mcp.service';
 import { PrismaService } from '../src/prisma/prisma.service';
 import { SettingsService } from '../src/settings/settings.service';
+import { RunPollCycleService } from '../src/sync/run-poll-cycle.service';
+import { PollSchedulerService } from '../src/sync/poll-scheduler.service';
 
 /**
  * When the Kanban issue is deleted in Vibe Kanban but the PR stays on the review queue,
@@ -15,7 +15,7 @@ import { SettingsService } from '../src/settings/settings.service';
  * the poll's create quota allows (live VK [vibe-squire] count vs max_board_pr_count).
  */
 describe('Sync heal deleted Kanban issue (integration)', () => {
-  let app: INestApplication<App>;
+  let app: INestApplication;
   let kanbanIssueGone = false;
 
   const vkStub = {
@@ -69,6 +69,9 @@ describe('Sync heal deleted Kanban issue (integration)', () => {
     );
     await app.init();
 
+    const scheduler = app.get(PollSchedulerService);
+    scheduler.onModuleDestroy();
+
     const prisma = app.get(PrismaService);
     await prisma.pollRun.deleteMany();
     await prisma.syncedPullRequest.deleteMany();
@@ -109,9 +112,9 @@ describe('Sync heal deleted Kanban issue (integration)', () => {
     vkStub.getIssue.mockReset();
     vkStub.getIssue.mockImplementation((issueId: string) => {
       if (kanbanIssueGone) {
-        return null;
+        return Promise.resolve(null);
       }
-      return { id: issueId, status: 'Open' as const };
+      return Promise.resolve({ id: issueId, status: 'Open' as const });
     });
   });
 
@@ -120,7 +123,8 @@ describe('Sync heal deleted Kanban issue (integration)', () => {
       .mockResolvedValueOnce('fake-issue-id')
       .mockResolvedValue('fake-issue-id-2');
 
-    await request(app.getHttpServer()).post('/api/sync/run').expect(201);
+    const runPoll = app.get(RunPollCycleService);
+    await runPoll.execute('manual');
     expect(vkStub.createIssue).toHaveBeenCalledTimes(1);
     const prisma = app.get(PrismaService);
     expect(await prisma.syncedPullRequest.count()).toBe(1);
@@ -129,7 +133,7 @@ describe('Sync heal deleted Kanban issue (integration)', () => {
 
     kanbanIssueGone = true;
 
-    await request(app.getHttpServer()).post('/api/sync/run').expect(201);
+    await runPoll.execute('manual');
     expect(vkStub.getIssue).toHaveBeenCalledWith('fake-issue-id');
     expect(vkStub.createIssue).toHaveBeenCalledTimes(2);
     expect(await prisma.syncedPullRequest.count()).toBe(1);
@@ -146,11 +150,12 @@ describe('Sync heal deleted Kanban issue (integration)', () => {
       .mockResolvedValueOnce('issue-first')
       .mockResolvedValue('issue-should-not-run');
 
-    await request(app.getHttpServer()).post('/api/sync/run').expect(201);
+    const runPoll = app.get(RunPollCycleService);
+    await runPoll.execute('manual');
     expect(vkStub.createIssue).toHaveBeenCalledTimes(1);
 
     kanbanIssueGone = true;
-    await request(app.getHttpServer()).post('/api/sync/run').expect(201);
+    await runPoll.execute('manual');
     expect(vkStub.createIssue).toHaveBeenCalledTimes(1);
     const prisma = app.get(PrismaService);
     expect(await prisma.syncedPullRequest.count()).toBe(0);

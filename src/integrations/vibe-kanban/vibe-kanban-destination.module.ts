@@ -1,0 +1,94 @@
+import { Module, type Provider } from '@nestjs/common';
+import { PrismaModule } from '../../prisma/prisma.module';
+import { SetupModule } from '../../setup/setup.module';
+import { SyncRunStateModule } from '../../sync/sync-run-state.module';
+import {
+  DESTINATION_BOARD_PORT,
+  DESTINATION_STATUS_PORT,
+  INTEGRATION_SETTINGS_PROVIDERS,
+  SYNC_DESTINATION_BOARD_PORT,
+  UI_NAV_ENTRIES,
+  VIBE_KANBAN_BOARD_PORT,
+  VK_MCP_STDIO_SESSION_PORT,
+} from '../../ports/injection-tokens';
+import type { UiNavEntry } from '../../ports/ui-nav.types';
+import { VibeKanbanMcpService } from '../../vibe-kanban/vibe-kanban-mcp.service';
+import { VibeKanbanContextController } from '../../vibe-kanban/vibe-kanban-context.controller';
+import { VkMcpStdioSessionService } from '../../vibe-kanban/vk-mcp-stdio-session.service';
+import { VkBoardAdapterService } from './vk-board-adapter.service';
+import { VkStatusService } from './vk-status.service';
+import { VkIntegrationSettingsProvider } from './vk-settings.provider';
+import { VkMcpIntegrationListener } from './vk-mcp-integration.listener';
+import { VkUiController } from './vk-ui.controller';
+
+const VK_NAV_MAPPINGS: UiNavEntry = {
+  id: 'mappings',
+  label: 'Mappings',
+  href: '/ui/mappings',
+};
+const VK_NAV_BOARD: UiNavEntry = {
+  id: 'vibe_kanban',
+  label: 'Vibe Kanban',
+  href: '/ui/vibe-kanban',
+};
+
+@Module({
+  imports: [SetupModule, PrismaModule, SyncRunStateModule],
+  controllers: [VibeKanbanContextController, VkUiController],
+  providers: [
+    VkMcpStdioSessionService,
+    VibeKanbanMcpService,
+    VkBoardAdapterService,
+    VkStatusService,
+    VkIntegrationSettingsProvider,
+    VkMcpIntegrationListener,
+    {
+      provide: INTEGRATION_SETTINGS_PROVIDERS,
+      useExisting: VkIntegrationSettingsProvider,
+      multi: true,
+    } as Provider,
+    {
+      provide: UI_NAV_ENTRIES,
+      useValue: VK_NAV_MAPPINGS,
+      multi: true,
+    } as Provider,
+    {
+      provide: UI_NAV_ENTRIES,
+      useValue: VK_NAV_BOARD,
+      multi: true,
+    } as Provider,
+    {
+      provide: VIBE_KANBAN_BOARD_PORT,
+      useExisting: VibeKanbanMcpService,
+    },
+    {
+      provide: VK_MCP_STDIO_SESSION_PORT,
+      useExisting: VkMcpStdioSessionService,
+    },
+    {
+      provide: DESTINATION_BOARD_PORT,
+      useExisting: VkBoardAdapterService,
+    },
+    {
+      provide: SYNC_DESTINATION_BOARD_PORT,
+      useExisting: VkBoardAdapterService,
+    },
+    {
+      provide: DESTINATION_STATUS_PORT,
+      useExisting: VkStatusService,
+    },
+  ],
+  exports: [
+    VibeKanbanMcpService,
+    VkMcpStdioSessionService,
+    VkBoardAdapterService,
+    VIBE_KANBAN_BOARD_PORT,
+    VK_MCP_STDIO_SESSION_PORT,
+    DESTINATION_BOARD_PORT,
+    SYNC_DESTINATION_BOARD_PORT,
+    DESTINATION_STATUS_PORT,
+    UI_NAV_ENTRIES,
+    INTEGRATION_SETTINGS_PROVIDERS,
+  ],
+})
+export class VibeKanbanDestinationModule {}

@@ -2,7 +2,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ValidationPipe } from '@nestjs/common';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import request from 'supertest';
-import { App } from 'supertest/types';
 import { testingAppModule } from './testing-app-module';
 import { configureExpressApp } from '../src/configure-express-app';
 import { GhCliService } from '../src/gh/gh-cli.service';
@@ -26,7 +25,7 @@ const vkStub = {
  * Phase 1 — UiController smoke: HBS stack + status snapshot without real gh / MCP.
  */
 describe('UI smoke (integration)', () => {
-  let app: NestExpressApplication<App>;
+  let app: NestExpressApplication;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -40,7 +39,7 @@ describe('UI smoke (integration)', () => {
       .useValue(vkStub)
       .compile();
 
-    app = moduleFixture.createNestApplication<NestExpressApplication<App>>();
+    app = moduleFixture.createNestApplication<NestExpressApplication>();
     configureExpressApp(app);
     app.useGlobalPipes(
       new ValidationPipe({ whitelist: true, transform: true }),

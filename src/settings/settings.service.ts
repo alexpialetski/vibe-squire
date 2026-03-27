@@ -1,33 +1,76 @@
 import { Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { ModuleRef } from '@nestjs/core';
 import { APP_ENV, type AppEnv } from '../config/env-schema';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   isSettingKey,
   MIN_POLL_INTERVAL_MINUTES,
-  SETTING_DEFINITIONS,
-  SETTING_KEYS,
   type SettingKey,
 } from '../config/setting-keys';
 import { resolveEffectiveSetting } from '../config/resolve-effective-setting';
+import type { IntegrationSettingsProvider } from '../ports/integration-settings.port';
+import { INTEGRATION_SETTINGS_PROVIDERS } from '../ports/injection-tokens';
+
+type SettingDef = { envVar?: string; defaultValue: string };
 
 @Injectable()
 export class SettingsService implements OnModuleInit {
   private readonly logger = new Logger(SettingsService.name);
+  private readonly mergedDefinitions = new Map<string, SettingDef>();
   private cache = new Map<SettingKey, string>();
 
   constructor(
     @Inject(APP_ENV) private readonly appEnv: AppEnv,
     private readonly prisma: PrismaService,
+    private readonly moduleRef: ModuleRef,
   ) {}
 
   async onModuleInit(): Promise<void> {
+    let providers: IntegrationSettingsProvider[] = [];
+    try {
+      const resolved: unknown = this.moduleRef.get(
+        INTEGRATION_SETTINGS_PROVIDERS,
+        { strict: false, each: true },
+      );
+      providers = Array.isArray(resolved)
+        ? (resolved as IntegrationSettingsProvider[])
+        : [];
+    } catch {
+      providers = [];
+    }
+    for (const p of providers) {
+      this.registerDefinitions(p.getSettingDefinitions());
+    }
     await this.refreshCache();
+  }
+
+  /**
+   * Merge plugin definitions (same shape as static {@link SETTING_DEFINITIONS} entries).
+   */
+  registerDefinitions(defs: Record<string, SettingDef>): void {
+    for (const [k, v] of Object.entries(defs)) {
+      this.mergedDefinitions.set(k, v);
+    }
+  }
+
+  private definitionFor(key: SettingKey): SettingDef {
+    const d = this.mergedDefinitions.get(key);
+    if (!d) {
+      throw new Error(`Unknown setting key (no definition): ${key}`);
+    }
+    return d;
+  }
+
+  /** All keys known after integration merge (for cache refresh). */
+  private allSettingKeys(): SettingKey[] {
+    return [...this.mergedDefinitions.keys()] as SettingKey[];
   }
 
   /** Reload all known keys from DB into memory (call after writes). */
   async refreshCache(): Promise<void> {
+    const keys = this.allSettingKeys();
     const rows = await this.prisma.setting.findMany({
-      where: { key: { in: [...SETTING_KEYS] } },
+      where: { key: { in: keys } },
     });
     this.cache.clear();
     for (const row of rows) {
@@ -38,13 +81,15 @@ export class SettingsService implements OnModuleInit {
     this.logger.debug(`Settings cache loaded (${this.cache.size} rows)`);
   }
 
-  /**
-   * Effective value: env (if key has `envVar` and value non-empty) → SQLite → code default.
-   */
   getEffective(key: SettingKey): string {
-    const def = SETTING_DEFINITIONS[key];
-    const fromEnv =
-      'envVar' in def ? this.appEnv.settingsEnv[def.envVar] : undefined;
+    const def = this.definitionFor(key);
+    const envKey = 'envVar' in def ? def.envVar : undefined;
+    const fromEnv: string | undefined =
+      envKey !== undefined
+        ? (this.appEnv.settingsEnv as Record<string, string | undefined>)[
+            envKey
+          ]
+        : undefined;
     const hasDb = this.cache.has(key);
     const fromDb = hasDb ? this.cache.get(key) : undefined;
     return resolveEffectiveSetting(fromEnv, hasDb, fromDb, def.defaultValue);
@@ -61,13 +106,9 @@ export class SettingsService implements OnModuleInit {
     return Number.isFinite(n) ? n : fallback;
   }
 
-  /**
-   * Effective poll interval for the scheduler (minutes), clamped to at least
-   * {@link MIN_POLL_INTERVAL_MINUTES}. Manual sync ignores this.
-   */
   getPollIntervalMinutes(): number {
     const fallback = parseInt(
-      SETTING_DEFINITIONS.poll_interval_minutes.defaultValue,
+      this.definitionFor('poll_interval_minutes').defaultValue,
       10,
     );
     const n = this.getEffectiveInt(
@@ -78,6 +119,7 @@ export class SettingsService implements OnModuleInit {
   }
 
   async setValue(key: SettingKey, value: string): Promise<void> {
+    this.definitionFor(key);
     await this.prisma.setting.upsert({
       where: { key },
       create: { key, value },
@@ -86,16 +128,12 @@ export class SettingsService implements OnModuleInit {
     this.cache.set(key, value);
   }
 
-  /**
-   * Effective values for all defined settings (§5.3). Safe for API: no secrets beyond URL
-   * hosts operators already set. Includes `source_type` / `destination_type` from {@link AppEnv}.
-   */
   listEffectiveNonSecret(): Record<string, string> {
     const out: Record<string, string> = {
       source_type: this.appEnv.sourceType,
       destination_type: this.appEnv.destinationType,
     };
-    for (const key of SETTING_KEYS) {
+    for (const key of this.allSettingKeys()) {
       out[key] = this.getEffective(key);
     }
     return out;

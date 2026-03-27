@@ -7,11 +7,11 @@ import type { AppEnv } from './config/env-schema';
 import { createLoggerModuleParams } from './logging/create-logger-params';
 import { PrismaModule } from './prisma/prisma.module';
 import { SettingsModule } from './settings/settings.module';
-import { GhModule } from './gh/gh.module';
 import { MappingsModule } from './mappings/mappings.module';
 import { StatusModule } from './status/status.module';
 import { StatusEventsModule } from './events/status-events.module';
 import { SyncModule } from './sync/sync.module';
+import { SyncRunStateModule } from './sync/sync-run-state.module';
 import { ReinitModule } from './reinit/reinit.module';
 import { UiModule } from './ui/ui.module';
 import { SetupModule } from './setup/setup.module';
@@ -37,8 +37,8 @@ export class AppModule {
         EventEmitterModule.forRoot(),
         StatusEventsModule,
         PrismaModule,
-        SettingsModule,
-        GhModule,
+        SyncRunStateModule,
+        SettingsModule.forRoot(env),
         SyncModule,
         ReinitModule,
         MappingsModule,

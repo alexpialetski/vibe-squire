@@ -80,7 +80,7 @@ describe('VkMcpIntegrationListener (integration)', () => {
     scheduler.onModuleDestroy();
 
     expect(vkStub.probe).toHaveBeenCalled();
-    expect(runState.getVibeKanbanHealth().state).toBe('ok');
+    expect(runState.getDestinationHealth('vibe_kanban').state).toBe('ok');
   });
 
   afterAll(async () => {
@@ -101,7 +101,7 @@ describe('VkMcpIntegrationListener (integration)', () => {
       .expect(200);
 
     expect(stdioShutdown).toHaveBeenCalled();
-    expect(runState.getVibeKanbanHealth().state).toBe('unknown');
+    expect(runState.getDestinationHealth('vibe_kanban').state).toBe('unknown');
   });
 
   it('PATCH valid vk_mcp_stdio_json again runs probe and restores ok health', async () => {
@@ -111,7 +111,7 @@ describe('VkMcpIntegrationListener (integration)', () => {
       .expect(200);
 
     expect(vkStub.probe).toHaveBeenCalled();
-    expect(runState.getVibeKanbanHealth().state).toBe('ok');
+    expect(runState.getDestinationHealth('vibe_kanban').state).toBe('ok');
   });
 
   it('integration-settings event with healthy VK: probe failure → degraded if lastOkAt set', async () => {
@@ -122,7 +122,7 @@ describe('VkMcpIntegrationListener (integration)', () => {
       .send({ poll_interval_minutes: '12' })
       .expect(200);
 
-    const h = runState.getVibeKanbanHealth();
+    const h = runState.getDestinationHealth('vibe_kanban');
     expect(h.state).toBe('degraded');
     expect(h.message).toContain('probe transient');
     expect(h.lastOkAt).toBeDefined();
