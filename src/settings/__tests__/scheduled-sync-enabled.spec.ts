@@ -1,14 +1,14 @@
-import { isValidScheduledSyncEnabledInput } from '../scheduled-sync-enabled';
+import { validateScheduledSyncEnabled } from '../core-setting-keys';
 
-describe('isValidScheduledSyncEnabledInput', () => {
+describe('validateScheduledSyncEnabled', () => {
   it('accepts common boolean spellings', () => {
     for (const v of ['true', 'false', '1', '0', 'yes', 'no', 'TRUE', ' No ']) {
-      expect(isValidScheduledSyncEnabledInput(v)).toBe(true);
+      expect(validateScheduledSyncEnabled(v)).toBeNull();
     }
   });
 
   it('rejects garbage', () => {
-    expect(isValidScheduledSyncEnabledInput('maybe')).toBe(false);
-    expect(isValidScheduledSyncEnabledInput('')).toBe(false);
+    expect(validateScheduledSyncEnabled('maybe')).not.toBeNull();
+    expect(validateScheduledSyncEnabled('')).not.toBeNull();
   });
 });

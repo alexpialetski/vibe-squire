@@ -1,3 +1,4 @@
+import type { SettingDefinition } from './setting-definition';
 import {
   CORE_SETTING_DEFINITIONS,
   CORE_SETTING_KEYS,
@@ -26,14 +27,11 @@ export const SETTING_KEYS = [
 
 export type SettingKey = (typeof SETTING_KEYS)[number];
 
-/** Omit `envVar` when the key has no process-env override (DB + code default only). */
-type Def = { envVar?: string; defaultValue: string };
-
 export const SETTING_DEFINITIONS = {
   ...VK_SETTING_DEFINITIONS,
   ...CORE_SETTING_DEFINITIONS,
   ...GITHUB_INTEGRATION_SETTING_DEFINITIONS,
-} satisfies Record<SettingKey, Def>;
+} satisfies Record<SettingKey, SettingDefinition>;
 
 /** Process env names that can override a setting (see {@link SETTING_DEFINITIONS}). */
 export type SettingEnvVarName = {
@@ -48,4 +46,13 @@ export type SettingEnvVarName = {
 
 export function isSettingKey(key: string): key is SettingKey {
   return (SETTING_KEYS as readonly string[]).includes(key);
+}
+
+/** Run the definition-level validator for `key` (if one exists). Returns `null` when valid. */
+export function validateSettingValue(
+  key: SettingKey,
+  value: string,
+): string | null {
+  const def = SETTING_DEFINITIONS[key] as SettingDefinition;
+  return def.validate?.(value) ?? null;
 }

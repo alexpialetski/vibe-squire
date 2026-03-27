@@ -13,9 +13,5 @@ export const SYNC_DESTINATION_BOARD_PORT = DESTINATION_BOARD_PORT;
 export const SOURCE_STATUS_PORT = Symbol('SOURCE_STATUS_PORT');
 /** Destination setup + health (`AppEnv.destinationType`). */
 export const DESTINATION_STATUS_PORT = Symbol('DESTINATION_STATUS_PORT');
-/** Multi: each integration contributes definitions merged in {@link SettingsService}. */
-export const INTEGRATION_SETTINGS_PROVIDERS = Symbol(
-  'INTEGRATION_SETTINGS_PROVIDERS',
-);
 /** Multi: sidebar links under Settings (plugin-owned pages). */
 export const UI_NAV_ENTRIES = Symbol('UI_NAV_ENTRIES');

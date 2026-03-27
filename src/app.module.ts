@@ -5,6 +5,7 @@ import { AppController } from './app.controller';
 import { EnvModule } from './config/env.module';
 import type { AppEnv } from './config/app-env.token';
 import { createLoggerModuleParams } from './logging/create-logger-params';
+import { IntegrationsModule } from './integrations/integrations.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { SettingsModule } from './settings/settings.module';
 import { MappingsModule } from './mappings/mappings.module';
@@ -38,7 +39,8 @@ export class AppModule {
         StatusEventsModule,
         PrismaModule,
         SyncRunStateModule,
-        SettingsModule.forRoot(env),
+        SettingsModule,
+        IntegrationsModule.register(env),
         SyncModule,
         ReinitModule,
         MappingsModule,
