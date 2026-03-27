@@ -1,18 +1,20 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { SettingsService } from '../settings/settings.service';
-import { GhCliService } from '../gh/gh-cli.service';
+import { APP_ENV, type AppEnv } from '../config/env-schema';
 import { StatusEventsService } from '../events/status-events.service';
 import {
+  SOURCE_STATUS_PORT,
   SYNC_DESTINATION_BOARD_PORT,
   SYNC_PR_SCOUT_PORT,
 } from '../ports/injection-tokens';
+import type { SourceStatusProvider } from '../ports/source-status.port';
 import type { SyncPrScoutPort } from '../ports/sync-pr-scout.port';
-import type { SyncDestinationBoardPort } from '../ports/sync-destination-board.port';
+import type { DestinationBoardPort } from '../ports/destination-board.port';
 import { DEFAULT_KANBAN_DONE_STATUS } from './sync-constants';
 import { redactHttpUrls } from '../logging/redact-urls';
 import { SyncRunStateService } from './sync-run-state.service';
-import type { GithubPrCandidate } from '../scout/github-pr-scout.service';
+import type { GithubPrCandidate } from '../ports/github-pr-candidate';
 import { SetupEvaluationService } from '../setup/setup-evaluation.service';
 import { PollRunHistoryService } from './poll-run-history.service';
 import { runPollPrerequisites } from './poll-cycle/run-poll-prerequisites';
@@ -43,15 +45,17 @@ export class RunPollCycleService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly settings: SettingsService,
-    private readonly gh: GhCliService,
+    @Inject(SOURCE_STATUS_PORT)
+    private readonly sourceStatus: SourceStatusProvider,
     @Inject(SYNC_PR_SCOUT_PORT)
     private readonly prScout: SyncPrScoutPort,
     @Inject(SYNC_DESTINATION_BOARD_PORT)
-    private readonly destinationBoard: SyncDestinationBoardPort,
+    private readonly destinationBoard: DestinationBoardPort,
     private readonly runState: SyncRunStateService,
     private readonly statusEvents: StatusEventsService,
     private readonly setupEvaluation: SetupEvaluationService,
     private readonly pollRunHistory: PollRunHistoryService,
+    @Inject(APP_ENV) private readonly appEnv: AppEnv,
   ) {}
 
   computeNextPollAt(from = new Date()): Date {
@@ -76,10 +80,10 @@ export class RunPollCycleService {
 
       const pre = await runPollPrerequisites(
         this.setupEvaluation,
-        this.gh,
+        this.sourceStatus,
         this.destinationBoard,
         () =>
-          this.runState.setVibeKanbanHealth({
+          this.runState.setDestinationHealth(this.appEnv.destinationType, {
             state: 'ok',
             lastOkAt: new Date().toISOString(),
           }),
@@ -133,6 +137,7 @@ export class RunPollCycleService {
         destinationBoard: this.destinationBoard,
         logger: this.logger,
         runState: this.runState,
+        destinationHealthId: this.appEnv.destinationType,
       };
 
       const {
@@ -240,15 +245,16 @@ export class RunPollCycleService {
   }
 
   private applyDestinationFailure(message: string): void {
-    const prev = this.runState.getVibeKanbanHealth();
+    const id = this.appEnv.destinationType;
+    const prev = this.runState.getDestinationHealth(id);
     if (prev.lastOkAt) {
-      this.runState.setVibeKanbanHealth({
+      this.runState.setDestinationHealth(id, {
         state: 'degraded',
         message,
         lastOkAt: prev.lastOkAt,
       });
     } else {
-      this.runState.setVibeKanbanHealth({ state: 'error', message });
+      this.runState.setDestinationHealth(id, { state: 'error', message });
     }
   }
 }

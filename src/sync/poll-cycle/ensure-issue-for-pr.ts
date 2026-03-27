@@ -1,9 +1,11 @@
 import type { Logger } from '@nestjs/common';
 import type { PrismaService } from '../../prisma/prisma.service';
 import type { SettingsService } from '../../settings/settings.service';
-import type { SyncDestinationBoardPort } from '../../ports/sync-destination-board.port';
-import type { GithubPrCandidate } from '../../scout/github-pr-scout.service';
-import type { VkIssueRef } from '../../vibe-kanban/vk-entities';
+import type {
+  BoardIssueRef,
+  DestinationBoardPort,
+} from '../../ports/destination-board.port';
+import type { GithubPrCandidate } from '../../ports/github-pr-candidate';
 import {
   buildVibeSquirePrDescriptionMarker,
   VIBE_SQUIRE_TITLE_MARKER,
@@ -22,9 +24,10 @@ import {
 export type EnsureIssueForPrDeps = {
   prisma: PrismaService;
   settings: SettingsService;
-  destinationBoard: SyncDestinationBoardPort;
+  destinationBoard: DestinationBoardPort;
   logger: Pick<Logger, 'debug' | 'warn' | 'log'>;
-  runState: Pick<SyncRunStateService, 'setVibeKanbanHealth'>;
+  runState: Pick<SyncRunStateService, 'setDestinationHealth'>;
+  destinationHealthId: string;
 };
 
 export function buildPollIssueDescription(
@@ -52,6 +55,9 @@ async function tryPersistWorkspace(
   vkRepoId: string,
 ): Promise<void> {
   const { prisma, settings, destinationBoard, logger } = deps;
+  if (!destinationBoard.startWorkspace) {
+    return;
+  }
   try {
     const wsId = await destinationBoard.startWorkspace({
       name: workspaceNameForPr(pr),
@@ -78,7 +84,7 @@ async function tryPersistWorkspace(
 async function disambiguateKanbanIssueHits(
   deps: EnsureIssueForPrDeps,
   pr: GithubPrCandidate,
-  hits: VkIssueRef[],
+  hits: BoardIssueRef[],
 ): Promise<string> {
   const { destinationBoard, logger } = deps;
   if (hits.length === 1) {
@@ -175,7 +181,7 @@ export async function ensureIssueForPr(
     await prisma.syncedPullRequest.delete({ where: { id: existing.id } });
   }
 
-  let hitCandidates: VkIssueRef[] = [];
+  let hitCandidates: BoardIssueRef[] = [];
   const hints = [
     `${VIBE_SQUIRE_TITLE_MARKER} PR #${pr.number}`,
     pr.url,
@@ -215,13 +221,13 @@ export async function ensureIssueForPr(
       return { kind: 'skipped_board_limit' };
     }
     issueId = await destinationBoard.createIssue({
-      projectId,
+      boardId: projectId,
       title: issueTitleForPr(pr),
       description: buildPollIssueDescription(pr, settings),
     });
     createdNewIssue = true;
     quotaForCreates.remaining -= 1;
-    runState.setVibeKanbanHealth({
+    runState.setDestinationHealth(deps.destinationHealthId, {
       state: 'ok',
       lastOkAt: new Date().toISOString(),
     });

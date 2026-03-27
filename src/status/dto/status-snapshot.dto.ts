@@ -2,7 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 /** Documented subset of `GET /api/status` — see status-snapshot.contract validation for full shape. */
 export class StatusGhDto {
-  @ApiProperty({ enum: ['ok', 'not_installed', 'not_authenticated', 'error'] })
+  @ApiProperty({ enum: ['ok', 'error', 'unknown'] })
   state!: string;
 
   @ApiPropertyOptional()

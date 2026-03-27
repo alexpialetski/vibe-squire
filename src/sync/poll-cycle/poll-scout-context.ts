@@ -1,5 +1,5 @@
 import type { SyncPrScoutPort } from '../../ports/sync-pr-scout.port';
-import type { SyncDestinationBoardPort } from '../../ports/sync-destination-board.port';
+import type { DestinationBoardPort } from '../../ports/destination-board.port';
 import type { SettingsService } from '../../settings/settings.service';
 import type { GithubPrCandidate } from '../../scout/github-pr-scout.service';
 import { parsePrIgnoreAuthorLogins } from '../pr-ignore-author-logins';
@@ -22,15 +22,12 @@ export type PollScoutContext = {
 };
 
 /**
- * Lists scout candidates, resolves max-board cap vs active VK issues, parses `pr_ignore_author_logins`.
+ * Lists scout candidates, resolves max-board cap vs active board issues, parses `pr_ignore_author_logins`.
  */
 export async function buildPollScoutContext(deps: {
   prScout: SyncPrScoutPort;
   settings: Pick<SettingsService, 'getEffective'>;
-  destinationBoard: Pick<
-    SyncDestinationBoardPort,
-    'countActiveVibeSquireIssues'
-  >;
+  destinationBoard: Pick<DestinationBoardPort, 'countActiveIssues'>;
   warn: (msg: string) => void;
 }): Promise<PollScoutContext> {
   const candidates = deps.prScout.listReviewRequestedForMe();
@@ -46,13 +43,11 @@ export async function buildPollScoutContext(deps: {
   if (projectIdForCap.length > 0) {
     try {
       activeVkIssueCount =
-        await deps.destinationBoard.countActiveVibeSquireIssues(
-          projectIdForCap,
-        );
+        await deps.destinationBoard.countActiveIssues(projectIdForCap);
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       deps.warn(
-        `countActiveVibeSquireIssues failed: ${redactHttpUrls(msg)}; treating as 0`,
+        `countActiveIssues failed: ${redactHttpUrls(msg)}; treating as 0`,
       );
     }
   }

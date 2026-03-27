@@ -1,7 +1,7 @@
 import { runPollPrerequisites } from '../run-poll-prerequisites';
-import type { GhCliService } from '../../../gh/gh-cli.service';
 import type { SetupEvaluationService } from '../../../setup/setup-evaluation.service';
-import type { SyncDestinationBoardPort } from '../../../ports/sync-destination-board.port';
+import type { DestinationBoardPort } from '../../../ports/destination-board.port';
+import type { SourceStatusProvider } from '../../../ports/source-status.port';
 
 function setupSvc(complete: boolean): SetupEvaluationService {
   return {
@@ -9,23 +9,29 @@ function setupSvc(complete: boolean): SetupEvaluationService {
   } as unknown as SetupEvaluationService;
 }
 
-function ghSvc(state: 'ok' | 'not_authenticated'): GhCliService {
+function sourceSvc(
+  state: 'ok' | 'error',
+  errors?: { code: string; message: string }[],
+): SourceStatusProvider {
   return {
-    checkAuth: jest.fn().mockReturnValue({ state }),
-  } as unknown as GhCliService;
+    sourceType: 'github',
+    checkReadiness: jest
+      .fn()
+      .mockReturnValue(errors?.length ? { state, errors } : { state }),
+  } as unknown as SourceStatusProvider;
 }
 
-function board(probeImpl: () => Promise<void>): SyncDestinationBoardPort {
+function board(probeImpl: () => Promise<void>): DestinationBoardPort {
   return {
     probe: jest.fn().mockImplementation(probeImpl),
-  } as unknown as SyncDestinationBoardPort;
+  } as unknown as DestinationBoardPort;
 }
 
 describe('runPollPrerequisites', () => {
   it('aborts with setup_incomplete when setup is not complete', async () => {
     const r = await runPollPrerequisites(
       setupSvc(false),
-      ghSvc('ok'),
+      sourceSvc('ok'),
       board(async () => {}),
       jest.fn(),
       jest.fn(),
@@ -33,15 +39,20 @@ describe('runPollPrerequisites', () => {
     expect(r).toEqual({ kind: 'aborted', reason: 'setup_incomplete' });
   });
 
-  it('aborts with gh_* when GitHub auth is not ok', async () => {
+  it('aborts with source_* when source readiness is not ok', async () => {
     const r = await runPollPrerequisites(
       setupSvc(true),
-      ghSvc('not_authenticated'),
+      sourceSvc('error', [
+        { code: 'source_gh_not_authenticated', message: 'no token' },
+      ]),
       board(async () => {}),
       jest.fn(),
       jest.fn(),
     );
-    expect(r).toEqual({ kind: 'aborted', reason: 'gh_not_authenticated' });
+    expect(r).toEqual({
+      kind: 'aborted',
+      reason: 'source_gh_not_authenticated',
+    });
   });
 
   it('returns probe_failed and calls onMcpProbeFailed when probe throws', async () => {
@@ -49,7 +60,7 @@ describe('runPollPrerequisites', () => {
     const onFail = jest.fn();
     const r = await runPollPrerequisites(
       setupSvc(true),
-      ghSvc('ok'),
+      sourceSvc('ok'),
       board(() => Promise.reject(new Error('boom'))),
       onOk,
       onFail,
@@ -64,7 +75,7 @@ describe('runPollPrerequisites', () => {
     const onFail = jest.fn();
     const r = await runPollPrerequisites(
       setupSvc(true),
-      ghSvc('ok'),
+      sourceSvc('ok'),
       board(async () => {}),
       onOk,
       onFail,

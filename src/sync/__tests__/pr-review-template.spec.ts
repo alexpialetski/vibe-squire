@@ -6,6 +6,9 @@ describe('applyPrReviewBodyTemplate', () => {
     title: 'Fix bug',
     url: 'https://github.com/o/r/pull/7',
     githubRepo: 'o/r',
+    createdAt: '2025-01-01T00:00:00Z',
+    headRefName: 'fix-bug',
+    authorLogin: 'alice',
   };
 
   it('replaces all placeholders', () => {

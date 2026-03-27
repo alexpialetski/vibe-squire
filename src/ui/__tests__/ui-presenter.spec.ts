@@ -8,6 +8,7 @@ import {
   type PollRunRowForActivity,
 } from '../ui-presenter';
 import type { SetupEvaluation } from '../../setup/setup-evaluation.service';
+import type { UiNavEntry } from '../../ports/ui-nav.types';
 
 function baseEv(over: Partial<SetupEvaluation> = {}): SetupEvaluation {
   return {
@@ -15,11 +16,17 @@ function baseEv(over: Partial<SetupEvaluation> = {}): SetupEvaluation {
     mappingCount: 0,
     sourceType: '',
     destinationType: '',
-    vkMcpReady: false,
+    destinationMcpConfigured: false,
     hasRouting: false,
     ...over,
   };
 }
+
+const sampleNav: UiNavEntry[] = [
+  { id: 'github', label: 'GitHub', href: '/ui/github' },
+  { id: 'mappings', label: 'Mappings', href: '/ui/mappings' },
+  { id: 'vibe_kanban', label: 'Vibe Kanban', href: '/ui/vibe-kanban' },
+];
 
 describe('ui-presenter', () => {
   describe('escapeForPre', () => {
@@ -47,7 +54,7 @@ describe('ui-presenter', () => {
       const rows = buildSetupChecklist(
         baseEv({
           destinationType: 'vibe_kanban',
-          vkMcpReady: false,
+          destinationMcpConfigured: false,
         }),
       );
       expect(rows.some((r) => r.text.includes('MCP stdio'))).toBe(true);
@@ -96,22 +103,10 @@ describe('ui-presenter', () => {
   });
 
   describe('uiNavLocals', () => {
-    it('never uses minimal nav; VK tools follow destination', () => {
-      const l = uiNavLocals(baseEv({ destinationType: '', sourceType: '' }));
+    it('passes entries through for the nav partial', () => {
+      const l = uiNavLocals(baseEv(), sampleNav);
       expect(l.navMinimal).toBe(false);
-      expect(l.showNavVkTools).toBe(false);
-      expect(l.showNavGithubSettings).toBe(false);
-    });
-    it('shows GitHub and VK nav when github source and vibe_kanban destination', () => {
-      const l = uiNavLocals(
-        baseEv({
-          sourceType: 'github',
-          destinationType: 'vibe_kanban',
-        }),
-      );
-      expect(l.navMinimal).toBe(false);
-      expect(l.showNavGithubSettings).toBe(true);
-      expect(l.showNavVkTools).toBe(true);
+      expect(l.integrationNavEntries).toBe(sampleNav);
     });
   });
 });

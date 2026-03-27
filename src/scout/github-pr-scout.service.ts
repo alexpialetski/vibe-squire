@@ -1,24 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
+import type { GithubPrCandidate } from '../ports/github-pr-candidate';
 import type { GithubPrScoutPort } from '../ports/github-scout.port';
 import { ghSearchPrsResponseSchema } from './github-search-prs.schema';
 
+export type { GithubPrCandidate } from '../ports/github-pr-candidate';
+
 /** Branch passed to `start_workspace` for every PR (PR head not fetched). */
 const WORKSPACE_BRANCH = 'main';
-
-export type GithubPrCandidate = {
-  number: number;
-  title: string;
-  url: string;
-  githubRepo: string;
-  /** ISO 8601 from GitHub (`gh search prs --json createdAt`). */
-  createdAt: string;
-  /** Fixed branch for `start_workspace` (not the PR head). */
-  headRefName: string;
-  /** From `gh search prs --json author`; used for author skip rules. */
-  authorLogin: string;
-};
 
 function compareCandidatesOldestFirst(
   a: GithubPrCandidate,

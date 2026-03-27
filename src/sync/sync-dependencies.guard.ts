@@ -2,45 +2,51 @@ import {
   CanActivate,
   HttpException,
   HttpStatus,
+  Inject,
   Injectable,
 } from '@nestjs/common';
-import { GhCliService } from '../gh/gh-cli.service';
-import { SyncRunStateService } from './sync-run-state.service';
+import {
+  DESTINATION_STATUS_PORT,
+  SOURCE_STATUS_PORT,
+} from '../ports/injection-tokens';
+import type { DestinationStatusProvider } from '../ports/destination-status.port';
+import type { SourceStatusProvider } from '../ports/source-status.port';
 
 /**
- * Blocks manual sync when GitHub CLI auth is not usable or Vibe Kanban has
- * been marked in error. Does not block on `unknown` / `degraded` VK health
- * (e.g. before the first poll).
+ * Blocks manual sync when the source or destination {@link checkReadiness} reports `error`.
+ * Does not block on `unknown` / `degraded` destination (e.g. before first poll). See PLUGIN-ARCHITECTURE-PLAN.md §9.
  */
 @Injectable()
 export class SyncDependenciesGuard implements CanActivate {
   constructor(
-    private readonly gh: GhCliService,
-    private readonly syncRunState: SyncRunStateService,
+    @Inject(SOURCE_STATUS_PORT)
+    private readonly sourceStatus: SourceStatusProvider,
+    @Inject(DESTINATION_STATUS_PORT)
+    private readonly destinationStatus: DestinationStatusProvider,
   ) {}
 
-  canActivate(): boolean {
-    const gh = this.gh.checkAuth();
-    if (gh.state !== 'ok') {
+  async canActivate(): Promise<boolean> {
+    const src = this.sourceStatus.checkReadiness();
+    if (src.state !== 'ok') {
       throw new HttpException(
         {
           error: 'dependency_unavailable',
-          subsystem: 'github',
-          state: gh.state,
-          ...(gh.message ? { message: gh.message } : {}),
+          subsystem: this.sourceStatus.sourceType,
+          state: src.state,
+          ...(src.message ? { message: src.message } : {}),
         },
         HttpStatus.SERVICE_UNAVAILABLE,
       );
     }
 
-    const vk = this.syncRunState.getVibeKanbanHealth();
-    if (vk.state === 'error') {
+    const dest = await this.destinationStatus.checkReadiness();
+    if (dest.state === 'error') {
       throw new HttpException(
         {
           error: 'dependency_unavailable',
-          subsystem: 'vibe_kanban',
-          state: vk.state,
-          ...(vk.message ? { message: vk.message } : {}),
+          subsystem: this.destinationStatus.destinationType,
+          state: dest.state,
+          ...(dest.message ? { message: dest.message } : {}),
         },
         HttpStatus.SERVICE_UNAVAILABLE,
       );

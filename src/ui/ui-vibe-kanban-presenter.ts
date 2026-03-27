@@ -7,6 +7,7 @@ import {
   normalizeVkWorkspaceExecutor,
   VK_WORKSPACE_EXECUTOR_OPTIONS,
 } from '../config/vk-workspace-executors';
+import type { UiNavEntry } from '../ports/ui-nav.types';
 import { SETTING_LABELS } from './setting-labels';
 import { uiNavLocals } from './ui-presenter';
 
@@ -22,10 +23,19 @@ export async function buildVibeKanbanPageLocals(deps: {
   destinationType: SupportedDestinationType;
   setupEvaluation: Pick<SetupEvaluationService, 'evaluate'>;
   vk: Pick<VibeKanbanMcpService, 'listOrganizations' | 'listProjects'>;
+  uiNavEntries: UiNavEntry[];
   saved?: string;
   err?: string;
 }): Promise<Record<string, unknown>> {
-  const { settings, destinationType, setupEvaluation, vk, saved, err } = deps;
+  const {
+    settings,
+    destinationType,
+    setupEvaluation,
+    vk,
+    uiNavEntries,
+    saved,
+    err,
+  } = deps;
   const values = settings.listEffectiveNonSecret();
   const ev = await setupEvaluation.evaluate();
   const mcpBoardPicker = isVibeKanbanMcpConfigured(settings, destinationType);
@@ -67,7 +77,7 @@ export async function buildVibeKanbanPageLocals(deps: {
     normalizedEx ?? VK_WORKSPACE_EXECUTOR_OPTIONS[0]?.value ?? 'cursor_agent';
 
   return {
-    ...uiNavLocals(ev),
+    ...uiNavLocals(ev, uiNavEntries),
     saved: saved === '1',
     error: err ? decodeURIComponent(err) : null,
     mcpBoardPicker,

@@ -266,19 +266,21 @@ describe('RunPollCycleService branches (integration)', () => {
       await seedCompleteRouting(prisma, settings);
     });
 
-    it('execute() aborts with gh_not_authenticated (manual HTTP would be blocked by SyncDependenciesGuard)', async () => {
+    it('execute() aborts with source_gh_not_authenticated (manual HTTP would be blocked by SyncDependenciesGuard)', async () => {
       await runPoll.execute('manual');
 
       const run = await prisma.pollRun.findFirst({
         orderBy: { startedAt: 'desc' },
       });
       expect(run?.phase).toBe(POLL_RUN_PHASE.aborted);
-      expect(run?.abortReason).toBe('gh_not_authenticated');
+      expect(run?.abortReason).toBe('source_gh_not_authenticated');
 
       const scout = await prisma.scoutState.findUnique({
         where: { scoutId: GITHUB_PR_SCOUT_ID },
       });
-      expect(scout?.lastError).toContain('skipped: gh_not_authenticated');
+      expect(scout?.lastError).toContain(
+        'skipped: source_gh_not_authenticated',
+      );
     });
   });
 });

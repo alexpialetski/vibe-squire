@@ -1,29 +1,36 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { APP_ENV, type AppEnv } from '../config/env-schema';
 import { PrismaService } from '../prisma/prisma.service';
-import { GhCliService } from '../gh/gh-cli.service';
 import { SettingsService } from '../settings/settings.service';
 import { SyncRunStateService } from '../sync/sync-run-state.service';
 import { SyncService } from '../sync/sync.service';
 import { GITHUB_PR_SCOUT_ID } from '../sync/sync-constants';
 import { redactHttpUrls } from '../logging/redact-urls';
 import { SetupEvaluationService } from '../setup/setup-evaluation.service';
-import { isVibeKanbanMcpConfigured } from '../vibe-kanban/mcp-transport-config';
+import {
+  DESTINATION_STATUS_PORT,
+  SOURCE_STATUS_PORT,
+} from '../ports/injection-tokens';
+import type { DestinationStatusProvider } from '../ports/destination-status.port';
+import type { SourceStatusProvider } from '../ports/source-status.port';
 
 @Injectable()
 export class StatusService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly gh: GhCliService,
+    @Inject(SOURCE_STATUS_PORT)
+    private readonly sourceStatus: SourceStatusProvider,
     private readonly settings: SettingsService,
     private readonly syncRunState: SyncRunStateService,
     private readonly sync: SyncService,
     private readonly setupEvaluation: SetupEvaluationService,
+    @Inject(DESTINATION_STATUS_PORT)
+    private readonly destinationStatus: DestinationStatusProvider,
     @Inject(APP_ENV) private readonly appEnv: AppEnv,
   ) {}
 
   async getSnapshot() {
-    const ghResult = this.gh.checkAuth();
+    const ghResult = this.sourceStatus.checkReadiness();
 
     let databaseState: 'ok' | 'error' = 'ok';
     let databaseMessage: string | undefined;
@@ -35,6 +42,7 @@ export class StatusService {
     }
 
     const setupEval = await this.setupEvaluation.evaluate();
+    const destReady = await this.destinationStatus.checkReadiness();
 
     const scoutRow = await this.prisma.scoutState.findUnique({
       where: { scoutId: GITHUB_PR_SCOUT_ID },
@@ -42,14 +50,15 @@ export class StatusService {
 
     const scoutState = this.resolveScoutUiState(scoutRow?.lastError);
 
-    const vkHealth = this.syncRunState.getVibeKanbanHealth();
+    const destId = this.appEnv.destinationType;
+    const destHealth = this.syncRunState.getDestinationHealth(destId);
     const destinations = [
       {
-        id: 'vibe_kanban',
-        state: vkHealth.state,
-        ...(vkHealth.lastOkAt ? { lastOkAt: vkHealth.lastOkAt } : {}),
-        ...(vkHealth.message
-          ? { message: redactHttpUrls(vkHealth.message) }
+        id: destId,
+        state: destHealth.state,
+        ...(destHealth.lastOkAt ? { lastOkAt: destHealth.lastOkAt } : {}),
+        ...(destHealth.message
+          ? { message: redactHttpUrls(destHealth.message) }
           : {}),
       },
     ];
@@ -58,6 +67,8 @@ export class StatusService {
     const scheduledSyncEnabled = this.settings.getEffectiveBoolean(
       'scheduled_sync_enabled',
     );
+
+    const destConfigExtras = destReady.configuration ?? {};
 
     return {
       timestamp: new Date().toISOString(),
@@ -77,10 +88,7 @@ export class StatusService {
       configuration: {
         source_type: setupEval.sourceType,
         destination_type: setupEval.destinationType,
-        vk_mcp_configured: isVibeKanbanMcpConfigured(
-          this.settings,
-          this.appEnv.destinationType,
-        ),
+        ...destConfigExtras,
       },
       destinations,
       scouts: [

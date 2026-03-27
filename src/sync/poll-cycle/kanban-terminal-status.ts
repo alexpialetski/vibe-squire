@@ -1,5 +1,7 @@
 /** True when Kanban issue status looks terminal (done / closed / cancelled). */
-export function isTerminalKanbanStatus(status: string | undefined): boolean {
+export function isTerminalKanbanStatus(
+  status: string | null | undefined,
+): boolean {
   if (!status) {
     return false;
   }

@@ -14,7 +14,7 @@ function baseEv(): SetupEvaluation {
     mappingCount: 1,
     sourceType: 'github',
     destinationType: 'vibe_kanban',
-    vkMcpReady: true,
+    destinationMcpConfigured: true,
     hasRouting: true,
   };
 }
@@ -52,6 +52,7 @@ describe('buildVibeKanbanPageLocals', () => {
       destinationType: 'vibe_kanban',
       setupEvaluation,
       vk,
+      uiNavEntries: [],
     });
 
     expect(locals.orgError).toBe(VK_PAGE_ORG_ERROR_NO_MCP);
@@ -93,6 +94,7 @@ describe('buildVibeKanbanPageLocals', () => {
       destinationType: 'vibe_kanban',
       setupEvaluation,
       vk,
+      uiNavEntries: [],
     });
 
     expect(locals.orgError).toBeNull();
@@ -137,6 +139,7 @@ describe('buildVibeKanbanPageLocals', () => {
       destinationType: 'vibe_kanban',
       setupEvaluation,
       vk,
+      uiNavEntries: [],
     });
 
     expect(locals.vkBoardListError).toBe('rpc down');

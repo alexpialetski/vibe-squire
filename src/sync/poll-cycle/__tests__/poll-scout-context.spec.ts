@@ -1,6 +1,6 @@
 import { buildPollScoutContext } from '../poll-scout-context';
 import type { SyncPrScoutPort } from '../../../ports/sync-pr-scout.port';
-import type { SyncDestinationBoardPort } from '../../../ports/sync-destination-board.port';
+import type { DestinationBoardPort } from '../../../ports/destination-board.port';
 import type { SettingsService } from '../../../settings/settings.service';
 
 const pr = {
@@ -32,11 +32,8 @@ describe('buildPollScoutContext', () => {
         return '';
       },
     } as Pick<SettingsService, 'getEffective'>;
-    const destinationBoard: Pick<
-      SyncDestinationBoardPort,
-      'countActiveVibeSquireIssues'
-    > = {
-      countActiveVibeSquireIssues: jest.fn().mockResolvedValue(3),
+    const destinationBoard: Pick<DestinationBoardPort, 'countActiveIssues'> = {
+      countActiveIssues: jest.fn().mockResolvedValue(3),
     };
     const warn = jest.fn();
 
@@ -56,7 +53,7 @@ describe('buildPollScoutContext', () => {
     expect(warn).not.toHaveBeenCalled();
   });
 
-  it('treats active count as 0 when countActiveVibeSquireIssues throws', async () => {
+  it('treats active count as 0 when countActiveIssues throws', async () => {
     const prScout: SyncPrScoutPort = {
       listReviewRequestedForMe: () => [],
     };
@@ -74,13 +71,8 @@ describe('buildPollScoutContext', () => {
         return '';
       },
     } as Pick<SettingsService, 'getEffective'>;
-    const destinationBoard: Pick<
-      SyncDestinationBoardPort,
-      'countActiveVibeSquireIssues'
-    > = {
-      countActiveVibeSquireIssues: jest
-        .fn()
-        .mockRejectedValue(new Error('network down')),
+    const destinationBoard: Pick<DestinationBoardPort, 'countActiveIssues'> = {
+      countActiveIssues: jest.fn().mockRejectedValue(new Error('network down')),
     };
     const warn = jest.fn();
 
@@ -94,7 +86,7 @@ describe('buildPollScoutContext', () => {
     expect(ctx.activeVkIssueCount).toBe(0);
     expect(ctx.quotaForCreates.remaining).toBe(5);
     expect(warn).toHaveBeenCalledWith(
-      expect.stringContaining('countActiveVibeSquireIssues failed'),
+      expect.stringContaining('countActiveIssues failed'),
     );
   });
 
@@ -116,11 +108,8 @@ describe('buildPollScoutContext', () => {
         return '';
       },
     } as Pick<SettingsService, 'getEffective'>;
-    const destinationBoard: Pick<
-      SyncDestinationBoardPort,
-      'countActiveVibeSquireIssues'
-    > = {
-      countActiveVibeSquireIssues: jest.fn().mockResolvedValue(0),
+    const destinationBoard: Pick<DestinationBoardPort, 'countActiveIssues'> = {
+      countActiveIssues: jest.fn().mockResolvedValue(0),
     };
     const warn = jest.fn();
 
@@ -156,11 +145,8 @@ describe('buildPollScoutContext', () => {
         return '';
       },
     } as Pick<SettingsService, 'getEffective'>;
-    const destinationBoard: Pick<
-      SyncDestinationBoardPort,
-      'countActiveVibeSquireIssues'
-    > = {
-      countActiveVibeSquireIssues: countSpy,
+    const destinationBoard: Pick<DestinationBoardPort, 'countActiveIssues'> = {
+      countActiveIssues: countSpy,
     };
 
     const ctx = await buildPollScoutContext({

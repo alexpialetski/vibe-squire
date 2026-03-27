@@ -40,14 +40,15 @@
     return reason ? String(reason) : 'Incomplete setup.';
   }
 
-  function ghHuman(state) {
-    const m = {
-      ok: 'Authenticated and ready.',
-      not_installed: 'Install the GitHub CLI (`gh`).',
-      not_authenticated: 'Run `gh auth login`.',
-      error: 'GitHub CLI error — check `gh` output.',
-    };
-    return m[state] || String(state);
+  function ghHuman(state, message) {
+    if (state === 'ok') return 'Authenticated and ready.';
+    if (state === 'error') {
+      return message && String(message).trim()
+        ? String(message)
+        : 'GitHub CLI error — check `gh` output.';
+    }
+    if (state === 'unknown') return 'GitHub CLI status unknown.';
+    return String(state);
   }
 
   function destHuman(d) {
@@ -103,8 +104,7 @@
     if (gh.state === 'ok') ghDot = 'status-ok';
     else if (gh.state === 'error') ghDot = 'status-err';
     else ghDot = 'status-warn';
-    const ghLines = [ghHuman(gh.state)];
-    if (gh.message) ghLines.push(gh.message);
+    const ghLines = [ghHuman(gh.state, gh.message)];
     parts.push(card('GitHub CLI', ghDot, ghLines));
 
     const db = snap.database || {};

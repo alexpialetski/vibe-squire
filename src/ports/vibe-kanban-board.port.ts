@@ -1,6 +1,4 @@
-import type { SyncDestinationBoardPort } from './sync-destination-board.port';
+import type { VibeKanbanMcpService } from '../vibe-kanban/vibe-kanban-mcp.service';
 
-/**
- * Vibe Kanban MCP adapter. Same surface as {@link SyncDestinationBoardPort} for v1.
- */
-export type VibeKanbanBoardPort = SyncDestinationBoardPort;
+/** Alias for the Vibe Kanban MCP facade (wiring / legacy references). */
+export type VibeKanbanBoardPort = VibeKanbanMcpService;
