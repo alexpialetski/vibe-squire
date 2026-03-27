@@ -1,3 +1,5 @@
+import type { SettingDefinition } from '../../settings/setting-definition';
+
 export const VK_SETTING_KEYS = [
   'vk_mcp_stdio_json',
   'default_organization_id',
@@ -7,8 +9,6 @@ export const VK_SETTING_KEYS = [
 ] as const;
 
 export type VkSettingKey = (typeof VK_SETTING_KEYS)[number];
-
-type Def = { envVar?: string; defaultValue: string };
 
 export const VK_SETTING_DEFINITIONS = {
   vk_mcp_stdio_json: {
@@ -25,7 +25,7 @@ export const VK_SETTING_DEFINITIONS = {
   kanban_done_status: {
     defaultValue: 'Done',
   },
-} satisfies Record<VkSettingKey, Def>;
+} satisfies Record<VkSettingKey, SettingDefinition>;
 
 /** Keys edited together on `/ui/vibe-kanban` (not the general Settings form). */
 export const VIBE_KANBAN_UI_KEYS = [

@@ -13,9 +13,6 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { SettingsService } from './settings.service';
-import { type SettingKey } from './setting-keys';
-import { StatusEventsService } from '../events/status-events.service';
-import { IntegrationSettingsEmitterService } from '../events/integration-settings-emitter.service';
 import { PATCH_SETTINGS_SCHEMA } from './dto/patch-settings.dto';
 import {
   formatZodIssuesForBadRequest,
@@ -25,11 +22,7 @@ import {
 @ApiTags('settings')
 @Controller('api/settings')
 export class SettingsController {
-  constructor(
-    private readonly settings: SettingsService,
-    private readonly statusEvents: StatusEventsService,
-    private readonly integrationEmitter: IntegrationSettingsEmitterService,
-  ) {}
+  constructor(private readonly settings: SettingsService) {}
 
   @Get()
   @ApiOperation({ summary: 'Effective non-secret settings (env + DB merged)' })
@@ -44,9 +37,6 @@ export class SettingsController {
     return this.settings.listEffectiveNonSecret();
   }
 
-  /**
-   * Body: `{ "vk_mcp_stdio_json": "[...]", "scheduled_sync_enabled": "true", "poll_interval_minutes": "15" }` — only known keys applied.
-   */
   @Patch()
   @ApiOperation({ summary: 'Upsert settings by key (strings only)' })
   @ApiBody({ schema: PATCH_SETTINGS_SCHEMA })
@@ -59,17 +49,7 @@ export class SettingsController {
     if (!parsed.success) {
       throw new BadRequestException(formatZodIssuesForBadRequest(parsed.error));
     }
-    const touched: string[] = [];
-    for (const [key, value] of Object.entries(parsed.data)) {
-      await this.settings.setValue(key as SettingKey, value);
-      touched.push(key);
-    }
-    await this.settings.refreshCache();
-    await this.integrationEmitter.emitIntegrationSettingsChanged(
-      touched as SettingKey[],
-    );
-    this.statusEvents.emitChanged();
-    this.statusEvents.emitScheduleRefresh();
+    await this.settings.applyPatch(parsed.data);
     return { ok: true };
   }
 }

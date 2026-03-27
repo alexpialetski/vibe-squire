@@ -6,8 +6,7 @@ import type { UiNavEntry } from '../ports/ui-nav.types';
 /**
  * Gathers all {@link UI_NAV_ENTRIES} multi-provider bindings at boot via {@link ModuleRef}.
  * Direct `@Inject(UI_NAV_ENTRIES)` doesn't aggregate across module boundaries in NestJS;
- * this service works around that limitation (same pattern as {@link SettingsService} for
- * `INTEGRATION_SETTINGS_PROVIDERS`).
+ * this service works around that limitation.
  */
 @Injectable()
 export class UiNavService implements OnModuleInit {

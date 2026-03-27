@@ -1,7 +1,5 @@
-import {
-  isValidMaxBoardPrCountInput,
-  resolveMaxBoardPrCount,
-} from '../max-board-pr-count';
+import { resolveMaxBoardPrCount } from '../max-board-pr-count';
+import { validateMaxBoardPrCount } from '../core-setting-keys';
 
 describe('resolveMaxBoardPrCount', () => {
   it('returns default for invalid input', () => {
@@ -20,9 +18,15 @@ describe('resolveMaxBoardPrCount', () => {
   });
 });
 
-describe('isValidMaxBoardPrCountInput', () => {
+describe('validateMaxBoardPrCount', () => {
   it('rejects out of range', () => {
-    expect(isValidMaxBoardPrCountInput('0')).toBe(false);
-    expect(isValidMaxBoardPrCountInput('201')).toBe(false);
+    expect(validateMaxBoardPrCount('0')).not.toBeNull();
+    expect(validateMaxBoardPrCount('201')).not.toBeNull();
+  });
+
+  it('accepts in-range values', () => {
+    expect(validateMaxBoardPrCount('1')).toBeNull();
+    expect(validateMaxBoardPrCount('5')).toBeNull();
+    expect(validateMaxBoardPrCount('200')).toBeNull();
   });
 });

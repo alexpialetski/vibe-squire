@@ -5,7 +5,6 @@ import { SyncRunStateModule } from '../../sync/sync-run-state.module';
 import {
   DESTINATION_BOARD_PORT,
   DESTINATION_STATUS_PORT,
-  INTEGRATION_SETTINGS_PROVIDERS,
   SYNC_DESTINATION_BOARD_PORT,
   UI_NAV_ENTRIES,
   VIBE_KANBAN_BOARD_PORT,
@@ -17,7 +16,6 @@ import { VibeKanbanContextController } from '../../vibe-kanban/vibe-kanban-conte
 import { VkMcpStdioSessionService } from '../../vibe-kanban/vk-mcp-stdio-session.service';
 import { VkBoardAdapterService } from './vk-board-adapter.service';
 import { VkStatusService } from './vk-status.service';
-import { VkIntegrationSettingsProvider } from './vk-settings.provider';
 import { VkMcpIntegrationListener } from './vk-mcp-integration.listener';
 import { VkUiController } from './vk-ui.controller';
 
@@ -40,13 +38,7 @@ const VK_NAV_BOARD: UiNavEntry = {
     VibeKanbanMcpService,
     VkBoardAdapterService,
     VkStatusService,
-    VkIntegrationSettingsProvider,
     VkMcpIntegrationListener,
-    {
-      provide: INTEGRATION_SETTINGS_PROVIDERS,
-      useExisting: VkIntegrationSettingsProvider,
-      multi: true,
-    } as Provider,
     {
       provide: UI_NAV_ENTRIES,
       useValue: VK_NAV_MAPPINGS,
@@ -88,7 +80,6 @@ const VK_NAV_BOARD: UiNavEntry = {
     SYNC_DESTINATION_BOARD_PORT,
     DESTINATION_STATUS_PORT,
     UI_NAV_ENTRIES,
-    INTEGRATION_SETTINGS_PROVIDERS,
   ],
 })
 export class VibeKanbanDestinationModule {}

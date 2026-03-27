@@ -15,10 +15,7 @@ import { StatusService } from '../status/status.service';
 import { SettingsService } from '../settings/settings.service';
 import { MappingsService } from '../mappings/mappings.service';
 import { StatusEventsService } from '../events/status-events.service';
-import { IntegrationSettingsEmitterService } from '../events/integration-settings-emitter.service';
-import { isValidMaxBoardPrCountInput } from '../settings/max-board-pr-count';
-import { isValidScheduledSyncEnabledInput } from '../settings/scheduled-sync-enabled';
-import { type SettingKey } from '../settings/setting-keys';
+import { validateSettingValue } from '../settings/setting-keys';
 import { schedulerTextFieldsForUi } from './setting-labels';
 import { generalSettingsPostKeys } from './integration-ui-registry';
 import { SetupEvaluationService } from '../setup/setup-evaluation.service';
@@ -40,7 +37,6 @@ export class UiController {
     private readonly settings: SettingsService,
     private readonly mappings: MappingsService,
     private readonly statusEvents: StatusEventsService,
-    private readonly integrationEmitter: IntegrationSettingsEmitterService,
     private readonly setupEvaluation: SetupEvaluationService,
     private readonly pollRunHistory: PollRunHistoryService,
     private readonly uiNav: UiNavService,
@@ -113,34 +109,15 @@ export class UiController {
     @Res() res: Response,
   ): Promise<void> {
     try {
-      const touched: SettingKey[] = [];
+      const entries: Record<string, string> = {};
       for (const key of generalSettingsPostKeys()) {
-        if (Object.prototype.hasOwnProperty.call(body, key)) {
-          const value = String(body[key] ?? '');
-          if (
-            key === 'max_board_pr_count' &&
-            !isValidMaxBoardPrCountInput(value)
-          ) {
-            throw new Error(
-              'Max PRs on board must be an integer from 1 to 200',
-            );
-          }
-          if (
-            key === 'scheduled_sync_enabled' &&
-            !isValidScheduledSyncEnabledInput(value)
-          ) {
-            throw new Error(
-              'Automatic polling must be true/false, 1/0, or yes/no',
-            );
-          }
-          await this.settings.setValue(key, value);
-          touched.push(key);
-        }
+        if (!Object.prototype.hasOwnProperty.call(body, key)) continue;
+        const value = String(body[key] ?? '');
+        const error = validateSettingValue(key, value);
+        if (error) throw new Error(error);
+        entries[key] = value;
       }
-      await this.settings.refreshCache();
-      await this.integrationEmitter.emitIntegrationSettingsChanged(touched);
-      this.statusEvents.emitChanged();
-      this.statusEvents.emitScheduleRefresh();
+      await this.settings.applyPatch(entries);
       res.redirect(302, '/ui/settings?saved=1');
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
