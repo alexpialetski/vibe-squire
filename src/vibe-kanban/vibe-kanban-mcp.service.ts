@@ -59,7 +59,7 @@ export class VibeKanbanMcpService {
       return;
     }
     const summary = summarizeMcpToolErrorText(result);
-    this.logger.error(
+    this.logger.debug(
       `Vibe Kanban MCP tool "${toolName}" returned isError: ${summary}`,
     );
     throw new Error(`${toolName}: ${summary}`);
