@@ -18,17 +18,23 @@ import { StatusEventsService } from '../events/status-events.service';
 import { schedulerTextFieldsForUi } from './setting-labels';
 import { generalSettingsPostKeys } from './integration-ui-registry';
 import { SetupEvaluationService } from '../setup/setup-evaluation.service';
-import { PollRunHistoryService } from '../sync/poll-run-history.service';
 import {
   buildSetupChecklist,
   destinationTypeLabel,
   escapeForPre,
-  presentActivityRunsForView,
+  SETUP_REASON_MESSAGES,
   sourceTypeLabel,
   uiNavLocals,
 } from './ui-presenter';
 import { UiNavService } from './ui-nav.service';
 import { CoreSettings } from '../settings/core-settings.service';
+
+/** HTML form body from POST /ui/mappings (all string per url-encoded). */
+type MappingFormBody = {
+  githubRepo?: string;
+  vibeKanbanRepoId?: string;
+  label?: string;
+};
 
 @Controller('ui')
 export class UiController {
@@ -39,7 +45,6 @@ export class UiController {
     private readonly mappings: MappingsService,
     private readonly statusEvents: StatusEventsService,
     private readonly setupEvaluation: SetupEvaluationService,
-    private readonly pollRunHistory: PollRunHistoryService,
     private readonly uiNav: UiNavService,
   ) {}
 
@@ -51,13 +56,8 @@ export class UiController {
 
   @Get('activity')
   @Render('activity')
-  async activityPage(): Promise<Record<string, unknown>> {
-    const ev = await this.setupEvaluation.evaluate();
-    const rows = await this.pollRunHistory.listRecentForUi(40);
-    return {
-      ...uiNavLocals(ev, this.uiNav.getEntries()),
-      runs: presentActivityRunsForView(rows),
-    };
+  activityPage(): Record<string, unknown> {
+    return uiNavLocals(this.uiNav.getEntries());
   }
 
   @Get('dashboard')
@@ -70,9 +70,10 @@ export class UiController {
     const setupChecklist = buildSetupChecklist(ev);
     const scheduledSyncEnabled = this.coreSettings.scheduledSyncEnabled;
     return {
-      ...uiNavLocals(ev, this.uiNav.getEntries()),
+      ...uiNavLocals(this.uiNav.getEntries()),
       snapshotPretty,
       bootSnapshotJson,
+      setupReasonMapJson: JSON.stringify(SETUP_REASON_MESSAGES),
       manualSync: snapshot.manual_sync as Record<string, unknown>,
       showSetupChecklist: setupChecklist.length > 0,
       setupChecklist,
@@ -90,7 +91,7 @@ export class UiController {
     const ev = await this.setupEvaluation.evaluate();
     const scheduledSyncEnabled = this.coreSettings.scheduledSyncEnabled;
     return {
-      ...uiNavLocals(ev, this.uiNav.getEntries()),
+      ...uiNavLocals(this.uiNav.getEntries()),
       fields: schedulerTextFieldsForUi(values),
       scheduledSyncEnabled,
       saved: saved === '1',
@@ -127,7 +128,7 @@ export class UiController {
     const ev = await this.setupEvaluation.evaluate();
     const rows = await this.mappings.findAll();
     return {
-      ...uiNavLocals(ev, this.uiNav.getEntries()),
+      ...uiNavLocals(this.uiNav.getEntries()),
       rows,
       error: err ? decodeURIComponent(err) : null,
       kanbanMcpPicker: ev.destinationMcpConfigured,
@@ -136,7 +137,7 @@ export class UiController {
 
   @Post('mappings')
   async postMapping(
-    @Body() body: Record<string, string>,
+    @Body() body: MappingFormBody,
     @Res() res: Response,
   ): Promise<void> {
     try {

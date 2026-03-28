@@ -13,17 +13,15 @@
   const esc = Ui.esc;
   const fmtIso = Ui.fmtIso;
 
+  var reasonMap = {};
+  try {
+    var el = document.getElementById('setup-reasons');
+    if (el && el.textContent) reasonMap = JSON.parse(el.textContent);
+  } catch { /* embedded map unavailable — fall through to reason code */ }
+
   function setupReasonHuman(reason) {
-    if (reason === 'vk_mcp_stdio_invalid') {
-      return 'Set stdio MCP command via VK_MCP_STDIO_JSON or PATCH vk_mcp_stdio_json (/api/settings/destination).';
-    }
-    if (reason === 'no_default_kanban_board') {
-      return 'Open Vibe Kanban and set target organization + project (required for sync).';
-    }
-    if (reason === 'no_mappings') {
-      return 'Add at least one GitHub repo → Vibe Kanban repository mapping on Mappings.';
-    }
-    return reason ? String(reason) : 'Incomplete setup.';
+    if (!reason) return 'Incomplete setup.';
+    return reasonMap[reason] || String(reason);
   }
 
   function ghHuman(state, message) {

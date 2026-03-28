@@ -6,7 +6,7 @@ import { isVibeKanbanMcpConfigured } from '../vibe-kanban/transport/mcp-transpor
 import {
   normalizeVkWorkspaceExecutor,
   VK_WORKSPACE_EXECUTOR_OPTIONS,
-} from '../integrations/vibe-kanban/vk-workspace-executors';
+} from '../config/vk-executors';
 import type { UiNavEntry } from '../ports/ui-nav.types';
 import { SETTING_LABELS } from './setting-labels';
 import { uiNavLocals } from './ui-presenter';
@@ -37,7 +37,7 @@ export async function buildVibeKanbanPageLocals(deps: {
     err,
   } = deps;
   const values = settings.listEffectiveNonSecret();
-  const ev = await setupEvaluation.evaluate();
+  await setupEvaluation.evaluate();
   const mcpBoardPicker = isVibeKanbanMcpConfigured(settings, destinationType);
   const orgError = !mcpBoardPicker ? VK_PAGE_ORG_ERROR_NO_MCP : null;
   const boardOrg = settings.getEffective('default_organization_id');
@@ -77,7 +77,7 @@ export async function buildVibeKanbanPageLocals(deps: {
     normalizedEx ?? VK_WORKSPACE_EXECUTOR_OPTIONS[0]?.value ?? 'cursor_agent';
 
   return {
-    ...uiNavLocals(ev, uiNavEntries),
+    ...uiNavLocals(uiNavEntries),
     saved: saved === '1',
     error: err ? decodeURIComponent(err) : null,
     mcpBoardPicker,

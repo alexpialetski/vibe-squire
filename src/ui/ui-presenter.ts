@@ -81,7 +81,11 @@ export function presentActivityRunsForView(
 }
 
 export function escapeForPre(s: string): string {
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
 
 export function destinationTypeLabel(t: string): string {
@@ -133,13 +137,25 @@ export function buildSetupChecklist(ev: SetupEvaluation): SetupChecklistRow[] {
   return rows;
 }
 
+/** Reason code → human-readable setup guidance (single source for server + client). */
+export const SETUP_REASON_MESSAGES: Record<string, string> = {
+  vk_mcp_stdio_invalid:
+    'Set stdio MCP command via VK_MCP_STDIO_JSON or PATCH vk_mcp_stdio_json (/api/settings/destination).',
+  no_default_kanban_board:
+    'Open Vibe Kanban and set target organization + project (required for sync).',
+  no_mappings:
+    'Add at least one GitHub repo → Vibe Kanban repository mapping on Mappings.',
+};
+
+export function setupReasonHuman(reason: string | undefined): string {
+  if (!reason) return 'Incomplete setup.';
+  return SETUP_REASON_MESSAGES[reason] ?? String(reason);
+}
+
 /**
  * Sidebar integration links come from {@link UiNavService} (aggregated per integration module).
  */
-export function uiNavLocals(
-  _ev: SetupEvaluation,
-  integrationNavEntries: UiNavEntry[],
-): {
+export function uiNavLocals(integrationNavEntries: UiNavEntry[]): {
   navMinimal: boolean;
   integrationNavEntries: UiNavEntry[];
 } {
