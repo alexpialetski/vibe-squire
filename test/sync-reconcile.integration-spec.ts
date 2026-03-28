@@ -8,7 +8,7 @@ import { GithubPrScoutService } from '../src/scout/github-pr-scout.service';
 import { VibeKanbanMcpService } from '../src/vibe-kanban/vibe-kanban-mcp.service';
 import { PrismaService } from '../src/prisma/prisma.service';
 import { SettingsService } from '../src/settings/settings.service';
-import { KANBAN_TERMINAL_STATUS } from '../src/sync/sync-constants';
+import { DEFAULT_KANBAN_DONE_STATUS } from '../src/sync/sync-constants';
 
 /**
  * §16.5 — PR disappears from scout → reconcile calls update_issue to terminal status and drops sync row.
@@ -108,7 +108,7 @@ describe('Sync reconciliation (integration)', () => {
     expect(vkStub.getIssue).toHaveBeenCalledWith('fake-issue-id');
     expect(vkStub.updateIssue).toHaveBeenCalledTimes(1);
     expect(vkStub.updateIssue).toHaveBeenCalledWith('fake-issue-id', {
-      status: KANBAN_TERMINAL_STATUS,
+      status: DEFAULT_KANBAN_DONE_STATUS,
     });
     expect(await prisma.syncedPullRequest.count()).toBe(0);
     expect(vkStub.createIssue).toHaveBeenCalledTimes(1);

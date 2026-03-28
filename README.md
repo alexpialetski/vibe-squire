@@ -20,7 +20,7 @@ npm run start:dev
 
 Handlebars templates + static CSS/JS are served by the same Nest process (no separate dev server).
 
-- **URLs:** [http://127.0.0.1:3000/ui/dashboard](http://127.0.0.1:3000/ui/dashboard) (root `/` redirects here), plus `/ui/settings`, `/ui/mappings`, `/ui/vibe-kanban` (legacy `/ui/kanban` redirects here).
+- **URLs:** [http://127.0.0.1:3000/ui/dashboard](http://127.0.0.1:3000/ui/dashboard) (root `/` redirects here), plus `/ui/settings`, `/ui/mappings`, `/ui/vibe-kanban`.
 - **Assets:** `/ui/assets/*` (CSS + small scripts for SSE, inline mapping edits, Vibe Kanban page).
 - **Templates:** `src/ui/views/` (and `src/ui/public/`). Copied to `dist/ui/` on `npm run build` via `nest-cli.json` assets.
 
@@ -79,14 +79,13 @@ After `npm run build`, the package exposes `vibe-squire` via `bin/vibe-squire.js
 | `npm run build` | `nest build` |
 | `npm run start:prod` | `node dist/main` |
 | `npm run test` | Unit tests (`src/**/__tests__/**/*.spec.ts`) |
-| `npm run test:e2e` | Supertest against bootstrapped app |
-| `npm run test:integration` | Fakes for `gh` / scout / MCP; DB in temp dir per worker |
+| `npm run test:integration` | Prisma + migrations + Nest wiring; Supertest HTTP smoke; stubs for `gh` / MCP |
 
 ## Tests (§16)
 
 - **Unit:** setting precedence (`config/__tests__/resolve-effective-setting.spec.ts`), poll backoff (`sync/__tests__/poll-backoff.spec.ts`).
 - **Integration:** happy path + idempotency (`sync-with-fakes.integration-spec.ts`), reconciliation (`sync-reconcile.integration-spec.ts`), VK-first board cap (`sync-vk-board-cap.integration-spec.ts`), Kanban heal / quota (`sync-kanban-issue-heal.integration-spec.ts`), settings / mappings / Kanban context (`settings-mappings-vk.integration-spec.ts`), poll-cycle branches (`run-poll-cycle-branches.integration-spec.ts`), VK MCP listener + settings emit (`vk-mcp-integration-listener.integration-spec.ts`), UI smoke (`ui-smoke.integration-spec.ts`).
-- **Contract:** `validateStatusSnapshot` on `GET /api/status` in e2e.
+- **Contract:** `validateStatusSnapshot` on `GET /api/status` in `ui-smoke.integration-spec.ts`.
 
 ## Docker (optional)
 

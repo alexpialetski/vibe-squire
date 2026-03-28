@@ -8,8 +8,7 @@ alwaysApply: true
 ## Strategy
 
 - **Integration-first:** Prefer tests that run real Prisma + migrations and Nest module wiring. Stub or fake only at boundaries (**GitHub scout**, **Vibe Kanban MCP**, **`gh` CLI**) so CI does not hit real networks.
-- **Unit tests:** Use for **pure logic**, **Zod/schemas**, and **small helpers**—not for every controller line. HTTP confidence can come from Supertest + test DB when you add API-level integration tests.
-- **E2E:** Keep **minimal** (smoke / contract); do not rely on a large E2E suite for routine coverage.
+- **Unit tests:** Use for **pure logic**, **Zod/schemas**, and **small helpers**—not for every controller line. HTTP smoke and API contracts live in `test/*.integration-spec.ts` (e.g. `ui-smoke.integration-spec.ts`).
 
 ## Where files live
 
@@ -17,7 +16,6 @@ alwaysApply: true
 |------|-----------|------|
 | Unit | `src/**/__tests__/**/*.spec.ts` (mirror the feature folder; root app spec in `src/__tests__/`) | Default `npm test` — see `package.json` `jest.testMatch` |
 | Integration | `test/*.integration-spec.ts` | `npm run test:integration` — `test/jest-integration.json` |
-| E2E | `test/*.e2e-spec.ts` | `npm run test:e2e` — `test/jest-e2e.json` |
 
 New unit specs **must** sit under `__tests__` or Jest will not discover them. Imports from `__tests__` typically use `../` to the implementation module (adjust depth for nested folders). Keep the `*.spec.ts` suffix.
 
@@ -38,5 +36,5 @@ Repo-wide line % is misleading; if you add thresholds, scope them to **directori
 ## Verify
 
 ```bash
-npm test && npm run test:cov && npm run test:integration && npm run test:e2e
+npm test && npm run test:cov && npm run test:integration
 ```

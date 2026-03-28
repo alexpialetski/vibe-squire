@@ -101,7 +101,7 @@ export function buildSetupChecklist(ev: SetupEvaluation): SetupChecklistRow[] {
   if (ev.destinationType.trim() === 'vibe_kanban') {
     if (!ev.destinationMcpConfigured) {
       rows.push({
-        text: 'Configure Vibe Kanban MCP stdio (VK_MCP_STDIO_JSON env or PATCH vk_mcp_stdio_json via /api/settings).',
+        text: 'Configure Vibe Kanban MCP stdio (VK_MCP_STDIO_JSON env or PATCH vk_mcp_stdio_json via /api/settings/destination).',
       });
     }
     if (ev.reason === 'no_default_kanban_board') {

@@ -7,6 +7,28 @@ import { configureExpressApp } from '../src/configure-express-app';
 import { GhCliService } from '../src/gh/gh-cli.service';
 import { VibeKanbanMcpService } from '../src/vibe-kanban/vibe-kanban-mcp.service';
 import { PollSchedulerService } from '../src/sync/poll-scheduler.service';
+import { validateStatusSnapshot } from '../src/status/status-snapshot.contract';
+
+const HTTP_SMOKE_ENV_KEYS = ['SOURCE_TYPE', 'VK_MCP_STDIO_JSON'] as const;
+
+function snapshotHttpSmokeEnv(): Record<string, string | undefined> {
+  const out: Record<string, string | undefined> = {};
+  for (const k of HTTP_SMOKE_ENV_KEYS) {
+    out[k] = process.env[k];
+  }
+  return out;
+}
+
+function restoreHttpSmokeEnv(snap: Record<string, string | undefined>): void {
+  for (const k of HTTP_SMOKE_ENV_KEYS) {
+    const v = snap[k];
+    if (v === undefined) {
+      delete process.env[k];
+    } else {
+      process.env[k] = v;
+    }
+  }
+}
 
 const vkStub = {
   probe: jest.fn().mockResolvedValue(undefined),
@@ -21,60 +43,170 @@ const vkStub = {
   startWorkspace: jest.fn().mockResolvedValue('ws-1'),
 };
 
-/**
- * Phase 1 — UiController smoke: HBS stack + status snapshot without real gh / MCP.
- */
-describe('UI smoke (integration)', () => {
-  let app: NestExpressApplication;
-
-  beforeAll(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [testingAppModule()],
+async function createSmokeApp(): Promise<NestExpressApplication> {
+  const moduleFixture: TestingModule = await Test.createTestingModule({
+    imports: [testingAppModule()],
+  })
+    .overrideProvider(GhCliService)
+    .useValue({
+      checkAuth: () => ({ state: 'ok' as const }),
     })
-      .overrideProvider(GhCliService)
-      .useValue({
-        checkAuth: () => ({ state: 'ok' as const }),
-      })
-      .overrideProvider(VibeKanbanMcpService)
-      .useValue(vkStub)
-      .compile();
+    .overrideProvider(VibeKanbanMcpService)
+    .useValue(vkStub)
+    .compile();
 
-    app = moduleFixture.createNestApplication<NestExpressApplication>();
-    configureExpressApp(app);
-    app.useGlobalPipes(
-      new ValidationPipe({ whitelist: true, transform: true }),
-    );
-    await app.init();
+  const app = moduleFixture.createNestApplication<NestExpressApplication>();
+  configureExpressApp(app);
+  app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+  await app.init();
+  app.get(PollSchedulerService).onModuleDestroy();
+  return app;
+}
 
-    const scheduler = app.get(PollSchedulerService);
-    scheduler.onModuleDestroy();
+/**
+ * HBS + Express wiring, status/reinit/sync contracts — real Prisma + migrations, stubbed gh / MCP.
+ */
+describe('App HTTP smoke (integration)', () => {
+  describe('default operator env (no SOURCE_TYPE / VK MCP env)', () => {
+    let app: NestExpressApplication;
+    let prevEnv: Record<string, string | undefined>;
+
+    beforeAll(async () => {
+      prevEnv = snapshotHttpSmokeEnv();
+      delete process.env.SOURCE_TYPE;
+      delete process.env.VK_MCP_STDIO_JSON;
+      app = await createSmokeApp();
+    });
+
+    afterAll(async () => {
+      await app.close();
+      restoreHttpSmokeEnv(prevEnv);
+    });
+
+    it('GET / redirects to operator UI', async () => {
+      await request(app.getHttpServer())
+        .get('/')
+        .expect(302)
+        .expect('Location', '/ui/dashboard');
+    });
+
+    it('GET /ui/dashboard renders dashboard HTML', async () => {
+      const res = await request(app.getHttpServer())
+        .get('/ui/dashboard')
+        .expect(200);
+      expect(res.text).toContain('Dashboard');
+      expect(res.text).toContain('Technical details (raw JSON)');
+    });
+
+    it('GET /ui/settings renders general settings HTML', async () => {
+      const res = await request(app.getHttpServer())
+        .get('/ui/settings')
+        .expect(200);
+      expect(res.text).toContain('General');
+      expect(res.text).toContain('Sync adapters');
+      expect(res.text).toContain('Resolved for this process');
+    });
+
+    it('GET /ui/activity renders activity HTML', async () => {
+      const res = await request(app.getHttpServer())
+        .get('/ui/activity')
+        .expect(200);
+      expect(res.text).toContain('Activity');
+      expect(res.text).toContain('Per-sync');
+    });
+
+    it('GET /api/status returns a valid snapshot', async () => {
+      const res = await request(app.getHttpServer())
+        .get('/api/status')
+        .expect(200);
+      const body = res.body as {
+        timestamp: string;
+        gh: { state: string };
+        database: { state: string };
+        setup: { complete: boolean; reason?: string };
+        configuration: {
+          source_type: string;
+          destination_type: string;
+          vk_mcp_configured: boolean;
+        };
+        destinations: Array<{ id: string; state: string }>;
+        scouts: Array<{ id: string; state: string }>;
+        manual_sync: { canRun: boolean };
+        scheduled_sync: { enabled: boolean };
+      };
+      expect(typeof body.timestamp).toBe('string');
+      expect(typeof body.gh.state).toBe('string');
+      expect(typeof body.database.state).toBe('string');
+      expect(typeof body.setup.complete).toBe('boolean');
+      expect(typeof body.configuration.source_type).toBe('string');
+      expect(typeof body.configuration.destination_type).toBe('string');
+      expect(typeof body.configuration.vk_mcp_configured).toBe('boolean');
+      expect(Array.isArray(body.destinations)).toBe(true);
+      expect(body.destinations.length).toBeGreaterThanOrEqual(1);
+      expect(typeof body.destinations[0].state).toBe('string');
+      expect(Array.isArray(body.scouts)).toBe(true);
+      expect(body.scouts.length).toBe(1);
+      expect(typeof body.scouts[0].state).toBe('string');
+      expect(typeof body.manual_sync.canRun).toBe('boolean');
+      expect(typeof body.scheduled_sync.enabled).toBe('boolean');
+
+      expect(validateStatusSnapshot(body)).toBeNull();
+    });
+
+    it('POST /api/reinit returns subsystem states', async () => {
+      const res = await request(app.getHttpServer())
+        .post('/api/reinit')
+        .expect(201);
+      const body = res.body as {
+        ok: boolean;
+        database: { state: string };
+        source: { state: string };
+        destination: { state: string };
+      };
+      expect(body.ok).toBe(true);
+      expect(body.database.state).toBe('ok');
+      expect(typeof body.source.state).toBe('string');
+      expect(typeof body.destination.state).toBe('string');
+    });
   });
 
-  afterAll(async () => {
-    await app.close();
-  });
+  describe('invalid VK MCP stdio (env)', () => {
+    let app: NestExpressApplication;
+    let prevEnv: Record<string, string | undefined>;
 
-  it('GET /ui/dashboard renders dashboard HTML', async () => {
-    const res = await request(app.getHttpServer())
-      .get('/ui/dashboard')
-      .expect(200);
-    expect(res.text).toContain('Dashboard');
-    expect(res.text).toContain('Technical details (raw JSON)');
-  });
+    beforeAll(async () => {
+      prevEnv = snapshotHttpSmokeEnv();
+      delete process.env.SOURCE_TYPE;
+      process.env.VK_MCP_STDIO_JSON = '[]';
+      app = await createSmokeApp();
+    });
 
-  it('GET /ui/settings renders general settings HTML', async () => {
-    const res = await request(app.getHttpServer())
-      .get('/ui/settings')
-      .expect(200);
-    expect(res.text).toContain('General');
-    expect(res.text).toContain('Sync adapters');
-    expect(res.text).toContain('Resolved for this process');
-  });
+    afterAll(async () => {
+      await app.close();
+      restoreHttpSmokeEnv(prevEnv);
+    });
 
-  it('GET /ui/activity renders activity HTML', async () => {
-    const res = await request(app.getHttpServer())
-      .get('/ui/activity')
-      .expect(200);
-    expect(res.text).toContain('Activity');
+    it('GET /ui/dashboard still renders (no integration gate redirect)', async () => {
+      const res = await request(app.getHttpServer())
+        .get('/ui/dashboard')
+        .expect(200);
+      expect(res.text).toContain('Dashboard');
+    });
+
+    it('GET /ui/activity still renders', async () => {
+      const res = await request(app.getHttpServer())
+        .get('/ui/activity')
+        .expect(200);
+      expect(res.text).toContain('Activity');
+    });
+
+    it('POST /api/sync/run returns 409 when setup incomplete', async () => {
+      const res = await request(app.getHttpServer())
+        .post('/api/sync/run')
+        .expect(409);
+      const body = res.body as { error: string; reason: string };
+      expect(body.error).toBe('setup_incomplete');
+      expect(typeof body.reason).toBe('string');
+    });
   });
 });

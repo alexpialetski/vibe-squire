@@ -1,5 +1,5 @@
 import type { PrismaService } from '../../prisma/prisma.service';
-import type { SettingsService } from '../../settings/settings.service';
+import type { CoreSettings } from '../../settings/core-settings.service';
 import { GITHUB_PR_SCOUT_ID } from '../sync-constants';
 import { computeErrorNextPollAt } from '../poll-backoff';
 
@@ -48,7 +48,7 @@ export async function persistScoutSkippedAfterPoll(deps: {
 export async function persistScoutErrorAfterPoll(deps: {
   prisma: PrismaService;
   now: Date;
-  settings: SettingsService;
+  coreSettings: CoreSettings;
   message: string;
   markPollCompleted: () => void;
 }): Promise<void> {
@@ -56,7 +56,11 @@ export async function persistScoutErrorAfterPoll(deps: {
     where: { scoutId: GITHUB_PR_SCOUT_ID },
   });
   const streak = (row?.failureStreak ?? 0) + 1;
-  const nextPollAt = computeErrorNextPollAt(deps.now, streak, deps.settings);
+  const nextPollAt = computeErrorNextPollAt(
+    deps.now,
+    streak,
+    deps.coreSettings,
+  );
   await deps.prisma.scoutState.upsert({
     where: { scoutId: GITHUB_PR_SCOUT_ID },
     create: {

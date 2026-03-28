@@ -1,41 +1,41 @@
+import { isIgnoredAuthorLogin } from '../pr-ignore-author-logins';
 import {
-  isIgnoredAuthorLogin,
-  parsePrIgnoreAuthorLogins,
-} from '../pr-ignore-author-logins';
+  prIgnoreAuthorLoginsSchema,
+  prIgnoreAuthorLoginsStorageField,
+} from '../../integrations/github/github-settings.schema';
 
-describe('parsePrIgnoreAuthorLogins', () => {
-  it('returns empty set for empty string', () => {
-    const r = parsePrIgnoreAuthorLogins('');
-    expect(r.ok).toBe(true);
-    if (r.ok) {
-      expect(r.set.size).toBe(0);
-    }
+describe('prIgnoreAuthorLoginsStorageField', () => {
+  it('returns empty parse for empty string', () => {
+    const result = prIgnoreAuthorLoginsStorageField.safeParse('');
+    expect(result.success).toBe(true);
   });
 
-  it('splits on semicolon and lowercases', () => {
-    const r = parsePrIgnoreAuthorLogins(' Foo ; bar ');
-    expect(r.ok).toBe(true);
-    if (r.ok) {
-      expect([...r.set].sort()).toEqual(['bar', 'foo']);
-    }
-  });
-
-  it('treats consecutive semicolons as extra delimiters (empty tokens dropped)', () => {
-    const r = parsePrIgnoreAuthorLogins('a;;b');
-    expect(r.ok).toBe(true);
-    if (r.ok) {
-      expect([...r.set].sort()).toEqual(['a', 'b']);
+  it('splits on semicolon and accepts valid logins', () => {
+    const result = prIgnoreAuthorLoginsStorageField.safeParse(' Foo ; bar ');
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data).toBe(' Foo ; bar ');
     }
   });
 
   it('rejects a login longer than max length', () => {
-    const r = parsePrIgnoreAuthorLogins('a'.repeat(100));
-    expect(r.ok).toBe(false);
+    const result = prIgnoreAuthorLoginsStorageField.safeParse('a'.repeat(100));
+    expect(result.success).toBe(false);
   });
 
   it('rejects when raw too long', () => {
-    const r = parsePrIgnoreAuthorLogins('x'.repeat(8001));
-    expect(r.ok).toBe(false);
+    const result = prIgnoreAuthorLoginsStorageField.safeParse('x'.repeat(8001));
+    expect(result.success).toBe(false);
+  });
+});
+
+describe('prIgnoreAuthorLoginsSchema (Set output)', () => {
+  it('lower cases for set', () => {
+    const r = prIgnoreAuthorLoginsSchema.safeParse('Foo;BAR');
+    expect(r.success).toBe(true);
+    if (r.success) {
+      expect([...r.data].sort()).toEqual(['bar', 'foo']);
+    }
   });
 });
 

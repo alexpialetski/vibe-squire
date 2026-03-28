@@ -9,7 +9,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { RunPollCycleService } from './run-poll-cycle.service';
 import { GITHUB_PR_SCOUT_ID } from './sync-constants';
 import { StatusEventsService } from '../events/status-events.service';
-import { SettingsService } from '../settings/settings.service';
+import { CoreSettings } from '../settings/core-settings.service';
 
 const MIN_DELAY_MS = 1_000;
 const STARTUP_DELAY_MS = 3_000;
@@ -26,7 +26,7 @@ export class PollSchedulerService implements OnModuleInit, OnModuleDestroy {
     private readonly prisma: PrismaService,
     private readonly runPoll: RunPollCycleService,
     private readonly statusEvents: StatusEventsService,
-    private readonly settings: SettingsService,
+    private readonly coreSettings: CoreSettings,
   ) {}
 
   onModuleInit(): void {
@@ -63,7 +63,7 @@ export class PollSchedulerService implements OnModuleInit, OnModuleDestroy {
     if (this.stopped) {
       return;
     }
-    if (!this.settings.getEffectiveBoolean('scheduled_sync_enabled')) {
+    if (!this.coreSettings.scheduledSyncEnabled) {
       this.logger.debug(
         `Scheduled sync disabled (scheduled_sync_enabled); timer not armed (${reason})`,
       );
@@ -98,7 +98,7 @@ export class PollSchedulerService implements OnModuleInit, OnModuleDestroy {
       return;
     }
     this.handle = null;
-    if (!this.settings.getEffectiveBoolean('scheduled_sync_enabled')) {
+    if (!this.coreSettings.scheduledSyncEnabled) {
       this.logger.debug(
         'Scheduled poll skipped: scheduled_sync_enabled is off',
       );

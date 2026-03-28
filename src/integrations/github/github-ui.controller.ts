@@ -10,10 +10,6 @@ import {
 import { APP_ENV, type AppEnv } from '../../config/app-env.token';
 import type { Response } from 'express';
 import { SettingsService } from '../../settings/settings.service';
-import { StatusEventsService } from '../../events/status-events.service';
-import { IntegrationSettingsEmitterService } from '../../events/integration-settings-emitter.service';
-import { parsePrIgnoreAuthorLogins } from '../../sync/pr-ignore-author-logins';
-import { type SettingKey } from '../../settings/setting-keys';
 import { integrationFieldsForUi } from '../../ui/setting-labels';
 import { GITHUB_SOURCE_UI_KEYS } from '../../ui/integration-ui-registry';
 import { SetupEvaluationService } from '../../setup/setup-evaluation.service';
@@ -24,8 +20,6 @@ import { UiNavService } from '../../ui/ui-nav.service';
 export class GithubUiController {
   constructor(
     private readonly settings: SettingsService,
-    private readonly statusEvents: StatusEventsService,
-    private readonly integrationEmitter: IntegrationSettingsEmitterService,
     private readonly setupEvaluation: SetupEvaluationService,
     @Inject(APP_ENV) private readonly appEnv: AppEnv,
     private readonly uiNav: UiNavService,
@@ -61,24 +55,12 @@ export class GithubUiController {
       return;
     }
     try {
-      const touched: SettingKey[] = [];
+      const entries: Record<string, string> = {};
       for (const key of GITHUB_SOURCE_UI_KEYS) {
-        if (Object.prototype.hasOwnProperty.call(body, key)) {
-          const value = String(body[key] ?? '');
-          if (key === 'pr_ignore_author_logins') {
-            const parsed = parsePrIgnoreAuthorLogins(value);
-            if (!parsed.ok) {
-              throw new Error(parsed.message);
-            }
-          }
-          await this.settings.setValue(key, value);
-          touched.push(key);
-        }
+        if (!Object.prototype.hasOwnProperty.call(body, key)) continue;
+        entries[key] = String(body[key] ?? '');
       }
-      await this.settings.refreshCache();
-      await this.integrationEmitter.emitIntegrationSettingsChanged(touched);
-      this.statusEvents.emitChanged();
-      this.statusEvents.emitScheduleRefresh();
+      await this.settings.applyGroupPatch('source', entries);
       res.redirect(302, '/ui/github?saved=1');
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);

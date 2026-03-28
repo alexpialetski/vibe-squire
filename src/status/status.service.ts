@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { APP_ENV, type AppEnv } from '../config/app-env.token';
 import { PrismaService } from '../prisma/prisma.service';
-import { SettingsService } from '../settings/settings.service';
+import { CoreSettings } from '../settings/core-settings.service';
 import { SyncRunStateService } from '../sync/sync-run-state.service';
 import { SyncService } from '../sync/sync.service';
 import { GITHUB_PR_SCOUT_ID } from '../sync/sync-constants';
@@ -20,7 +20,7 @@ export class StatusService {
     private readonly prisma: PrismaService,
     @Inject(SOURCE_STATUS_PORT)
     private readonly sourceStatus: SourceStatusProvider,
-    private readonly settings: SettingsService,
+    private readonly coreSettings: CoreSettings,
     private readonly syncRunState: SyncRunStateService,
     private readonly sync: SyncService,
     private readonly setupEvaluation: SetupEvaluationService,
@@ -64,9 +64,7 @@ export class StatusService {
     ];
 
     const manualSync = this.sync.getManualSyncSnapshot();
-    const scheduledSyncEnabled = this.settings.getEffectiveBoolean(
-      'scheduled_sync_enabled',
-    );
+    const scheduledSyncEnabled = this.coreSettings.scheduledSyncEnabled;
 
     const destConfigExtras = destReady.configuration ?? {};
 

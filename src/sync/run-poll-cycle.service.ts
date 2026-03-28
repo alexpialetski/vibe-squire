@@ -1,6 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { SettingsService } from '../settings/settings.service';
+import { CoreSettings } from '../settings/core-settings.service';
 import { APP_ENV, type AppEnv } from '../config/app-env.token';
 import { StatusEventsService } from '../events/status-events.service';
 import {
@@ -45,6 +46,7 @@ export class RunPollCycleService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly settings: SettingsService,
+    private readonly coreSettings: CoreSettings,
     @Inject(SOURCE_STATUS_PORT)
     private readonly sourceStatus: SourceStatusProvider,
     @Inject(SYNC_PR_SCOUT_PORT)
@@ -59,8 +61,8 @@ export class RunPollCycleService {
   ) {}
 
   computeNextPollAt(from = new Date()): Date {
-    const minutes = this.settings.getPollIntervalMinutes();
-    const jitterMax = this.settings.getEffectiveInt('jitter_max_seconds', 30);
+    const minutes = this.coreSettings.pollIntervalMinutes;
+    const jitterMax = this.coreSettings.jitterMaxSeconds;
     const jitterSec = Math.floor(Math.random() * (jitterMax + 1));
     return new Date(from.getTime() + minutes * 60_000 + jitterSec * 1000);
   }
@@ -105,7 +107,7 @@ export class RunPollCycleService {
         await persistScoutErrorAfterPoll({
           prisma: this.prisma,
           now: new Date(),
-          settings: this.settings,
+          coreSettings: this.coreSettings,
           message: `mcp_probe: ${pre.message}`,
           markPollCompleted: () => this.runState.markPollCompleted(),
         });
@@ -119,6 +121,7 @@ export class RunPollCycleService {
       const ctx = await buildPollScoutContext({
         prScout: this.prScout,
         settings: this.settings,
+        coreSettings: this.coreSettings,
         destinationBoard: this.destinationBoard,
         warn: (msg) => this.logger.warn(msg),
       });
@@ -208,7 +211,7 @@ export class RunPollCycleService {
       await persistScoutErrorAfterPoll({
         prisma: this.prisma,
         now: new Date(),
-        settings: this.settings,
+        coreSettings: this.coreSettings,
         message: msg,
         markPollCompleted: () => this.runState.markPollCompleted(),
       });

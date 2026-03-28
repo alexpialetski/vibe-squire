@@ -29,7 +29,7 @@
 
   function setupReasonHuman(reason) {
     if (reason === 'vk_mcp_stdio_invalid') {
-      return 'Set stdio MCP command via VK_MCP_STDIO_JSON or PATCH vk_mcp_stdio_json (/api/settings).';
+      return 'Set stdio MCP command via VK_MCP_STDIO_JSON or PATCH vk_mcp_stdio_json (/api/settings/destination).';
     }
     if (reason === 'no_default_kanban_board') {
       return 'Open Vibe Kanban and set target organization + project (required for sync).';

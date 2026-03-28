@@ -168,7 +168,6 @@ Zod is used in several places; class-validator appears on Nest DTOs. Pick a **bo
 ```bash
 npm test
 npm run test:integration
-npm run test:e2e
 npm run build
 ```
 

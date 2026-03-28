@@ -16,10 +16,7 @@ import {
 } from '../../vibe-kanban/mcp-transport-config';
 import { SyncRunStateService } from '../../sync/sync-run-state.service';
 import { StatusEventsService } from '../../events/status-events.service';
-import {
-  INTEGRATION_SETTINGS_CHANGED,
-  type IntegrationSettingsChangedPayload,
-} from '../../events/integration-settings.events';
+import { INTEGRATION_SETTINGS_CHANGED } from '../../events/integration-settings.events';
 
 const VK_DESTINATION_ID = 'vibe_kanban' as const;
 
@@ -46,14 +43,7 @@ export class VkMcpIntegrationListener implements OnApplicationBootstrap {
   }
 
   @OnEvent(INTEGRATION_SETTINGS_CHANGED)
-  async handleIntegrationSettingsChanged(
-    payload: IntegrationSettingsChangedPayload,
-  ): Promise<void> {
-    if (payload.keys.length > 0) {
-      this.logger.debug(
-        `Integration settings event (keys: ${payload.keys.join(', ')})`,
-      );
-    }
+  async handleIntegrationSettingsChanged(): Promise<void> {
     await this.reconcile('event');
   }
 

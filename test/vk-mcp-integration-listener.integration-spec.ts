@@ -96,7 +96,7 @@ describe('VkMcpIntegrationListener (integration)', () => {
 
   it('PATCH invalid vk_mcp_stdio_json runs listener: stdio shutdown and unknown health', async () => {
     await request(app.getHttpServer())
-      .patch('/api/settings')
+      .patch('/api/settings/destination')
       .send({ vk_mcp_stdio_json: '[]' })
       .expect(200);
 
@@ -106,7 +106,7 @@ describe('VkMcpIntegrationListener (integration)', () => {
 
   it('PATCH valid vk_mcp_stdio_json again runs probe and restores ok health', async () => {
     await request(app.getHttpServer())
-      .patch('/api/settings')
+      .patch('/api/settings/destination')
       .send({ vk_mcp_stdio_json: VALID_VK_MCP_JSON })
       .expect(200);
 
@@ -118,7 +118,7 @@ describe('VkMcpIntegrationListener (integration)', () => {
     vkStub.probe.mockRejectedValueOnce(new Error('probe transient'));
 
     await request(app.getHttpServer())
-      .patch('/api/settings')
+      .patch('/api/settings/core')
       .send({ poll_interval_minutes: '12' })
       .expect(200);
 
@@ -130,7 +130,7 @@ describe('VkMcpIntegrationListener (integration)', () => {
 
   it('PATCH destination_type is rejected (not a persisted setting key)', async () => {
     await request(app.getHttpServer())
-      .patch('/api/settings')
+      .patch('/api/settings/core')
       .send({ destination_type: '' })
       .expect(400);
   });
