@@ -15,6 +15,7 @@ import {
   StatusDatabaseDto,
   StatusGhDto,
   StatusManualSyncDto,
+  StatusScheduledSyncDto,
   StatusSetupDto,
   StatusSnapshotDto,
 } from './dto/status-snapshot.dto';
@@ -27,6 +28,7 @@ import {
   StatusSetupDto,
   StatusConfigurationDto,
   StatusManualSyncDto,
+  StatusScheduledSyncDto,
 )
 @Controller('api/status')
 export class StatusController {
