@@ -9,7 +9,7 @@ import {
 import type { UiNavEntry } from '../../ports/ui-nav.types';
 import { SOURCE_SETTINGS_GROUP } from '../../settings/settings-group.tokens';
 import { GhCliService } from './gh-cli.service';
-import { GithubPrScoutService } from '../../scout/github-pr-scout.service';
+import { GithubPrScoutService } from './github-pr-scout.service';
 import { GithubSourceStatusService } from './github-source-status.service';
 import { GithubSettings } from './github-settings.service';
 import { GithubSettingsGroup } from './github-settings-group.service';

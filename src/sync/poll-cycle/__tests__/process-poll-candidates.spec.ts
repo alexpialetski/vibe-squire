@@ -1,6 +1,6 @@
 import { processPollCandidatesLoop } from '../process-poll-candidates';
 import { POLL_RUN_ITEM_DECISION } from '../../poll-run-decisions';
-import type { GithubPrCandidate } from '../../../scout/github-pr-scout.service';
+import type { GithubPrCandidate } from '../../../integrations/github/github-pr-scout.service';
 import type { VkCreateQuota } from '../poll-scout-context';
 
 function pr(n: number, author = 'human'): GithubPrCandidate {
