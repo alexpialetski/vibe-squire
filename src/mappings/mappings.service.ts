@@ -3,6 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import type { CreateRepoMappingDto } from './dto/create-mapping.dto';
 import type { UpdateRepoMappingDto } from './dto/update-mapping.dto';
@@ -29,10 +30,8 @@ export class MappingsService {
       });
     } catch (e: unknown) {
       if (
-        e &&
-        typeof e === 'object' &&
-        'code' in e &&
-        (e as { code: string }).code === 'P2002'
+        e instanceof Prisma.PrismaClientKnownRequestError &&
+        e.code === 'P2002'
       ) {
         throw new ConflictException(`Mapping already exists for ${githubRepo}`);
       }
@@ -47,18 +46,34 @@ export class MappingsService {
     if (!existing) {
       throw new NotFoundException(`Mapping ${id} not found`);
     }
-    return this.prisma.repoProjectMapping.update({
-      where: { id },
-      data: {
-        ...(dto.githubRepo !== undefined && {
-          githubRepo: dto.githubRepo.trim().toLowerCase(),
-        }),
-        ...(dto.vibeKanbanRepoId !== undefined && {
-          vibeKanbanRepoId: dto.vibeKanbanRepoId.trim(),
-        }),
-        ...(dto.label !== undefined && { label: dto.label.trim() || null }),
-      },
-    });
+
+    const githubRepo =
+      dto.githubRepo !== undefined
+        ? dto.githubRepo.trim().toLowerCase()
+        : undefined;
+
+    try {
+      return await this.prisma.repoProjectMapping.update({
+        where: { id },
+        data: {
+          ...(githubRepo !== undefined && { githubRepo }),
+          ...(dto.vibeKanbanRepoId !== undefined && {
+            vibeKanbanRepoId: dto.vibeKanbanRepoId.trim(),
+          }),
+          ...(dto.label !== undefined && { label: dto.label.trim() || null }),
+        },
+      });
+    } catch (e: unknown) {
+      if (
+        e instanceof Prisma.PrismaClientKnownRequestError &&
+        e.code === 'P2002'
+      ) {
+        throw new ConflictException(
+          `Mapping already exists for ${githubRepo ?? existing.githubRepo}`,
+        );
+      }
+      throw e;
+    }
   }
 
   async remove(id: string) {
@@ -66,10 +81,8 @@ export class MappingsService {
       await this.prisma.repoProjectMapping.delete({ where: { id } });
     } catch (e: unknown) {
       if (
-        e &&
-        typeof e === 'object' &&
-        'code' in e &&
-        (e as { code: string }).code === 'P2025'
+        e instanceof Prisma.PrismaClientKnownRequestError &&
+        e.code === 'P2025'
       ) {
         throw new NotFoundException(`Mapping ${id} not found`);
       }
