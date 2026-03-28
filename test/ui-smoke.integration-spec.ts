@@ -4,7 +4,7 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import request from 'supertest';
 import { testingAppModule } from './testing-app-module';
 import { configureExpressApp } from '../src/configure-express-app';
-import { GhCliService } from '../src/gh/gh-cli.service';
+import { GhCliService } from '../src/integrations/github/gh-cli.service';
 import { VibeKanbanMcpService } from '../src/vibe-kanban/vibe-kanban-mcp.service';
 import { PollSchedulerService } from '../src/sync/poll-scheduler.service';
 import { validateStatusSnapshot } from '../src/status/status-snapshot.contract';
