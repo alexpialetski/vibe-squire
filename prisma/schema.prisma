@@ -10,7 +10,7 @@ datasource db {
   provider = "sqlite"
 }
 
-/// Key-value runtime settings (precedence: env → row → code default). Keys in `setting-keys.ts`.
+/// Key-value runtime settings (precedence: env > SQLite row > code default). Keys in `setting-keys.ts`.
 model Setting {
   key       String   @id
   value     String
@@ -33,9 +33,9 @@ model ScoutState {
   lastPollAt     DateTime?
   nextPollAt     DateTime?
   lastError      String?
-  /// Increments on poll errors; resets on success/skip. Used for exponential backoff (§11).
+  /// Increments on poll errors; resets on success/skip. Used for exponential backoff.
   failureStreak  Int       @default(0)
-  /// Last successful GitHub PR scout run (§3.2 — surface unmapped skips in status).
+  /// Last successful GitHub PR scout run (surface unmapped skips in status).
   lastPollCandidatesCount Int?
   lastPollSkippedUnmapped Int?
   lastPollIssuesCreated   Int?

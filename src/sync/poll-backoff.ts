@@ -12,7 +12,7 @@ export type BackoffParams = {
 };
 
 /**
- * §11 — Next poll after an error: base interval × 2^(streak-1), capped, plus jitter.
+ * Next poll after an error: base interval × 2^(streak-1), capped, plus jitter.
  * `streak` is the new value after increment (≥ 1).
  */
 export function computeBackoffNextPollAtMs(p: BackoffParams): number {

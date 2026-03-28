@@ -1,7 +1,7 @@
 import type { GithubPrCandidate } from '../ports/github-pr-candidate';
 
 /**
- * §3.2 — Body text for PR review issues. Placeholders: `{prUrl}`, `{title}`, `{number}`, `{githubRepo}`.
+ * Body text for PR review issues. Placeholders: `{prUrl}`, `{title}`, `{number}`, `{githubRepo}`.
  */
 export function applyPrReviewBodyTemplate(
   template: string,

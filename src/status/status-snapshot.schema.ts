@@ -58,7 +58,7 @@ export const statusSnapshotSchema = z.object({
 });
 
 /**
- * §16.4 — Runtime validation for `GET /api/status` JSON (contract tests + optional guards).
+ * Runtime validation for `GET /api/status` JSON (contract tests + optional guards).
  * Returns `null` if valid; otherwise a short error message.
  */
 export function validateStatusSnapshot(body: unknown): string | null {

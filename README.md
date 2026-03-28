@@ -1,114 +1,140 @@
 # vibe-squire
 
-Local background service that polls **GitHub** (via `gh`) for PRs requesting your review and syncs them into **Vibe Kanban** over **MCP stdio** (spawned subprocess). See [REQUIREMENTS.md](./REQUIREMENTS.md) for scope and contracts.
+Local background orchestrator that polls **GitHub** for PRs requesting your review and syncs them as issues into **[Vibe Kanban](https://vibekanban.com)** over MCP (Model Context Protocol).
 
-**Prerequisites:** Node.js **LTS** (for `npx` to run the bundled **`vibe-kanban@latest --mcp`** stdio server), [`gh`](https://cli.github.com/) authenticated. See [Vibe Kanban](https://vibekanban.com/docs).
+Built with [NestJS](https://nestjs.com), [Prisma](https://www.prisma.io) + SQLite, and a hexagonal architecture that keeps source/destination adapters pluggable.
+
+## How it works
+
+```mermaid
+graph LR
+    GH["GitHub (PRs)"] -- "gh pr list<br/>review-requested:@me" --> VS["vibe-squire<br/>(localhost)"]
+    VS -- "MCP stdio<br/>create / update issue" --> VK["Vibe Kanban<br/>(board)"]
+    VS -- "state" --> DB["SQLite"]
+```
+
+1. **Scout** — polls GitHub via `gh pr list --search "review-requested:@me"` on a configurable interval.
+2. **Dispatcher** — routes each PR to a Kanban project based on `owner/repo` mappings, deduplicates, and creates/updates issues via the Vibe Kanban MCP server.
+3. **Reconciliation** — when a PR leaves your review queue, the matching Kanban issue is closed automatically.
+
+## Prerequisites
+
+- **Node.js** >= 20 (LTS)
+- **[`gh`](https://cli.github.com/)** — installed and authenticated (`gh auth login`)
+- **[Vibe Kanban](https://vibekanban.com)** — the MCP server is spawned automatically as a stdio subprocess (`npx vibe-kanban@latest --mcp`)
 
 ## Quick start
 
 ```bash
+git clone https://github.com/AliakseiPialetski/vibe-squire.git
+cd vibe-squire
 npm install
-cp .env.example .env   # set DATABASE_URL (see table below)
-npm run start:dev
+cp .env.example .env          # review and adjust settings
+npm run start:dev              # dev mode with watch
 ```
 
-- **API + SSE:** default bind `127.0.0.1`:`PORT` (env, default `3000`).
-- **OpenAPI:** [http://127.0.0.1:3000/api/docs](http://127.0.0.1:3000/api/docs) unless `OPENAPI_ENABLED=false`.
-- **Logs:** structured HTTP logs via **pino** (`nestjs-pino`). Set `LOG_LEVEL` (e.g. `debug`). Pretty output is used when `NODE_ENV` is not `production`. Optional `LOG_FILE_PATH` also writes JSON lines to a file.
+Open the operator UI at **http://127.0.0.1:3000/ui/dashboard** (root `/` redirects there).
 
-## Operator UI (server-rendered)
+## Configuration
 
-Handlebars templates + static CSS/JS are served by the same Nest process (no separate dev server).
+### Environment variables
 
-- **URLs:** [http://127.0.0.1:3000/ui/dashboard](http://127.0.0.1:3000/ui/dashboard) (root `/` redirects here), plus `/ui/settings`, `/ui/mappings`, `/ui/vibe-kanban`.
-- **Assets:** `/ui/assets/*` (CSS + small scripts for SSE, inline mapping edits, Vibe Kanban page).
-- **Templates:** `src/ui/views/` (and `src/ui/public/`). Copied to `dist/ui/` on `npm run build` via `nest-cli.json` assets.
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `DATABASE_URL` | `file:./dev.db` | SQLite URL for Prisma. If unset, resolved from `DATABASE_PATH`, `VIBE_SQUIRE_DATA_DIR`, or OS defaults. |
+| `HOST` | `127.0.0.1` | HTTP bind address. |
+| `PORT` | `3000` | HTTP bind port. |
+| `SOURCE_TYPE` | `github` | Scout adapter (`github`). |
+| `DESTINATION_TYPE` | `vibe_kanban` | Board adapter (`vibe_kanban`). |
+| `SCHEDULED_SYNC_ENABLED` | `true` | Set `false` to disable the automatic poll timer (manual "Sync now" still works). |
+| `POLL_INTERVAL_MINUTES` | `10` | Minutes between scheduled polls (minimum 5, clamped). |
+| `JITTER_MAX_SECONDS` | `30` | Random jitter added to the poll interval. |
+| `RUN_NOW_COOLDOWN_SECONDS` | `60` | Minimum gap after a manual sync before another is allowed. |
+| `LOG_LEVEL` | `info` | Pino log level (`fatal` / `error` / `warn` / `info` / `debug` / `trace` / `silent`). |
+| `LOG_FILE_PATH` | — | Path for JSON file logging (in addition to console). |
+| `OPENAPI_ENABLED` | `true` | Expose Swagger UI at `/api/docs`. |
 
-After `npm run start:dev`, open `/ui/dashboard` in the browser. CORS remains enabled for direct JSON API use (e.g. curl, other tools).
+### Runtime settings (SQLite)
 
-## Configuration (§5, §5.7)
+These have no env var equivalent — set them via the operator UI or `PATCH /api/settings`:
 
-| Mechanism | Purpose |
-|-----------|---------|
-| `DATABASE_URL` | SQLite `file:` URL for Prisma. If unset, see `src/database/resolve-database-url.ts` (`DATABASE_PATH`, `VIBE_SQUIRE_DATA_DIR`, OS defaults). |
-| Vibe Kanban MCP stdio | **Hardcoded** in `src/vibe-kanban/transport/vk-stdio-command.schema.ts` (`npx`, `-y`, `vibe-kanban@latest`, `--mcp`). Not configurable via env, API, or SQLite. |
-| `SCHEDULED_SYNC_ENABLED` / `scheduled_sync_enabled` | When `false` / `0` / `no`, the **scheduled timer** does not run; **Manual “Sync now”** still works. Default **true**. General **Settings** (poll schedule form). |
-| `POLL_INTERVAL_MINUTES`, `JITTER_MAX_SECONDS`, `RUN_NOW_COOLDOWN_SECONDS` | Scheduled poll interval (**minimum 5 minutes**; values below 5 are clamped). **Manual “Sync now”** is not limited by this interval (only by cooldown). Ignored when scheduled sync is disabled. |
-| `max_board_pr_count` | **No env** — max **new** Kanban issues per poll is `limit` minus the live count of `[vibe-squire]` issues on the default Kanban project (from MCP `list_issues`), not SQLite queue size (default **5**, allowed **1–200**). Oldest GitHub PR by `createdAt` is admitted first; extras get `skipped_board_limit`. General **Settings** (poll schedule form). |
-| `default_organization_id`, `default_project_id`, `vk_workspace_executor`, `kanban_done_status`, `pr_ignore_author_logins`, `pr_review_body_template` | **No env vars** — set via operator UI (GitHub / Vibe Kanban / Settings) or `PATCH /api/settings`. Code defaults apply when unset (e.g. empty board UUIDs until you configure them). |
-| `HOST`, `PORT` | HTTP server bind (env-only). |
+`default_organization_id`, `default_project_id`, `vk_workspace_executor`, `kanban_done_status`, `pr_ignore_author_logins`, `pr_review_body_template`, `max_board_pr_count`.
 
-Effective precedence where an env var exists for a key: **env (non-empty) → SQLite → code default**. Keys listed above without env mapping use **SQLite → code default** only (`SettingsService`, `resolveEffectiveSetting`).
+### Effective precedence
 
-### Sync orchestration (`SOURCE_TYPE` / `DESTINATION_TYPE`)
+For keys that have both an env var and a SQLite row: **env (non-empty) > SQLite > code default**.
 
-**Boot-time environment** (validated when the process starts via `parseAppEnv` in `src/config/env-schema.ts`) chooses **which adapter** runs the poll pipeline and MCP wiring (see `REFACTORING-PLAN.md` §G). Defaults: **`SOURCE_TYPE=github`**, **`DESTINATION_TYPE=vibe_kanban`**. Changing adapters requires updating env and **restarting** the process; they are not stored in SQLite.
+### Database location
 
-`GET /api/settings` and status payloads still expose **`source_type`** and **`destination_type`** as strings for a stable JSON shape — those fields reflect **`AppEnv`**, not rows in the `Setting` table.
+When `DATABASE_URL` is not set, the app resolves a path automatically:
 
-| Role | Env var (default) | Orchestration token (internal) | Adapter today |
-|------|-------------------|-------------------------------|---------------|
-| PR scout | `SOURCE_TYPE` (`github`) | `SYNC_PR_SCOUT_PORT` | GitHub `gh` scout via `GITHUB_PR_SCOUT_PORT` |
-| Destination board | `DESTINATION_TYPE` (`vibe_kanban`) | `SYNC_DESTINATION_BOARD_PORT` | `VkBoardAdapterService` (`DestinationBoardPort`) → `VibeKanbanMcpService` |
+| OS | Default directory |
+|----|-------------------|
+| Linux | `~/.local/state/vibe-squire/` (respects `XDG_STATE_HOME`) |
+| macOS | `~/Library/Application Support/vibe-squire/` |
+| Windows | `%APPDATA%\vibe-squire\` |
 
-Unsupported **`SOURCE_TYPE`** / **`DESTINATION_TYPE`** values **fail at startup** (Zod). After boot, if a future code path delegates to an adapter that does not match the configured type, sync may still throw (e.g. `Sync source not supported: …`).
+Override with `VIBE_SQUIRE_DATA_DIR` (directory) or `DATABASE_PATH` (full file path).
 
-## HTTP surface (summary)
+## Operator UI
+
+Server-rendered Handlebars templates served by the same Nest process — no separate frontend build.
+
+| URL | Page |
+|-----|------|
+| `/ui/dashboard` | Health status, sync schedule, "Sync now" button |
+| `/ui/settings` | Poll interval, board limits, PR filters |
+| `/ui/mappings` | GitHub `owner/repo` → Vibe Kanban project mappings |
+| `/ui/vibe-kanban` | Organisation/project picker, workspace executor |
+
+## HTTP API
 
 | Method | Path | Description |
 |--------|------|-------------|
-| GET | `/api/status` | Aggregate health / setup / scheduler snapshot. Each scout includes `last_poll` (`candidates_count`, `skipped_unmapped`, `issues_created`) after a successful GitHub PR poll. |
-| GET | `/api/status/stream` | SSE status snapshots (heartbeat + events). |
-| POST | `/api/sync/run` | Run poll pipeline now (cooldown + guards). |
-| POST | `/api/reinit` | Soft reinit: DB, `gh`, MCP probe, reset scout backoff. |
-| CRUD | `/api/settings`, `/api/mappings` | Runtime settings and repo → project mappings. |
-| GET | `/api/vibe-kanban/organizations` | MCP `list_organizations`. |
-| GET | `/api/vibe-kanban/projects?organization_id=` | MCP `list_projects`. |
-| GET | `/ui/*` | Operator UI (Handlebars): dashboard, settings, mappings, Vibe Kanban. `/` redirects to `/ui/dashboard`. |
+| `GET` | `/api/status` | Aggregate health, setup, and scheduler snapshot |
+| `GET` | `/api/status/stream` | SSE status stream (heartbeat + events) |
+| `POST` | `/api/sync/run` | Trigger manual sync (cooldown + guards) |
+| `POST` | `/api/reinit` | Soft reinit: re-probe `gh`, DB, MCP; reset backoff |
+| `CRUD` | `/api/settings` | Runtime settings |
+| `CRUD` | `/api/mappings` | Repo → project mappings |
+| `GET` | `/api/vibe-kanban/organizations` | MCP `list_organizations` |
+| `GET` | `/api/vibe-kanban/projects?organization_id=` | MCP `list_projects` |
 
-## CLI / npm package (§13)
-
-After `npm run build`, the package exposes `vibe-squire` via `bin/vibe-squire.js` (requires `dist/`). Published tarball includes `dist`, `prisma`, `prisma.config.ts`, and `bin` per `package.json` `files`.
-
-**Single instance:** use one process per SQLite file (see REQUIREMENTS §5.1).
+OpenAPI docs (when enabled): **http://127.0.0.1:3000/api/docs**
 
 ## Scripts
 
 | Script | Purpose |
 |--------|---------|
-| `npm run build` | `nest build` |
-| `npm run start:prod` | `node dist/main` |
-| `npm run test` | Unit tests (`src/**/__tests__/**/*.spec.ts`) |
-| `npm run test:integration` | Prisma + migrations + Nest wiring; Supertest HTTP smoke; stubs for `gh` / MCP |
+| `npm run build` | Compile with `nest build` |
+| `npm run start:dev` | Dev mode with file watching |
+| `npm run start:prod` | Production: `node dist/main` |
+| `npm test` | Unit tests |
+| `npm run test:cov` | Unit tests with coverage |
+| `npm run test:integration` | Integration tests (Prisma + migrations + Supertest) |
+| `npm run lint` | Lint and auto-fix |
+| `npm run typecheck` | TypeScript type checking |
 
-## Tests (§16)
+## Testing
 
-- **Unit:** setting precedence (`config/__tests__/resolve-effective-setting.spec.ts`), poll backoff (`sync/__tests__/poll-backoff.spec.ts`).
-- **Integration:** happy path + idempotency (`sync-with-fakes.integration-spec.ts`), reconciliation (`sync-reconcile.integration-spec.ts`), VK-first board cap (`sync-vk-board-cap.integration-spec.ts`), Kanban heal / quota (`sync-kanban-issue-heal.integration-spec.ts`), settings / mappings / Kanban context (`settings-mappings-vk.integration-spec.ts`), poll-cycle branches (`run-poll-cycle-branches.integration-spec.ts`), VK MCP listener + settings emit (`vk-mcp-integration-listener.integration-spec.ts`), UI smoke (`ui-smoke.integration-spec.ts`).
-- **Contract:** `validateStatusSnapshot` on `GET /api/status` in `ui-smoke.integration-spec.ts`.
+- **Unit tests** — `src/**/__tests__/**/*.spec.ts`. Pure logic, Zod schemas, helpers.
+- **Integration tests** — `test/*.integration-spec.ts`. Real Prisma + SQLite (`:memory:`), Nest module wiring, Supertest HTTP. External boundaries (GitHub `gh`, Vibe Kanban MCP) are stubbed.
+- CI runs lint, typecheck, build, unit, and integration tests on every push and PR.
 
-## Docker (optional)
-
-Example image build from the repo root (adjust `DATABASE_URL` / volume for persistence):
-
-```dockerfile
-FROM node:22-bookworm-slim
-WORKDIR /app
-COPY package.json package-lock.json ./
-RUN npm ci
-COPY . .
-RUN npx prisma generate && npm run build
-ENV NODE_ENV=production
-ENV HOST=0.0.0.0
-EXPOSE 3000
-CMD ["node", "dist/main"]
+```bash
+npm test && npm run test:integration
 ```
 
-Run with a mounted data directory and `DATABASE_URL=file:/data/vibe-squire.sqlite` (see Prisma SQLite URL rules). For local-only use, prefer binding `HOST=127.0.0.1` without publishing the port globally.
+## Deployment
 
-## systemd (user unit, optional)
+### Direct (recommended for development)
 
-Example `~/.config/systemd/user/vibe-squire.service` after `npm run build` and a writable SQLite path:
+```bash
+npm run build
+node dist/main
+```
+
+### systemd (user unit)
 
 ```ini
 [Unit]
@@ -129,8 +155,25 @@ Restart=on-failure
 WantedBy=default.target
 ```
 
-Then: `systemctl --user daemon-reload`, `systemctl --user enable --now vibe-squire.service`.
+### Docker (optional)
 
----
+```dockerfile
+FROM node:22-bookworm-slim
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci
+COPY . .
+RUN npx prisma generate && npm run build
+ENV NODE_ENV=production
+ENV HOST=0.0.0.0
+EXPOSE 3000
+CMD ["node", "dist/main"]
+```
 
-This project was bootstrapped with [Nest](https://github.com/nestjs/nest). Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+Mount a volume for the SQLite database and set `DATABASE_URL=file:/data/vibe-squire.sqlite`.
+
+**Important:** Run a single vibe-squire process per SQLite file. Concurrent processes on the same database are unsupported.
+
+## License
+
+UNLICENSED

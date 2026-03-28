@@ -1,0 +1,66 @@
+---
+description: Project identity, tech stack, and directory layout for vibe-squire
+alwaysApply: true
+---
+
+# Project overview
+
+**vibe-squire** is a local background orchestrator that polls GitHub for PRs requesting your review and syncs them as Kanban issues into Vibe Kanban via MCP (Model Context Protocol).
+
+## Tech stack
+
+- **Runtime:** Node.js >= 20 (LTS)
+- **Framework:** NestJS 11 (modules, DI, lifecycle hooks, schedulers, HTTP/SSE)
+- **Database:** SQLite via Prisma (with `@prisma/adapter-better-sqlite3`)
+- **MCP client:** `@modelcontextprotocol/sdk` — stdio transport to `npx vibe-kanban@latest --mcp`
+- **GitHub:** `gh` CLI via `child_process`
+- **Validation:** Zod (env/schemas), class-validator (DTOs)
+- **UI:** Server-rendered Handlebars templates (no SPA framework)
+- **Logging:** Pino via `nestjs-pino`
+- **Testing:** Jest, `@nestjs/testing`, Supertest
+
+## Directory layout
+
+```
+src/
+├── config/            — Zod env schema, AppEnv token, EnvModule
+├── database/          — SQLite path resolution, Prisma migrate runner
+├── prisma/            — PrismaModule (client provider)
+├── generated/prisma/  — Generated Prisma client (do not edit)
+├── ports/             — Port interfaces and DI tokens (hexagonal boundary)
+├── integrations/
+│   ├── github/        — gh CLI scout, PR search schema, GitHub settings
+│   └── vibe-kanban/   — MCP stdio adapter, board adapter, VK settings
+├── sync/              — Poll scheduler, dispatcher, reconciliation, poll-cycle
+├── settings/          — SettingsService, key-value CRUD, effective precedence
+├── mappings/          — Repo → project mapping CRUD
+├── status/            — Aggregate health endpoint, SSE stream
+├── events/            — Domain event bus (StatusEventsModule)
+├── setup/             — Setup-complete gate
+├── reinit/            — Soft reinit endpoint
+├── ui/                — Handlebars views, static assets, UI controllers
+├── logging/           — Pino logger configuration
+├── app.module.ts      — Root module (AppModule.forRoot)
+├── main.ts            — Bootstrap: env parse → migrate → create app → listen
+test/                  — Integration specs (*.integration-spec.ts)
+prisma/                — schema.prisma + migrations
+docs/                  — Architecture documentation
+bin/                   — CLI entry point (vibe-squire.js)
+```
+
+## Naming conventions
+
+- **Files:** kebab-case (`poll-scheduler.service.ts`, `github-pr-scout.service.ts`)
+- **Classes:** PascalCase with NestJS suffixes (`PollSchedulerService`, `SyncController`)
+- **Port interfaces:** Defined in `src/ports/`, named `*Port` (e.g. `SyncPrScoutPort`, `DestinationBoardPort`)
+- **DI tokens:** UPPER_SNAKE Symbols in `src/ports/injection-tokens.ts`
+- **Tests:** `src/**/__tests__/**/*.spec.ts` (unit), `test/*.integration-spec.ts` (integration)
+- **Settings keys:** snake_case strings matching Prisma `Setting.key`
+
+## Key patterns
+
+- `AppModule.forRoot(env)` is the only valid way to boot the module graph. Never use bare `AppModule`.
+- Integration adapters are registered dynamically by `IntegrationsModule.register(env)` based on `SOURCE_TYPE` / `DESTINATION_TYPE`.
+- Settings follow env > SQLite > code-default precedence (`SettingsService.resolveEffectiveSetting`).
+- The sync pipeline is guarded: setup must be complete, `gh` authenticated, and MCP reachable before polls run.
+- SSE pushes status snapshots on material state changes (poll start/end, settings change, reinit).

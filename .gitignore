@@ -64,5 +64,5 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 test/integration.sqlite
 test/integration.sqlite-journal
 
-# Local PR review prompt template
+# Local PR review prompt template (personal, not part of the project)
 pr-review-prompt.md

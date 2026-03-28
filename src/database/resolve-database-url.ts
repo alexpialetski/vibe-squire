@@ -4,7 +4,7 @@ import { dirname, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 /**
- * §5.7 — If `DATABASE_URL` is unset, derive SQLite `file:` URL from
+ * If `DATABASE_URL` is unset, derive SQLite `file:` URL from
  * `DATABASE_PATH`, then `VIBE_SQUIRE_DATA_DIR`, then OS defaults.
  * Creates parent directories. Mutates `process.env.DATABASE_URL`.
  */

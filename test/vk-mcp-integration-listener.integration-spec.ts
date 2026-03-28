@@ -26,8 +26,7 @@ function buildVkStub() {
 }
 
 /**
- * Phase 1 — VK MCP integration listener + IntegrationSettingsEmitter path
- * (REFACTORING-PLAN.md).
+ * VK MCP integration listener + IntegrationSettingsEmitter path.
  */
 describe('VkMcpIntegrationListener (integration)', () => {
   let app: INestApplication<App>;

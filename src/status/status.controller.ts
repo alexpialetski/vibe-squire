@@ -38,7 +38,7 @@ export class StatusController {
   ) {}
 
   @Get()
-  @ApiOperation({ summary: 'Runtime status snapshot (§4.2, §9)' })
+  @ApiOperation({ summary: 'Runtime status snapshot' })
   @ApiOkResponse({ type: StatusSnapshotDto })
   snapshot() {
     return this.status.getSnapshot();

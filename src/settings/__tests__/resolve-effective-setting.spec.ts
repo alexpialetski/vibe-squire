@@ -1,6 +1,6 @@
 import { resolveEffectiveSetting } from '../resolve-effective-setting';
 
-describe('resolveEffectiveSetting (§5.3)', () => {
+describe('resolveEffectiveSetting', () => {
   it('prefers non-empty env over DB and default', () => {
     expect(
       resolveEffectiveSetting('from-env', true, 'from-db', 'default'),

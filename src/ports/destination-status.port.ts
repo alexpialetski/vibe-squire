@@ -18,7 +18,7 @@ export type DestinationSetupReason = 'no_default_kanban_board' | 'no_mappings';
 
 /**
  * Destination-side readiness. Wired per {@link AppEnv.destinationType}.
- * See PLUGIN-ARCHITECTURE-PLAN.md §1.
+ * See docs/ARCHITECTURE.md.
  */
 export interface DestinationStatusProvider {
   readonly destinationType: string;

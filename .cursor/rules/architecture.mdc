@@ -1,0 +1,79 @@
+---
+description: Hexagonal architecture rules and integration patterns for vibe-squire
+alwaysApply: true
+---
+
+# Architecture
+
+## Hexagonal boundaries
+
+vibe-squire uses hexagonal (ports & adapters) architecture. The core domain has zero imports from NestJS, Prisma, GitHub, or Vibe Kanban adapter code.
+
+### Layers
+
+1. **Core (domain + application)** — Business logic, sync rules, routing, dedupe, reconciliation. Lives in `src/sync/`, `src/settings/`, `src/mappings/`, `src/status/`, `src/setup/`.
+2. **Ports** — Interfaces in `src/ports/`. The core depends on these abstractions only.
+3. **Adapters** — Implementations in `src/integrations/` (GitHub, Vibe Kanban), `src/database/`, `src/prisma/`.
+4. **Driving adapters** — NestJS controllers, schedulers, CLI entry points. They call application services.
+
+### Rules
+
+- Domain and application code must **never** import from `src/integrations/`, `src/generated/`, or adapter-specific packages directly.
+- Controllers call application services, not databases or `gh` directly.
+- New integrations implement existing port interfaces; the sync pipeline works unchanged.
+
+## Port tokens
+
+All port tokens live in `src/ports/injection-tokens.ts`:
+
+| Token | Port interface | Adapter |
+|-------|---------------|---------|
+| `SYNC_PR_SCOUT_PORT` | `SyncPrScoutPort` | `GithubPrScoutService` |
+| `DESTINATION_BOARD_PORT` | `DestinationBoardPort` | `VkBoardAdapterService` |
+| `SOURCE_STATUS_PORT` | `SourceStatusPort` | `GithubSourceStatusService` |
+| `DESTINATION_STATUS_PORT` | `DestinationStatusPort` | `VkStatusService` |
+
+## Configuration precedence
+
+For any tunable key: **env var (non-empty) > SQLite Setting row > code default**.
+
+- Boot-time env is validated by Zod in `src/config/env-schema.ts`, producing `AppEnv`.
+- `SettingsService` resolves effective values at runtime using this precedence.
+- On settings write: update SQLite, refresh in-memory cache, emit `SettingsChanged` event so schedulers and SSE react.
+
+## Adding a new integration
+
+1. Create a module under `src/integrations/<name>/`.
+2. Implement the relevant port (`SyncPrScoutPort` or `DestinationBoardPort`).
+3. Add the type to `SUPPORTED_SOURCE_TYPES` or `SUPPORTED_DESTINATION_TYPES` in `src/config/integration-types.ts`.
+4. Register the module conditionally in `IntegrationsModule.register()`.
+5. Provide a status service implementing `SourceStatusPort` or `DestinationStatusPort`.
+6. Optionally add a settings group service and UI controller under the same integration folder.
+
+## Sync pipeline
+
+The poll cycle in `src/sync/poll-cycle/` follows this sequence:
+
+1. **Guard** — `SyncDependenciesGuard` checks setup complete + source ok + destination ok.
+2. **Scout** — Adapter returns PR candidates via `SyncPrScoutPort`.
+3. **Route** — Match `owner/repo` to a Kanban project via `RepoProjectMapping`.
+4. **Dedupe** — Check `SyncedPullRequest` table; skip already-tracked PRs.
+5. **Board cap** — Enforce `max_board_pr_count` against live board issue count.
+6. **Create** — Call `DestinationBoardPort.createIssue()` for new PRs.
+7. **Reconcile** — PRs no longer in the scout results get their Kanban issues closed.
+
+Both scheduled and manual ("Sync now") runs execute the same pipeline. After a manual run, the next scheduled tick resets to `now + interval + jitter`.
+
+## Vibe Kanban MCP
+
+- Spawned as a **stdio subprocess** (`npx -y vibe-kanban@latest --mcp`).
+- Uses `@modelcontextprotocol/sdk` with stdio transport — not HTTP, not raw REST.
+- Session is lazy-initialized and serialized (one concurrent MCP call).
+- Tool reference: [vibekanban.com/docs](https://vibekanban.com/docs).
+
+## Database
+
+- **Prisma** with SQLite (`@prisma/adapter-better-sqlite3`).
+- Schema: `prisma/schema.prisma`. Generated client: `src/generated/prisma/`.
+- Migrations run automatically on bootstrap before HTTP starts.
+- One process per SQLite file (concurrent access unsupported).

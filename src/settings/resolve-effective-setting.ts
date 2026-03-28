@@ -1,5 +1,5 @@
 /**
- * §5.3 — Effective string: env (when caller passes a non-empty value) → SQLite row (when present) → code default.
+ * Effective string: env (when caller passes a non-empty value) → SQLite row (when present) → code default.
  * Keys without env mapping pass `undefined` for `envValue`.
  */
 export function resolveEffectiveSetting(

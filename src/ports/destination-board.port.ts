@@ -3,7 +3,7 @@
  * VK-specific listing APIs for the operator UI stay on {@link VibeKanbanMcpService}.
  *
  * Sync also needs issue search / fetch; those are included here (orchestration), not in the
- * minimal sketch in PLUGIN-ARCHITECTURE-PLAN.md §1.
+ * minimal sketch in docs/ARCHITECTURE.md.
  */
 export type WorkspaceStartParams = {
   name: string;
