@@ -1,10 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import type { SettingKey } from '../settings/setting-keys';
-import {
-  INTEGRATION_SETTINGS_CHANGED,
-  type IntegrationSettingsChangedPayload,
-} from './integration-settings.events';
+import { INTEGRATION_SETTINGS_CHANGED } from './integration-settings.events';
 
 @Injectable()
 export class IntegrationSettingsEmitterService {
@@ -15,8 +11,7 @@ export class IntegrationSettingsEmitterService {
    * Call after `refreshCache()` when persisted integration settings (e.g. MCP stdio JSON) may have changed.
    * Awaits async listeners so health/state is updated before HTTP redirects return.
    */
-  async emitIntegrationSettingsChanged(keys: SettingKey[] = []): Promise<void> {
-    const payload: IntegrationSettingsChangedPayload = { keys };
-    await this.emitter.emitAsync(INTEGRATION_SETTINGS_CHANGED, payload);
+  async emitIntegrationSettingsChanged(): Promise<void> {
+    await this.emitter.emitAsync(INTEGRATION_SETTINGS_CHANGED);
   }
 }

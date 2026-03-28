@@ -61,7 +61,5 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 # Local SQLite database (see DATABASE_URL in .env)
 *.db
 *.db-journal
-test/e2e.sqlite
-test/e2e.sqlite-journal
 test/integration.sqlite
 test/integration.sqlite-journal

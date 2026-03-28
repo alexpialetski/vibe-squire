@@ -2,6 +2,7 @@ import { buildPollScoutContext } from '../poll-scout-context';
 import type { SyncPrScoutPort } from '../../../ports/sync-pr-scout.port';
 import type { DestinationBoardPort } from '../../../ports/destination-board.port';
 import type { SettingsService } from '../../../settings/settings.service';
+import type { CoreSettings } from '../../../settings/core-settings.service';
 
 const pr = {
   number: 1,
@@ -36,10 +37,14 @@ describe('buildPollScoutContext', () => {
       countActiveIssues: jest.fn().mockResolvedValue(3),
     };
     const warn = jest.fn();
+    const coreSettings: Pick<CoreSettings, 'maxBoardPrCount'> = {
+      maxBoardPrCount: 10,
+    };
 
     const ctx = await buildPollScoutContext({
       prScout,
       settings,
+      coreSettings,
       destinationBoard,
       warn,
     });
@@ -75,10 +80,14 @@ describe('buildPollScoutContext', () => {
       countActiveIssues: jest.fn().mockRejectedValue(new Error('network down')),
     };
     const warn = jest.fn();
+    const coreSettings: Pick<CoreSettings, 'maxBoardPrCount'> = {
+      maxBoardPrCount: 5,
+    };
 
     const ctx = await buildPollScoutContext({
       prScout,
       settings,
+      coreSettings,
       destinationBoard,
       warn,
     });
@@ -112,10 +121,14 @@ describe('buildPollScoutContext', () => {
       countActiveIssues: jest.fn().mockResolvedValue(0),
     };
     const warn = jest.fn();
+    const coreSettings: Pick<CoreSettings, 'maxBoardPrCount'> = {
+      maxBoardPrCount: 5,
+    };
 
     const ctx = await buildPollScoutContext({
       prScout,
       settings,
+      coreSettings,
       destinationBoard,
       warn,
     });
@@ -149,9 +162,14 @@ describe('buildPollScoutContext', () => {
       countActiveIssues: countSpy,
     };
 
+    const coreSettings: Pick<CoreSettings, 'maxBoardPrCount'> = {
+      maxBoardPrCount: 4,
+    };
+
     const ctx = await buildPollScoutContext({
       prScout,
       settings,
+      coreSettings,
       destinationBoard,
       warn: jest.fn(),
     });

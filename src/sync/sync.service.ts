@@ -1,12 +1,12 @@
 import { ConflictException, HttpException, Injectable } from '@nestjs/common';
-import { SettingsService } from '../settings/settings.service';
+import { CoreSettings } from '../settings/core-settings.service';
 import { SyncRunStateService } from './sync-run-state.service';
 import { RunPollCycleService } from './run-poll-cycle.service';
 
 @Injectable()
 export class SyncService {
   constructor(
-    private readonly settings: SettingsService,
+    private readonly coreSettings: CoreSettings,
     private readonly runState: SyncRunStateService,
     private readonly runPoll: RunPollCycleService,
   ) {}
@@ -35,10 +35,7 @@ export class SyncService {
     if (this.runState.isRunning()) {
       return { canRun: false, reason: 'already_running' };
     }
-    const cooldownSec = this.settings.getEffectiveInt(
-      'run_now_cooldown_seconds',
-      90,
-    );
+    const cooldownSec = this.coreSettings.runNowCooldownSeconds;
     const last = this.runState.lastPollCompletedAtMsValue();
     if (last <= 0) {
       return { canRun: true };

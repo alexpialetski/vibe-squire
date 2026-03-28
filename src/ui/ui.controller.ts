@@ -15,7 +15,6 @@ import { StatusService } from '../status/status.service';
 import { SettingsService } from '../settings/settings.service';
 import { MappingsService } from '../mappings/mappings.service';
 import { StatusEventsService } from '../events/status-events.service';
-import { validateSettingValue } from '../settings/setting-keys';
 import { schedulerTextFieldsForUi } from './setting-labels';
 import { generalSettingsPostKeys } from './integration-ui-registry';
 import { SetupEvaluationService } from '../setup/setup-evaluation.service';
@@ -29,12 +28,14 @@ import {
   uiNavLocals,
 } from './ui-presenter';
 import { UiNavService } from './ui-nav.service';
+import { CoreSettings } from '../settings/core-settings.service';
 
 @Controller('ui')
 export class UiController {
   constructor(
     private readonly status: StatusService,
     private readonly settings: SettingsService,
+    private readonly coreSettings: CoreSettings,
     private readonly mappings: MappingsService,
     private readonly statusEvents: StatusEventsService,
     private readonly setupEvaluation: SetupEvaluationService,
@@ -67,9 +68,7 @@ export class UiController {
     const bootSnapshotJson = JSON.stringify(snapshot).replace(/</g, '\\u003c');
     const ev = await this.setupEvaluation.evaluate();
     const setupChecklist = buildSetupChecklist(ev);
-    const scheduledSyncEnabled = this.settings.getEffectiveBoolean(
-      'scheduled_sync_enabled',
-    );
+    const scheduledSyncEnabled = this.coreSettings.scheduledSyncEnabled;
     return {
       ...uiNavLocals(ev, this.uiNav.getEntries()),
       snapshotPretty,
@@ -89,9 +88,7 @@ export class UiController {
   ): Promise<Record<string, unknown>> {
     const values = this.settings.listEffectiveNonSecret();
     const ev = await this.setupEvaluation.evaluate();
-    const scheduledSyncEnabled = this.settings.getEffectiveBoolean(
-      'scheduled_sync_enabled',
-    );
+    const scheduledSyncEnabled = this.coreSettings.scheduledSyncEnabled;
     return {
       ...uiNavLocals(ev, this.uiNav.getEntries()),
       fields: schedulerTextFieldsForUi(values),
@@ -112,12 +109,9 @@ export class UiController {
       const entries: Record<string, string> = {};
       for (const key of generalSettingsPostKeys()) {
         if (!Object.prototype.hasOwnProperty.call(body, key)) continue;
-        const value = String(body[key] ?? '');
-        const error = validateSettingValue(key, value);
-        if (error) throw new Error(error);
-        entries[key] = value;
+        entries[key] = String(body[key] ?? '');
       }
-      await this.settings.applyPatch(entries);
+      await this.settings.applyGroupPatch('core', entries);
       res.redirect(302, '/ui/settings?saved=1');
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);

@@ -11,12 +11,15 @@ import {
   VK_MCP_STDIO_SESSION_PORT,
 } from '../../ports/injection-tokens';
 import type { UiNavEntry } from '../../ports/ui-nav.types';
+import { DESTINATION_SETTINGS_GROUP } from '../../settings/settings-group.tokens';
 import { VibeKanbanMcpService } from '../../vibe-kanban/vibe-kanban-mcp.service';
 import { VibeKanbanContextController } from '../../vibe-kanban/vibe-kanban-context.controller';
 import { VkMcpStdioSessionService } from '../../vibe-kanban/vk-mcp-stdio-session.service';
 import { VkBoardAdapterService } from './vk-board-adapter.service';
 import { VkStatusService } from './vk-status.service';
 import { VkMcpIntegrationListener } from './vk-mcp-integration.listener';
+import { VkSettings } from './vk-settings.service';
+import { VkSettingsGroup } from './vk-settings-group.service';
 import { VkUiController } from './vk-ui.controller';
 
 const VK_NAV_MAPPINGS: UiNavEntry = {
@@ -34,11 +37,17 @@ const VK_NAV_BOARD: UiNavEntry = {
   imports: [SetupModule, PrismaModule, SyncRunStateModule],
   controllers: [VibeKanbanContextController, VkUiController],
   providers: [
+    VkSettingsGroup,
+    {
+      provide: DESTINATION_SETTINGS_GROUP,
+      useExisting: VkSettingsGroup,
+    },
     VkMcpStdioSessionService,
     VibeKanbanMcpService,
     VkBoardAdapterService,
     VkStatusService,
     VkMcpIntegrationListener,
+    VkSettings,
     {
       provide: UI_NAV_ENTRIES,
       useValue: VK_NAV_MAPPINGS,
@@ -71,9 +80,12 @@ const VK_NAV_BOARD: UiNavEntry = {
     },
   ],
   exports: [
+    VkSettingsGroup,
+    DESTINATION_SETTINGS_GROUP,
     VibeKanbanMcpService,
     VkMcpStdioSessionService,
     VkBoardAdapterService,
+    VkSettings,
     VIBE_KANBAN_BOARD_PORT,
     VK_MCP_STDIO_SESSION_PORT,
     DESTINATION_BOARD_PORT,

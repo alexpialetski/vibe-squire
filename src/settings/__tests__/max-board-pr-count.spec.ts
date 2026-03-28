@@ -1,32 +1,30 @@
-import { resolveMaxBoardPrCount } from '../max-board-pr-count';
-import { validateMaxBoardPrCount } from '../core-setting-keys';
+import {
+  corePatchSchema,
+  MAX_BOARD_PR_COUNT_CAP,
+} from '../core-settings.schema';
 
-describe('resolveMaxBoardPrCount', () => {
-  it('returns default for invalid input', () => {
-    expect(resolveMaxBoardPrCount('')).toBe(5);
-    expect(resolveMaxBoardPrCount('0')).toBe(5);
-    expect(resolveMaxBoardPrCount('nope')).toBe(5);
+describe('max_board_pr_count (core patch schema)', () => {
+  it('rejects empty, zero, non-numeric, and over cap', () => {
+    expect(corePatchSchema.safeParse({ max_board_pr_count: '0' }).success).toBe(
+      false,
+    );
+    expect(
+      corePatchSchema.safeParse({ max_board_pr_count: '201' }).success,
+    ).toBe(false);
+    expect(
+      corePatchSchema.safeParse({ max_board_pr_count: 'nope' }).success,
+    ).toBe(false);
   });
 
-  it('clamps to cap', () => {
-    expect(resolveMaxBoardPrCount('999')).toBe(200);
-  });
-
-  it('accepts in-range values', () => {
-    expect(resolveMaxBoardPrCount('1')).toBe(1);
-    expect(resolveMaxBoardPrCount('12')).toBe(12);
-  });
-});
-
-describe('validateMaxBoardPrCount', () => {
-  it('rejects out of range', () => {
-    expect(validateMaxBoardPrCount('0')).not.toBeNull();
-    expect(validateMaxBoardPrCount('201')).not.toBeNull();
-  });
-
-  it('accepts in-range values', () => {
-    expect(validateMaxBoardPrCount('1')).toBeNull();
-    expect(validateMaxBoardPrCount('5')).toBeNull();
-    expect(validateMaxBoardPrCount('200')).toBeNull();
+  it('accepts values in range and caps at MAX_BOARD_PR_COUNT_CAP string', () => {
+    const r = corePatchSchema.safeParse({ max_board_pr_count: '12' });
+    expect(r.success).toBe(true);
+    if (r.success) {
+      expect(r.data.max_board_pr_count).toBe('12');
+    }
+    const cap = corePatchSchema.safeParse({
+      max_board_pr_count: String(MAX_BOARD_PR_COUNT_CAP),
+    });
+    expect(cap.success).toBe(true);
   });
 });

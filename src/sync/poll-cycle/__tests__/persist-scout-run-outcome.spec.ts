@@ -4,7 +4,7 @@ import {
 } from '../persist-scout-run-outcome';
 import { GITHUB_PR_SCOUT_ID } from '../../sync-constants';
 import type { PrismaService } from '../../../prisma/prisma.service';
-import type { SettingsService } from '../../../settings/settings.service';
+import type { CoreSettings } from '../../../settings/core-settings.service';
 
 describe('persistScoutSkippedAfterPoll', () => {
   it('upserts skip state and marks poll completed', async () => {
@@ -42,17 +42,17 @@ describe('persistScoutErrorAfterPoll', () => {
     const prisma = {
       scoutState: { findUnique, upsert },
     } as unknown as PrismaService;
-    const settings = {
-      getPollIntervalMinutes: () => 5,
-      getEffectiveInt: (_k: string, fb: number) => fb,
-    } as unknown as SettingsService;
+    const coreSettings = {
+      pollIntervalMinutes: 5,
+      jitterMaxSeconds: 30,
+    } as unknown as CoreSettings;
     const markPollCompleted = jest.fn();
     const now = new Date('2026-01-15T10:00:00.000Z');
 
     await persistScoutErrorAfterPoll({
       prisma,
       now,
-      settings,
+      coreSettings,
       message: 'boom',
       markPollCompleted,
     });

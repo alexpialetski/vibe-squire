@@ -1,9 +1,11 @@
 import type { SyncPrScoutPort } from '../../ports/sync-pr-scout.port';
 import type { DestinationBoardPort } from '../../ports/destination-board.port';
 import type { SettingsService } from '../../settings/settings.service';
+/** Subset of {@link SettingsService} used by poll-scout-context. */
+type EffectiveReader = Pick<SettingsService, 'getEffective'>;
+import type { CoreSettings } from '../../settings/core-settings.service';
 import type { GithubPrCandidate } from '../../scout/github-pr-scout.service';
-import { parsePrIgnoreAuthorLogins } from '../pr-ignore-author-logins';
-import { resolveMaxBoardPrCount } from '../../settings/max-board-pr-count';
+import { prIgnoreAuthorLoginsSchema } from '../../integrations/github/github-settings.schema';
 import { redactHttpUrls } from '../../logging/redact-urls';
 
 /** Mutable create quota for one poll; only `createIssue` decrements. */
@@ -26,15 +28,14 @@ export type PollScoutContext = {
  */
 export async function buildPollScoutContext(deps: {
   prScout: SyncPrScoutPort;
-  settings: Pick<SettingsService, 'getEffective'>;
+  settings: EffectiveReader;
+  coreSettings: Pick<CoreSettings, 'maxBoardPrCount'>;
   destinationBoard: Pick<DestinationBoardPort, 'countActiveIssues'>;
   warn: (msg: string) => void;
 }): Promise<PollScoutContext> {
   const candidates = deps.prScout.listReviewRequestedForMe();
   const urlsNow = new Set(candidates.map((c) => c.url));
-  const boardLimit = resolveMaxBoardPrCount(
-    deps.settings.getEffective('max_board_pr_count'),
-  );
+  const boardLimit = deps.coreSettings.maxBoardPrCount;
 
   const projectIdForCap = deps.settings
     .getEffective('default_project_id')
@@ -56,15 +57,16 @@ export async function buildPollScoutContext(deps: {
     remaining: Math.max(0, boardLimit - activeVkIssueCount),
   };
 
-  const ignoreParsed = parsePrIgnoreAuthorLogins(
+  const ignoreResult = prIgnoreAuthorLoginsSchema.safeParse(
     deps.settings.getEffective('pr_ignore_author_logins'),
   );
   let ignoredAuthorLogins: Set<string>;
-  if (ignoreParsed.ok) {
-    ignoredAuthorLogins = ignoreParsed.set;
+  if (ignoreResult.success) {
+    ignoredAuthorLogins = ignoreResult.data;
   } else {
+    const message = ignoreResult.error.issues.map((i) => i.message).join('; ');
     deps.warn(
-      `Invalid pr_ignore_author_logins (${ignoreParsed.message}); treating as empty`,
+      `Invalid pr_ignore_author_logins (${message}); treating as empty`,
     );
     ignoredAuthorLogins = new Set();
   }

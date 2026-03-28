@@ -50,8 +50,13 @@ describe('Settings, mappings, vibe-kanban (integration)', () => {
 
   it('PATCH /api/settings then GET returns merged values', async () => {
     await request(app.getHttpServer())
-      .patch('/api/settings')
-      .send({ poll_interval_minutes: '7', kanban_done_status: 'Closed' })
+      .patch('/api/settings/core')
+      .send({ poll_interval_minutes: '7' })
+      .expect(200);
+
+    await request(app.getHttpServer())
+      .patch('/api/settings/destination')
+      .send({ kanban_done_status: 'Closed' })
       .expect(200);
 
     const res = await request(app.getHttpServer())
@@ -126,15 +131,15 @@ describe('Settings, mappings, vibe-kanban (integration)', () => {
 
 describe('Vibe Kanban context when destination not configured (integration)', () => {
   let app: INestApplication<App>;
+  /** `parseAppEnv` snapshot does not drive `vk_mcp_stdio_json`; {@link SettingsService.getEffective} reads `process.env.VK_MCP_STDIO_JSON`. */
+  let prevVkMcpStdioJson: string | undefined;
 
   beforeAll(async () => {
+    prevVkMcpStdioJson = process.env.VK_MCP_STDIO_JSON;
+    process.env.VK_MCP_STDIO_JSON = '[]';
+
     const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [
-        testingAppModule({
-          ...process.env,
-          VK_MCP_STDIO_JSON: '[]',
-        }),
-      ],
+      imports: [testingAppModule()],
     }).compile();
 
     app = moduleFixture.createNestApplication();
@@ -146,6 +151,11 @@ describe('Vibe Kanban context when destination not configured (integration)', ()
 
   afterAll(async () => {
     await app.close();
+    if (prevVkMcpStdioJson === undefined) {
+      delete process.env.VK_MCP_STDIO_JSON;
+    } else {
+      process.env.VK_MCP_STDIO_JSON = prevVkMcpStdioJson;
+    }
   });
 
   it('GET /api/vibe-kanban/organizations returns 400', async () => {

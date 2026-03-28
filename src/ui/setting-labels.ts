@@ -1,7 +1,6 @@
-import { SETTING_KEYS, type SettingKey } from '../settings/setting-keys';
 import { SCHEDULER_TEXT_FIELD_KEYS } from './integration-ui-registry';
 
-export const SETTING_LABELS: Record<SettingKey, string> = {
+export const SETTING_LABELS: Record<string, string> = {
   vk_mcp_stdio_json:
     'Vibe Kanban MCP stdio: JSON array [command, ...args] to spawn the MCP server',
   scheduled_sync_enabled:
@@ -18,7 +17,7 @@ export const SETTING_LABELS: Record<SettingKey, string> = {
     'Target Kanban project UUID (required for sync; pick below or paste)',
   vk_workspace_executor:
     'Executor for start_workspace (e.g. cursor_agent, claude-code)',
-  kanban_done_status: 'Kanban “done” status name',
+  kanban_done_status: 'Kanban "done" status name',
   pr_ignore_author_logins:
     'Ignore authors (login, exact match): semicolon-separated; case-insensitive',
   pr_review_body_template: 'PR review body template',
@@ -29,32 +28,21 @@ export const SETTING_LABELS: Record<SettingKey, string> = {
  */
 export function schedulerTextFieldsForUi(
   values: Record<string, string>,
-): { key: SettingKey; label: string; value: string }[] {
+): { key: string; label: string; value: string }[] {
   return SCHEDULER_TEXT_FIELD_KEYS.map((key) => ({
     key,
-    label: SETTING_LABELS[key],
+    label: SETTING_LABELS[key] ?? key,
     value: values[key] ?? '',
   }));
 }
 
 export function integrationFieldsForUi(
-  keys: readonly SettingKey[],
+  keys: readonly string[],
   values: Record<string, string>,
-): { key: SettingKey; label: string; value: string }[] {
+): { key: string; label: string; value: string }[] {
   return keys.map((key) => ({
     key,
-    label: SETTING_LABELS[key],
-    value: values[key] ?? '',
-  }));
-}
-
-/** Full list for tools that need every key (tests, debugging). */
-export function settingsForView(
-  values: Record<string, string>,
-): { key: SettingKey; label: string; value: string }[] {
-  return SETTING_KEYS.map((key) => ({
-    key,
-    label: SETTING_LABELS[key],
+    label: SETTING_LABELS[key] ?? key,
     value: values[key] ?? '',
   }));
 }

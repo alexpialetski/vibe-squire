@@ -1,4 +1,4 @@
-import type { SettingsService } from '../settings/settings.service';
+import type { CoreSettings } from '../settings/core-settings.service';
 
 const MAX_BACKOFF_MS = 30 * 60_000;
 
@@ -27,13 +27,13 @@ export function computeBackoffNextPollAtMs(p: BackoffParams): number {
 export function computeErrorNextPollAt(
   from: Date,
   streak: number,
-  settings: SettingsService,
+  coreSettings: CoreSettings,
 ): Date {
   const ms = computeBackoffNextPollAtMs({
     fromMs: from.getTime(),
     streak,
-    pollIntervalMinutes: settings.getPollIntervalMinutes(),
-    jitterMaxSeconds: settings.getEffectiveInt('jitter_max_seconds', 30),
+    pollIntervalMinutes: coreSettings.pollIntervalMinutes,
+    jitterMaxSeconds: coreSettings.jitterMaxSeconds,
   });
   return new Date(ms);
 }

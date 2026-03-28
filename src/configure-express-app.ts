@@ -26,7 +26,7 @@ function resolveUiRoot(): string {
 
 /**
  * View engine, static UI assets, and form body parsing.
- * Shared by `main.ts` and e2e bootstrap so `/ui/*` works everywhere.
+ * Shared by `main.ts` and integration HTTP tests so `/ui/*` works everywhere.
  */
 export function configureExpressApp(app: NestExpressApplication): void {
   app.use(express.urlencoded({ extended: true }));
