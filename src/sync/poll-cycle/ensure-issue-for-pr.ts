@@ -1,6 +1,6 @@
 import type { Logger } from '@nestjs/common';
 import type { PrismaService } from '../../prisma/prisma.service';
-import type { SettingsService } from '../../settings/settings.service';
+import type { EffectiveSettingsReader } from '../../settings/settings.service';
 import type {
   BoardIssueRef,
   DestinationBoardPort,
@@ -21,12 +21,9 @@ import {
   workspaceNameForPr,
 } from './poll-pr-kanban-copy';
 
-/** Subset of {@link SettingsService} used here. */
-type EffectiveReader = Pick<SettingsService, 'getEffective'>;
-
 export type EnsureIssueForPrDeps = {
   prisma: PrismaService;
-  settings: EffectiveReader;
+  settings: EffectiveSettingsReader;
   destinationBoard: DestinationBoardPort;
   logger: Pick<Logger, 'debug' | 'warn' | 'log'>;
   runState: Pick<SyncRunStateService, 'setDestinationHealth'>;
@@ -35,7 +32,7 @@ export type EnsureIssueForPrDeps = {
 
 export function buildPollIssueDescription(
   pr: GithubPrCandidate,
-  settings: EffectiveReader,
+  settings: EffectiveSettingsReader,
 ): string {
   const marker = buildVibeSquirePrDescriptionMarker(pr.url);
   const template = settings.getEffective('pr_review_body_template');
@@ -43,7 +40,7 @@ export function buildPollIssueDescription(
   return `${marker}\n\n${body}`;
 }
 
-function workspaceExecutor(settings: EffectiveReader): string {
+function workspaceExecutor(settings: EffectiveSettingsReader): string {
   const e = settings.getEffective('vk_workspace_executor').trim();
   return e.length > 0 ? e : 'cursor_agent';
 }
