@@ -37,4 +37,8 @@ export interface DestinationBoardPort {
   }): Promise<string>;
   updateIssueStatus(issueId: string, status: string): Promise<void>;
   startWorkspace?(params: WorkspaceStartParams): Promise<string>;
+  deleteWorkspace?(
+    workspaceId: string,
+    opts?: { deleteBranches?: boolean },
+  ): Promise<void>;
 }

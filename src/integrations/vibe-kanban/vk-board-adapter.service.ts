@@ -73,4 +73,11 @@ export class VkBoardAdapterService implements DestinationBoardPort {
   startWorkspace(params: WorkspaceStartParams): Promise<string> {
     return this.vk.startWorkspace(params);
   }
+
+  deleteWorkspace(
+    workspaceId: string,
+    opts?: { deleteBranches?: boolean },
+  ): Promise<void> {
+    return this.vk.deleteWorkspace(workspaceId, opts);
+  }
 }

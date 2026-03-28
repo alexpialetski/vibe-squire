@@ -85,11 +85,9 @@ export class VibeKanbanMcpService {
     return this.stdioSession.runWithClient(fn);
   }
 
-  /** Lightweight reachability: list tools (implicitly initializes session). */
+  /** Reachability probe: calls list_organizations to verify both MCP stdio and VK API are up. */
   async probe(): Promise<void> {
-    await this.withClient(async (client) => {
-      await client.listTools();
-    });
+    await this.listOrganizations();
   }
 
   async listOrganizations(): Promise<VkOrgRef[]> {
@@ -270,6 +268,19 @@ export class VibeKanbanMcpService {
         );
       }
       return id;
+    });
+  }
+
+  async deleteWorkspace(
+    workspaceId: string,
+    opts?: { deleteBranches?: boolean },
+  ): Promise<void> {
+    await this.withClient(async (client) => {
+      const args: Record<string, unknown> = { workspace_id: workspaceId };
+      if (opts?.deleteBranches) {
+        args.delete_branches = true;
+      }
+      await this.callToolOk(client, 'delete_workspace', args);
     });
   }
 }

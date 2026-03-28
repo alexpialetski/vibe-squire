@@ -63,3 +63,6 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 *.db-journal
 test/integration.sqlite
 test/integration.sqlite-journal
+
+# Local PR review prompt template
+pr-review-prompt.md
