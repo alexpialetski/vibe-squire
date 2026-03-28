@@ -75,5 +75,5 @@ Both scheduled and manual ("Sync now") runs execute the same pipeline. After a m
 
 - **Prisma** with SQLite (`@prisma/adapter-better-sqlite3`).
 - Schema: `prisma/schema.prisma`. Generated client: `src/generated/prisma/`.
-- Migrations run automatically on bootstrap before HTTP starts.
+- Migrations run automatically on bootstrap via a lightweight `better-sqlite3` runner (`src/database/sqlite-migrate.ts`), not `prisma migrate deploy`. The Prisma CLI is a dev-only dependency.
 - One process per SQLite file (concurrent access unsupported).

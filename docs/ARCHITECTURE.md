@@ -88,7 +88,7 @@ Boot-time env (`AppEnv`) is validated by Zod in `src/config/env-schema.ts` and i
 | `PollRunItem` | Per-PR outcome within a poll run |
 | `SyncedPullRequest` | Tracks Kanban issues created for PRs (dedupe + reconciliation) |
 
-Migrations run automatically on every startup before the HTTP server accepts traffic.
+Migrations run automatically on every startup before the HTTP server accepts traffic. At runtime, migrations are applied via a lightweight `better-sqlite3` runner (`src/database/sqlite-migrate.ts`) that reads `prisma/migrations/*/migration.sql` files directly — the Prisma CLI is not required. The runner writes to Prisma's `_prisma_migrations` table so both tools stay compatible for local development.
 
 ## Sync pipeline
 
