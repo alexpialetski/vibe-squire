@@ -60,6 +60,13 @@ export class StatusManualSyncDto {
   cooldownUntil?: string;
 }
 
+export class StatusScheduledSyncDto {
+  @ApiProperty({
+    description: 'Whether the poll scheduler runs automatic sync cycles',
+  })
+  enabled!: boolean;
+}
+
 export class StatusSnapshotDto {
   @ApiProperty()
   timestamp!: string;
@@ -92,4 +99,7 @@ export class StatusSnapshotDto {
 
   @ApiProperty({ type: StatusManualSyncDto })
   manual_sync!: StatusManualSyncDto;
+
+  @ApiProperty({ type: StatusScheduledSyncDto })
+  scheduled_sync!: StatusScheduledSyncDto;
 }
