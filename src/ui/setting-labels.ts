@@ -1,8 +1,6 @@
 import { SCHEDULER_TEXT_FIELD_KEYS } from './integration-ui-registry';
 
 export const SETTING_LABELS: Record<string, string> = {
-  vk_mcp_stdio_json:
-    'Vibe Kanban MCP stdio: JSON array [command, ...args] to spawn the MCP server',
   scheduled_sync_enabled:
     'Automatic polling — timer runs on the interval below. Manual Sync now always works. Override: SCHEDULED_SYNC_ENABLED',
   poll_interval_minutes:

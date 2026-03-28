@@ -31,8 +31,8 @@ const appEnvInputSchema = z.looseObject({
   PORT: z.number().int().min(1).max(65535).default(3000),
   OPENAPI_ENABLED: z.stringbool().optional().default(true),
   LOG_LEVEL: z.enum(PINO_LOG_LEVELS).optional().default('info'),
-  LOG_TO_FILE: z.stringbool().optional().default(true),
-  LOG_FILE_PATH: z.string().optional().default('logs/app.log'),
+  /** When set to a non-empty string, JSON logs are also written to this path (relative paths are under cwd). */
+  LOG_FILE_PATH: z.string().optional(),
   SOURCE_TYPE: z.enum(SUPPORTED_SOURCE_TYPES).optional().default('github'),
   DESTINATION_TYPE: z
     .enum(SUPPORTED_DESTINATION_TYPES)
@@ -52,8 +52,7 @@ export function parseAppEnv(env: NodeJS.ProcessEnv = process.env): AppEnv {
     port: parsed.PORT,
     openapiEnabled: parsed.OPENAPI_ENABLED,
     logLevel: parsed.LOG_LEVEL,
-    logToFile: parsed.LOG_TO_FILE,
-    logFilePath: parsed.LOG_FILE_PATH,
+    logFilePath: parsed.LOG_FILE_PATH?.trim() || undefined,
     sourceType: parsed.SOURCE_TYPE,
     destinationType: parsed.DESTINATION_TYPE,
   };

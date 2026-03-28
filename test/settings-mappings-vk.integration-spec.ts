@@ -157,39 +157,3 @@ describe('Settings, mappings, vibe-kanban (integration)', () => {
     expect(vkStub.listOrganizations).toHaveBeenCalled();
   });
 });
-
-describe('Vibe Kanban context when destination not configured (integration)', () => {
-  let app: INestApplication<App>;
-  /** `parseAppEnv` snapshot does not drive `vk_mcp_stdio_json`; {@link SettingsService.getEffective} reads `process.env.VK_MCP_STDIO_JSON`. */
-  let prevVkMcpStdioJson: string | undefined;
-
-  beforeAll(async () => {
-    prevVkMcpStdioJson = process.env.VK_MCP_STDIO_JSON;
-    process.env.VK_MCP_STDIO_JSON = '[]';
-
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [testingAppModule()],
-    }).compile();
-
-    app = moduleFixture.createNestApplication();
-    app.useGlobalPipes(
-      new ValidationPipe({ whitelist: true, transform: true }),
-    );
-    await app.init();
-  });
-
-  afterAll(async () => {
-    await app.close();
-    if (prevVkMcpStdioJson === undefined) {
-      delete process.env.VK_MCP_STDIO_JSON;
-    } else {
-      process.env.VK_MCP_STDIO_JSON = prevVkMcpStdioJson;
-    }
-  });
-
-  it('GET /api/vibe-kanban/organizations returns 400', async () => {
-    await request(app.getHttpServer())
-      .get('/api/vibe-kanban/organizations')
-      .expect(400);
-  });
-});

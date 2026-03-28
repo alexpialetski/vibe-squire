@@ -2,16 +2,15 @@ import { Inject, Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import { APP_ENV, type AppEnv } from '../../config/app-env.token';
-import { SettingsService } from '../../settings/settings.service';
 import {
   isVibeKanbanDestination,
-  parseVkStdioCommand,
+  VK_MCP_STDIO_SPAWN,
 } from './mcp-transport-config';
 import type { VkMcpStdioSessionPort } from '../../ports/vk-mcp-stdio-session.port';
 
 /**
- * One long-lived MCP client over stdio (spawned `npx vibe-kanban --mcp` or custom command).
- * Lazy start on first use; serializes calls; tears down on transport/config change or shutdown.
+ * One long-lived MCP client over stdio (hardcoded `npx -y vibe-kanban@latest --mcp`).
+ * Lazy start on first use; serializes calls; tears down on destination change or shutdown.
  */
 @Injectable()
 export class VkMcpStdioSessionService
@@ -26,16 +25,10 @@ export class VkMcpStdioSessionService
   /** Serialize all MCP operations on the shared client. */
   private chain: Promise<unknown> = Promise.resolve();
 
-  constructor(
-    private readonly settings: SettingsService,
-    @Inject(APP_ENV) private readonly appEnv: AppEnv,
-  ) {}
+  constructor(@Inject(APP_ENV) private readonly appEnv: AppEnv) {}
 
   private buildConfigKey(): string {
-    return JSON.stringify({
-      dest: this.appEnv.destinationType,
-      stdio: this.settings.getEffective('vk_mcp_stdio_json'),
-    });
+    return this.appEnv.destinationType;
   }
 
   /**
@@ -91,14 +84,7 @@ export class VkMcpStdioSessionService
 
     await this.teardown();
 
-    const parsed = parseVkStdioCommand(
-      this.settings.getEffective('vk_mcp_stdio_json'),
-    );
-    if (!parsed) {
-      throw new Error(
-        'Invalid vk_mcp_stdio_json: expected JSON array [command, ...args]',
-      );
-    }
+    const parsed = VK_MCP_STDIO_SPAWN;
 
     const transport = new StdioClientTransport({
       command: parsed.command,

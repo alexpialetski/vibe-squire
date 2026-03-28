@@ -7,6 +7,7 @@ import type {
   SetupEvaluation,
   SetupEvaluationService,
 } from '../../setup/setup-evaluation.service';
+import type { SupportedDestinationType } from '../../config/integration-types';
 
 function baseEv(): SetupEvaluation {
   return {
@@ -20,13 +21,10 @@ function baseEv(): SetupEvaluation {
 }
 
 describe('buildVibeKanbanPageLocals', () => {
-  it('sets orgError when MCP stdio is not configured', async () => {
+  it('sets orgError when destination is not Vibe Kanban', async () => {
     const settings = {
       listEffectiveNonSecret: () => ({ kanban_done_status: '' }),
       getEffective: (key: string) => {
-        if (key === 'vk_mcp_stdio_json') {
-          return '';
-        }
         if (key === 'default_organization_id') {
           return '';
         }
@@ -49,7 +47,7 @@ describe('buildVibeKanbanPageLocals', () => {
 
     const locals = await buildVibeKanbanPageLocals({
       settings,
-      destinationType: 'vibe_kanban',
+      destinationType: 'not_vk' as SupportedDestinationType,
       setupEvaluation,
       vk,
       uiNavEntries: [],
@@ -64,9 +62,6 @@ describe('buildVibeKanbanPageLocals', () => {
     const settings = {
       listEffectiveNonSecret: () => ({ kanban_done_status: 'Done' }),
       getEffective: (key: string) => {
-        if (key === 'vk_mcp_stdio_json') {
-          return '["npx","-y","x"]';
-        }
         if (key === 'default_organization_id') {
           return 'org-1';
         }
@@ -111,9 +106,6 @@ describe('buildVibeKanbanPageLocals', () => {
     const settings = {
       listEffectiveNonSecret: () => ({}),
       getEffective: (key: string) => {
-        if (key === 'vk_mcp_stdio_json') {
-          return '["npx","x"]';
-        }
         if (key === 'default_organization_id') {
           return '';
         }

@@ -10,8 +10,6 @@ import { SettingsService } from '../src/settings/settings.service';
 import { SyncRunStateService } from '../src/sync/sync-run-state.service';
 import { PollSchedulerService } from '../src/sync/poll-scheduler.service';
 
-const VALID_VK_MCP_JSON = '["npx","-y","vibe-kanban@latest","--mcp"]' as const;
-
 function buildVkStub() {
   return {
     probe: jest.fn().mockResolvedValue(undefined),
@@ -67,7 +65,7 @@ describe('VkMcpIntegrationListener (integration)', () => {
     await prisma.setting.deleteMany({
       where: {
         key: {
-          in: ['vk_mcp_stdio_json', 'scheduled_sync_enabled'],
+          in: ['scheduled_sync_enabled'],
         },
       },
     });
@@ -94,24 +92,11 @@ describe('VkMcpIntegrationListener (integration)', () => {
     stdioShutdown.mockResolvedValue(undefined);
   });
 
-  it('PATCH invalid vk_mcp_stdio_json runs listener: stdio shutdown and unknown health', async () => {
+  it('PATCH destination rejects unknown vk_mcp_stdio_json key', async () => {
     await request(app.getHttpServer())
       .patch('/api/settings/destination')
       .send({ vk_mcp_stdio_json: '[]' })
-      .expect(200);
-
-    expect(stdioShutdown).toHaveBeenCalled();
-    expect(runState.getDestinationHealth('vibe_kanban').state).toBe('unknown');
-  });
-
-  it('PATCH valid vk_mcp_stdio_json again runs probe and restores ok health', async () => {
-    await request(app.getHttpServer())
-      .patch('/api/settings/destination')
-      .send({ vk_mcp_stdio_json: VALID_VK_MCP_JSON })
-      .expect(200);
-
-    expect(vkStub.probe).toHaveBeenCalled();
-    expect(runState.getDestinationHealth('vibe_kanban').state).toBe('ok');
+      .expect(400);
   });
 
   it('integration-settings event with healthy VK: probe failure → degraded if lastOkAt set', async () => {

@@ -6,14 +6,10 @@ import {
 } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import { APP_ENV, type AppEnv } from '../../config/app-env.token';
-import { SettingsService } from '../../settings/settings.service';
 import { VibeKanbanMcpService } from '../../vibe-kanban/vibe-kanban-mcp.service';
 import { VK_MCP_STDIO_SESSION_PORT } from '../../ports/injection-tokens';
 import type { VkMcpStdioSessionPort } from '../../ports/vk-mcp-stdio-session.port';
-import {
-  isVibeKanbanDestination,
-  isVibeKanbanMcpConfigured,
-} from '../../vibe-kanban/transport/mcp-transport-config';
+import { isVibeKanbanDestination } from '../../vibe-kanban/transport/mcp-transport-config';
 import { SyncRunStateService } from '../../sync/sync-run-state.service';
 import { StatusEventsService } from '../../events/status-events.service';
 import { INTEGRATION_SETTINGS_CHANGED } from '../../events/integration-settings.events';
@@ -21,15 +17,14 @@ import { INTEGRATION_SETTINGS_CHANGED } from '../../events/integration-settings.
 const VK_DESTINATION_ID = 'vibe_kanban' as const;
 
 /**
- * Reacts to integration settings changes: tear down stdio MCP when VK/MCP is off,
- * probe and update destination health when VK + stdio are configured.
+ * Reacts to integration settings changes and bootstrap: probe MCP when destination is Vibe Kanban,
+ * tear down stdio when it is not.
  */
 @Injectable()
 export class VkMcpIntegrationListener implements OnApplicationBootstrap {
   private readonly logger = new Logger(VkMcpIntegrationListener.name);
 
   constructor(
-    private readonly settings: SettingsService,
     @Inject(APP_ENV) private readonly appEnv: AppEnv,
     @Inject(VK_MCP_STDIO_SESSION_PORT)
     private readonly stdioSession: VkMcpStdioSessionPort,
@@ -49,12 +44,8 @@ export class VkMcpIntegrationListener implements OnApplicationBootstrap {
 
   private async reconcile(source: 'bootstrap' | 'event'): Promise<void> {
     const vkDest = isVibeKanbanDestination(this.appEnv.destinationType);
-    const mcpOk = isVibeKanbanMcpConfigured(
-      this.settings,
-      this.appEnv.destinationType,
-    );
 
-    if (!vkDest || !mcpOk) {
+    if (!vkDest) {
       await this.stdioSession.shutdown();
       this.runState.setDestinationHealth(VK_DESTINATION_ID, {
         state: 'unknown',

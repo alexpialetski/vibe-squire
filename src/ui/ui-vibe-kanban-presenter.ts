@@ -12,7 +12,7 @@ import { SETTING_LABELS } from './setting-labels';
 import { uiNavLocals } from './ui-presenter';
 
 export const VK_PAGE_ORG_ERROR_NO_MCP =
-  'Vibe Kanban MCP is not configured (set VK_MCP_STDIO_JSON or patch vk_mcp_stdio_json via API).';
+  'Vibe Kanban MCP is not available (this UI requires DESTINATION_TYPE=vibe_kanban).';
 
 /**
  * Template locals for `/ui/vibe-kanban` (board picker, executor, labels).
@@ -38,7 +38,7 @@ export async function buildVibeKanbanPageLocals(deps: {
   } = deps;
   const values = settings.listEffectiveNonSecret();
   await setupEvaluation.evaluate();
-  const mcpBoardPicker = isVibeKanbanMcpConfigured(settings, destinationType);
+  const mcpBoardPicker = isVibeKanbanMcpConfigured(destinationType);
   const orgError = !mcpBoardPicker ? VK_PAGE_ORG_ERROR_NO_MCP : null;
   const boardOrg = settings.getEffective('default_organization_id');
   const boardProj = settings.getEffective('default_project_id');

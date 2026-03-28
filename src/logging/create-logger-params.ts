@@ -9,32 +9,23 @@ const REDACT = {
   remove: true,
 };
 
-function defaultLogFilePath(): string {
-  return path.join(process.cwd(), 'logs', 'app.log');
-}
-
 /**
- * When file logging is on and path unset, uses `logs/app.log` under cwd.
+ * File logging is enabled when `LOG_FILE_PATH` is set to a non-empty value (after trim).
  */
-function resolveLogFilePath(
-  env: Pick<AppEnv, 'logToFile' | 'logFilePath'>,
-): string | null {
-  if (!env.logToFile) {
-    return null;
-  }
-  const raw = env.logFilePath;
+function resolveLogFilePath(env: Pick<AppEnv, 'logFilePath'>): string | null {
+  const raw = env.logFilePath?.trim();
   if (!raw) {
-    return defaultLogFilePath();
+    return null;
   }
   return path.isAbsolute(raw) ? raw : path.join(process.cwd(), raw);
 }
 
 /**
  * nestjs-pino / pino-http options. Kept out of AppModule to avoid clutter.
- * Writes JSON lines to a file (default `logs/app.log`) in addition to the console.
+ * When `LOG_FILE_PATH` is set, also writes JSON lines to that file alongside the console.
  */
 export function createLoggerModuleParams(
-  env: Pick<AppEnv, 'logLevel' | 'logToFile' | 'logFilePath' | 'nodeEnv'>,
+  env: Pick<AppEnv, 'logLevel' | 'logFilePath' | 'nodeEnv'>,
 ): Params {
   const level = env.logLevel;
   const isProd = env.nodeEnv === 'production';

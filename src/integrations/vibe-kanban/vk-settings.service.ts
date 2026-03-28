@@ -29,10 +29,6 @@ export class VkSettings {
     return this.getAll().default_organization_id;
   }
 
-  get vkMcpStdioJson(): string {
-    return this.getAll().vk_mcp_stdio_json;
-  }
-
   get vkWorkspaceExecutor(): string {
     return this.getAll().vk_workspace_executor;
   }

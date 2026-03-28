@@ -9,7 +9,7 @@ import { VibeKanbanMcpService } from '../src/vibe-kanban/vibe-kanban-mcp.service
 import { PollSchedulerService } from '../src/sync/poll-scheduler.service';
 import { validateStatusSnapshot } from '../src/status/status-snapshot.contract';
 
-const HTTP_SMOKE_ENV_KEYS = ['SOURCE_TYPE', 'VK_MCP_STDIO_JSON'] as const;
+const HTTP_SMOKE_ENV_KEYS = ['SOURCE_TYPE'] as const;
 
 function snapshotHttpSmokeEnv(): Record<string, string | undefined> {
   const out: Record<string, string | undefined> = {};
@@ -74,7 +74,6 @@ describe('App HTTP smoke (integration)', () => {
     beforeAll(async () => {
       prevEnv = snapshotHttpSmokeEnv();
       delete process.env.SOURCE_TYPE;
-      delete process.env.VK_MCP_STDIO_JSON;
       app = await createSmokeApp();
     });
 
@@ -180,37 +179,6 @@ describe('App HTTP smoke (integration)', () => {
       expect(body.database.state).toBe('ok');
       expect(typeof body.source.state).toBe('string');
       expect(typeof body.destination.state).toBe('string');
-    });
-  });
-
-  describe('invalid VK MCP stdio (env)', () => {
-    let app: NestExpressApplication;
-    let prevEnv: Record<string, string | undefined>;
-
-    beforeAll(async () => {
-      prevEnv = snapshotHttpSmokeEnv();
-      delete process.env.SOURCE_TYPE;
-      process.env.VK_MCP_STDIO_JSON = '[]';
-      app = await createSmokeApp();
-    });
-
-    afterAll(async () => {
-      await app.close();
-      restoreHttpSmokeEnv(prevEnv);
-    });
-
-    it('GET /ui/dashboard still renders (no integration gate redirect)', async () => {
-      const res = await request(app.getHttpServer())
-        .get('/ui/dashboard')
-        .expect(200);
-      expect(res.text).toContain('Dashboard');
-    });
-
-    it('GET /ui/activity still renders', async () => {
-      const res = await request(app.getHttpServer())
-        .get('/ui/activity')
-        .expect(200);
-      expect(res.text).toContain('Activity');
     });
 
     it('POST /api/sync/run returns 409 when setup incomplete', async () => {

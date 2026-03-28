@@ -53,14 +53,15 @@ describe('ui-presenter', () => {
     it('returns empty when setup is complete', () => {
       expect(buildSetupChecklist(baseEv({ complete: true }))).toEqual([]);
     });
-    it('includes MCP row when VK destination and MCP not ready', () => {
+    it('includes mappings row when VK destination and setup blocked on mappings', () => {
       const rows = buildSetupChecklist(
         baseEv({
           destinationType: 'vibe_kanban',
-          destinationMcpConfigured: false,
+          destinationMcpConfigured: true,
+          reason: 'no_mappings',
         }),
       );
-      expect(rows.some((r) => r.text.includes('MCP stdio'))).toBe(true);
+      expect(rows.some((r) => r.text.includes('Mappings'))).toBe(true);
     });
   });
 
@@ -110,8 +111,8 @@ describe('ui-presenter', () => {
       expect(setupReasonHuman('no_mappings')).toBe(
         SETUP_REASON_MESSAGES['no_mappings'],
       );
-      expect(setupReasonHuman('vk_mcp_stdio_invalid')).toBe(
-        SETUP_REASON_MESSAGES['vk_mcp_stdio_invalid'],
+      expect(setupReasonHuman('no_default_kanban_board')).toBe(
+        SETUP_REASON_MESSAGES['no_default_kanban_board'],
       );
     });
     it('returns fallback for unknown reason', () => {

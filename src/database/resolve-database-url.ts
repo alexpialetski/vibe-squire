@@ -5,7 +5,7 @@ import { pathToFileURL } from 'node:url';
 
 /**
  * §5.7 — If `DATABASE_URL` is unset, derive SQLite `file:` URL from
- * `SQLITE_DATABASE_PATH` / `DATABASE_PATH`, then `VIBE_SQUIRE_DATA_DIR`, then OS defaults.
+ * `DATABASE_PATH`, then `VIBE_SQUIRE_DATA_DIR`, then OS defaults.
  * Creates parent directories. Mutates `process.env.DATABASE_URL`.
  */
 export function ensureDatabaseUrlFromEnv(): void {
@@ -14,9 +14,7 @@ export function ensureDatabaseUrlFromEnv(): void {
     return;
   }
 
-  const explicitFile =
-    process.env.SQLITE_DATABASE_PATH?.trim() ||
-    process.env.DATABASE_PATH?.trim();
+  const explicitFile = process.env.DATABASE_PATH?.trim();
   if (explicitFile) {
     mkdirSync(dirname(explicitFile), { recursive: true });
     process.env.DATABASE_URL = pathToFileURL(explicitFile).href;
