@@ -11,7 +11,7 @@ export type AppEnv = {
   port: number;
   openapiEnabled: boolean;
   logLevel: LevelWithSilent;
-  logToFile: boolean;
+  /** When set, JSON logs are also written to this path (in addition to console). */
   logFilePath: string | undefined;
   /** PR / SCM adapter key (from `SOURCE_TYPE` + default). Invalid env fails at boot. */
   sourceType: SupportedSourceType;

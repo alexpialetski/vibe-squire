@@ -5,7 +5,6 @@ import { SettingsService } from '../../settings/settings.service';
 import {
   isVibeKanbanDestination,
   isVibeKanbanMcpConfigured,
-  parseVkStdioCommand,
 } from '../../vibe-kanban/transport/mcp-transport-config';
 import type {
   DestinationReadinessResult,
@@ -27,10 +26,7 @@ export class VkStatusService implements DestinationStatusProvider {
 
   async checkReadiness(): Promise<DestinationReadinessResult> {
     const configuration: Record<string, unknown> = {
-      vk_mcp_configured: isVibeKanbanMcpConfigured(
-        this.settings,
-        this.appEnv.destinationType,
-      ),
+      vk_mcp_configured: isVibeKanbanMcpConfigured(this.appEnv.destinationType),
     };
 
     if (!isVibeKanbanDestination(this.appEnv.destinationType)) {
@@ -42,9 +38,9 @@ export class VkStatusService implements DestinationStatusProvider {
     const defaultOrganizationId = this.settings.getEffective(
       'default_organization_id',
     );
-    const destinationMcpConfigured =
-      parseVkStdioCommand(this.settings.getEffective('vk_mcp_stdio_json')) !=
-      null;
+    const destinationMcpConfigured = isVibeKanbanMcpConfigured(
+      this.appEnv.destinationType,
+    );
 
     const defaultBoardReady =
       defaultOrganizationId.trim().length > 0 &&
@@ -54,14 +50,7 @@ export class VkStatusService implements DestinationStatusProvider {
     const setupComplete = hasRouting && destinationMcpConfigured;
 
     const errors: IntegrationError[] = [];
-    if (!destinationMcpConfigured) {
-      errors.push({
-        code: 'vk_mcp_stdio_invalid',
-        message:
-          'Configure Vibe Kanban MCP stdio (VK_MCP_STDIO_JSON or vk_mcp_stdio_json).',
-        settingsPageHint: '/ui/vibe-kanban',
-      });
-    } else if (!defaultBoardReady) {
+    if (!defaultBoardReady) {
       errors.push({
         code: 'no_default_kanban_board',
         message: 'Set default Kanban organization and project.',

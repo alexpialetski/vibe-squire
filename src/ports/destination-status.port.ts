@@ -14,10 +14,7 @@ export type DestinationReadinessResult = {
   };
 };
 
-export type DestinationSetupReason =
-  | 'vk_mcp_stdio_invalid'
-  | 'no_default_kanban_board'
-  | 'no_mappings';
+export type DestinationSetupReason = 'no_default_kanban_board' | 'no_mappings';
 
 /**
  * Destination-side readiness. Wired per {@link AppEnv.destinationType}.

@@ -10,13 +10,9 @@ export {
   type SupportedSourceType,
 } from '../config/integration-types';
 
-export type SetupReason =
-  | 'vk_mcp_stdio_invalid'
-  | 'no_default_kanban_board'
-  | 'no_mappings';
+export type SetupReason = 'no_default_kanban_board' | 'no_mappings';
 
 const ERROR_CODE_TO_REASON: Record<string, SetupReason> = {
-  vk_mcp_stdio_invalid: 'vk_mcp_stdio_invalid',
   no_default_kanban_board: 'no_default_kanban_board',
   no_mappings: 'no_mappings',
 };

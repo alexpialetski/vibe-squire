@@ -23,9 +23,6 @@ const vkWorkspaceExecutorField = z
 
 export const vkStorageSchema = z
   .object({
-    vk_mcp_stdio_json: z
-      .string()
-      .default('["npx","-y","vibe-kanban@latest","--mcp"]'),
     default_organization_id: z.string().default(''),
     default_project_id: z.string().default(''),
     vk_workspace_executor: vkWorkspaceExecutorField.pipe(
@@ -39,9 +36,10 @@ export type VkSettingsValues = z.output<typeof vkStorageSchema>;
 
 export const VK_STORAGE_DEFAULTS: VkSettingsValues = vkStorageSchema.parse({});
 
-export const VK_SETTING_ENV = {
-  vk_mcp_stdio_json: 'VK_MCP_STDIO_JSON',
-} as const satisfies Partial<Record<keyof VkSettingsValues, string>>;
+/** No destination env overrides for VK storage keys. */
+export const VK_SETTING_ENV = {} as const satisfies Partial<
+  Record<keyof VkSettingsValues, string>
+>;
 
 export const VK_STORAGE_KEYS = Object.keys(
   vkStorageSchema.shape,

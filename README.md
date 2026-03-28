@@ -2,19 +2,19 @@
 
 Local background service that polls **GitHub** (via `gh`) for PRs requesting your review and syncs them into **Vibe Kanban** over **MCP stdio** (spawned subprocess). See [REQUIREMENTS.md](./REQUIREMENTS.md) for scope and contracts.
 
-**Prerequisites:** Node.js **LTS**, [`gh`](https://cli.github.com/) authenticated, and a working **Vibe Kanban MCP** stdio command (see [Vibe Kanban](https://vibekanban.com/docs)).
+**Prerequisites:** Node.js **LTS** (for `npx` to run the bundled **`vibe-kanban@latest --mcp`** stdio server), [`gh`](https://cli.github.com/) authenticated. See [Vibe Kanban](https://vibekanban.com/docs).
 
 ## Quick start
 
 ```bash
 npm install
-cp .env.example .env   # set DATABASE_URL and VK MCP stdio JSON (see table below)
+cp .env.example .env   # set DATABASE_URL (see table below)
 npm run start:dev
 ```
 
 - **API + SSE:** default bind `127.0.0.1`:`PORT` (env, default `3000`).
 - **OpenAPI:** [http://127.0.0.1:3000/api/docs](http://127.0.0.1:3000/api/docs) unless `OPENAPI_ENABLED=false`.
-- **Logs:** structured HTTP logs via **pino** (`nestjs-pino`). Set `LOG_LEVEL` (e.g. `debug`). Pretty output is used when `NODE_ENV` is not `production`.
+- **Logs:** structured HTTP logs via **pino** (`nestjs-pino`). Set `LOG_LEVEL` (e.g. `debug`). Pretty output is used when `NODE_ENV` is not `production`. Optional `LOG_FILE_PATH` also writes JSON lines to a file.
 
 ## Operator UI (server-rendered)
 
@@ -30,8 +30,8 @@ After `npm run start:dev`, open `/ui/dashboard` in the browser. CORS remains ena
 
 | Mechanism | Purpose |
 |-----------|---------|
-| `DATABASE_URL` | SQLite `file:` URL for Prisma. If unset, see `src/database/resolve-database-url.ts` (`SQLITE_DATABASE_PATH`, `DATABASE_PATH`, `VIBE_SQUIRE_DATA_DIR`, OS defaults). |
-| `VK_MCP_STDIO_JSON` / `vk_mcp_stdio_json` | JSON array `[command, ...args]` to spawn the Vibe Kanban MCP server, e.g. `npx` + `-y` + `vibe-kanban@latest` + `--mcp`. |
+| `DATABASE_URL` | SQLite `file:` URL for Prisma. If unset, see `src/database/resolve-database-url.ts` (`DATABASE_PATH`, `VIBE_SQUIRE_DATA_DIR`, OS defaults). |
+| Vibe Kanban MCP stdio | **Hardcoded** in `src/vibe-kanban/transport/vk-stdio-command.schema.ts` (`npx`, `-y`, `vibe-kanban@latest`, `--mcp`). Not configurable via env, API, or SQLite. |
 | `SCHEDULED_SYNC_ENABLED` / `scheduled_sync_enabled` | When `false` / `0` / `no`, the **scheduled timer** does not run; **Manual “Sync now”** still works. Default **true**. General **Settings** (poll schedule form). |
 | `POLL_INTERVAL_MINUTES`, `JITTER_MAX_SECONDS`, `RUN_NOW_COOLDOWN_SECONDS` | Scheduled poll interval (**minimum 5 minutes**; values below 5 are clamped). **Manual “Sync now”** is not limited by this interval (only by cooldown). Ignored when scheduled sync is disabled. |
 | `max_board_pr_count` | **No env** — max **new** Kanban issues per poll is `limit` minus the live count of `[vibe-squire]` issues on the default Kanban project (from MCP `list_issues`), not SQLite queue size (default **5**, allowed **1–200**). Oldest GitHub PR by `createdAt` is admitted first; extras get `skipped_board_limit`. General **Settings** (poll schedule form). |

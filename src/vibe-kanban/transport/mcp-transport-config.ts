@@ -1,15 +1,13 @@
 import type { SupportedDestinationType } from '../../config/integration-types';
-import type { SettingsService } from '../../settings/settings.service';
-import { parseVkStdioCommand } from './vk-stdio-command.schema';
 
-export { parseVkStdioCommand };
+export {
+  parseVkStdioCommand,
+  VK_MCP_STDIO_SPAWN,
+} from './vk-stdio-command.schema';
 
 /** Shared with {@link VibeKanbanMcpConfiguredGuard} and API consumers. */
 export const VK_MCP_NOT_CONFIGURED_MESSAGE =
-  'Vibe Kanban MCP is not configured (valid vk_mcp_stdio_json for stdio spawn)';
-
-/** Any object that can resolve effective settings (MCP / destination checks). */
-export type EffectiveSettings = Pick<SettingsService, 'getEffective'>;
+  'Vibe Kanban MCP routes require DESTINATION_TYPE=vibe_kanban';
 
 export function isVibeKanbanDestination(
   destinationType: SupportedDestinationType,
@@ -18,16 +16,10 @@ export function isVibeKanbanDestination(
 }
 
 /**
- * True when MCP can be used for Vibe Kanban (stdio command JSON valid).
+ * True when the process is wired for Vibe Kanban MCP (stdio command is hardcoded).
  */
 export function isVibeKanbanMcpConfigured(
-  settings: EffectiveSettings,
   destinationType: SupportedDestinationType,
 ): boolean {
-  if (!isVibeKanbanDestination(destinationType)) {
-    return false;
-  }
-  return (
-    parseVkStdioCommand(settings.getEffective('vk_mcp_stdio_json')) != null
-  );
+  return isVibeKanbanDestination(destinationType);
 }

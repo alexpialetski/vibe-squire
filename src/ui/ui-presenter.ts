@@ -114,11 +114,6 @@ export function buildSetupChecklist(ev: SetupEvaluation): SetupChecklistRow[] {
   }
   const rows: SetupChecklistRow[] = [];
   if (ev.destinationType.trim() === 'vibe_kanban') {
-    if (!ev.destinationMcpConfigured) {
-      rows.push({
-        text: 'Configure Vibe Kanban MCP stdio (VK_MCP_STDIO_JSON env or PATCH vk_mcp_stdio_json via /api/settings/destination).',
-      });
-    }
     if (ev.reason === 'no_default_kanban_board') {
       rows.push({
         text: 'Set target Kanban organization and project on Vibe Kanban (required for sync).',
@@ -139,8 +134,6 @@ export function buildSetupChecklist(ev: SetupEvaluation): SetupChecklistRow[] {
 
 /** Reason code → human-readable setup guidance (single source for server + client). */
 export const SETUP_REASON_MESSAGES: Record<string, string> = {
-  vk_mcp_stdio_invalid:
-    'Set stdio MCP command via VK_MCP_STDIO_JSON or PATCH vk_mcp_stdio_json (/api/settings/destination).',
   no_default_kanban_board:
     'Open Vibe Kanban and set target organization + project (required for sync).',
   no_mappings:
