@@ -108,6 +108,35 @@ describe('Settings, mappings, vibe-kanban (integration)', () => {
     expect(empty.body as unknown[]).toHaveLength(0);
   });
 
+  it('PATCH /api/mappings returns 409 when githubRepo collides with another row', async () => {
+    const prisma = app.get(PrismaService);
+    await prisma.repoProjectMapping.deleteMany();
+
+    await request(app.getHttpServer())
+      .post('/api/mappings')
+      .send({
+        githubRepo: 'dup-test/one',
+        vibeKanbanRepoId: 'vk-repo-1',
+      })
+      .expect(201);
+
+    const second = await request(app.getHttpServer())
+      .post('/api/mappings')
+      .send({
+        githubRepo: 'dup-test/two',
+        vibeKanbanRepoId: 'vk-repo-2',
+      })
+      .expect(201);
+
+    const id = (second.body as { id: string }).id;
+    await request(app.getHttpServer())
+      .patch(`/api/mappings/${id}`)
+      .send({ githubRepo: 'dup-test/one' })
+      .expect(409);
+
+    await prisma.repoProjectMapping.deleteMany();
+  });
+
   it('GET /api/vibe-kanban/repos uses MCP stub', async () => {
     const res = await request(app.getHttpServer())
       .get('/api/vibe-kanban/repos')
