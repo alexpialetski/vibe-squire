@@ -120,9 +120,9 @@ export class PollRunHistoryService {
     });
   }
 
+  /** Includes in-progress runs so Activity / operator UI can show live sync state. */
   listRecentForUi(limit: number) {
     return this.prisma.pollRun.findMany({
-      where: { phase: { not: POLL_RUN_PHASE.running } },
       orderBy: { startedAt: 'desc' },
       take: limit,
       include: {

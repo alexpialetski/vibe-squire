@@ -3,6 +3,10 @@
     <span class="brand-mark">◇</span>
     <span class="brand-text">vibe-squire</span>
   </div>
+  <div class="nav-live" aria-live="polite">
+    <span class="nav-live-label muted">Status stream</span>
+    <span id="nav-sse-state" class="sse sse-connecting">connecting</span>
+  </div>
   <nav class="nav">
     {{#unless navMinimal}}
       <a

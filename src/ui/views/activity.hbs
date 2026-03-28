@@ -1,13 +1,14 @@
-{{#> layout title="Activity" active="activity" navMinimal=navMinimal integrationNavEntries=integrationNavEntries}}
+{{#> layout title="Activity" active="activity" pageScript="operator-activity.js" navMinimal=navMinimal integrationNavEntries=integrationNavEntries}}
   <div class="page">
     <header class="page-head">
       <h1>Activity</h1>
-      <p class="muted">Per-sync GitHub PR scout outcomes: created issues, skips, and bots filtered before sync.</p>
+      <p class="muted">Per-sync GitHub PR scout outcomes: created issues, skips, and bots filtered before sync. The list refreshes when the status stream updates; while a run is in progress it also polls briefly so rows update.</p>
     </header>
 
+    <div id="activity-runs-root">
     {{#unless runs.length}}
-      <div class="card">
-        <p class="muted" style="margin:0">No sync runs recorded yet. Runs appear after a scheduled or manual sync completes.</p>
+      <div class="card activity-empty-card">
+        <p class="muted" style="margin:0">No sync runs recorded yet. Runs appear when a sync starts.</p>
       </div>
     {{/unless}}
 
@@ -15,10 +16,15 @@
       <div class="card activity-run">
         <div class="activity-run-summary">
           <div class="activity-run-meta">
-            <span class="activity-run-time mono">{{startedAt}}</span>
+            <span class="activity-run-time mono">{{startedAtLabel}}</span>
             <span class="activity-pill activity-pill-trigger">{{trigger}}</span>
             <span class="activity-pill activity-pill-phase activity-pill-phase-{{phase}}">{{phaseLabel}}</span>
           </div>
+          {{#if (eq phase 'running')}}
+            <p class="muted activity-run-counts" style="margin:0.35rem 0 0">
+              Sync in progress… {{itemCount}} PR row(s) recorded so far.
+            </p>
+          {{/if}}
           {{#if (eq phase 'completed')}}
             <p class="muted activity-run-counts" style="margin:0.35rem 0 0">
               {{#if (eq candidatesCount null)}}—{{else}}{{candidatesCount}}{{/if}} PR(s) seen ·
@@ -82,5 +88,6 @@
         {{/if}}
       </div>
     {{/each}}
+    </div>
   </div>
 {{/layout}}
