@@ -127,7 +127,7 @@ This stays useful for **VK-only** wiring (MCP stdio, `VkMcpIntegrationListener`,
 
 `VkMcpStdioSessionService` centralizes lifecycle. **`VkMcpStdioSessionPort`** (`src/ports/vk-mcp-stdio-session.port.ts`) + **`VK_MCP_STDIO_SESSION_PORT`** wire `shutdown` + `runWithClient`; `VkMcpIntegrationListener` and `VibeKanbanMcpService` inject the port. Integration tests can still `overrideProvider(VkMcpStdioSessionService)` (`useExisting` resolves to the stub).
 
-**Progress:** `isVibeKanbanDestination` / `isVibeKanbanMcpConfigured` live in `mcp-transport-config.ts` — MCP gating uses **`EffectiveSettings`** plus **`SupportedDestinationType`** from `AppEnv`.
+**Progress:** `isVibeKanbanDestination` / `isVibeKanbanMcpConfigured` live in `vibe-kanban/transport/mcp-transport-config.ts` — MCP gating uses **`EffectiveSettings`** plus **`SupportedDestinationType`** from `AppEnv`.
 
 **Look for:** duplicated “is VK destination + MCP configured?” checks; consider one small helper or service used by listener + session + UI.
 

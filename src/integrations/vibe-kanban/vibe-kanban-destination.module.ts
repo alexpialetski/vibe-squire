@@ -14,7 +14,8 @@ import type { UiNavEntry } from '../../ports/ui-nav.types';
 import { DESTINATION_SETTINGS_GROUP } from '../../settings/settings-group.tokens';
 import { VibeKanbanMcpService } from '../../vibe-kanban/vibe-kanban-mcp.service';
 import { VibeKanbanContextController } from '../../vibe-kanban/vibe-kanban-context.controller';
-import { VkMcpStdioSessionService } from '../../vibe-kanban/vk-mcp-stdio-session.service';
+import { VibeKanbanMcpConfiguredGuard } from '../../vibe-kanban/vibe-kanban-mcp-configured.guard';
+import { VkMcpStdioSessionService } from '../../vibe-kanban/transport/vk-mcp-stdio-session.service';
 import { VkBoardAdapterService } from './vk-board-adapter.service';
 import { VkStatusService } from './vk-status.service';
 import { VkMcpIntegrationListener } from './vk-mcp-integration.listener';
@@ -37,6 +38,7 @@ const VK_NAV_BOARD: UiNavEntry = {
   imports: [SetupModule, PrismaModule, SyncRunStateModule],
   controllers: [VibeKanbanContextController, VkUiController],
   providers: [
+    VibeKanbanMcpConfiguredGuard,
     VkSettingsGroup,
     {
       provide: DESTINATION_SETTINGS_GROUP,

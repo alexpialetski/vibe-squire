@@ -2,7 +2,7 @@ import {
   isKanbanIssueDoneForBoardCount,
   vkListRowCountsTowardBoardCap,
 } from '../vk-board-cap';
-import { VIBE_SQUIRE_TITLE_MARKER } from '../vk-mcp-list-get-issue-response.schema';
+import { VIBE_SQUIRE_TITLE_MARKER } from '../vk-contract';
 
 describe('vk-board-cap', () => {
   it('isKanbanIssueDoneForBoardCount matches configured done status', () => {

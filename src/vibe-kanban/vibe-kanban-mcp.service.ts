@@ -8,15 +8,29 @@ import type {
   VkProjectRef,
   VkRepoRef,
 } from './vk-entities';
-import { isVibeKanbanDestination } from './mcp-transport-config';
+import { isVibeKanbanDestination } from './transport/mcp-transport-config';
 import { VK_MCP_STDIO_SESSION_PORT } from '../ports/injection-tokens';
 import type { VkMcpStdioSessionPort } from '../ports/vk-mcp-stdio-session.port';
 import {
   isGetIssueNotFoundMcpResult,
   summarizeMcpToolErrorText,
-} from './mcp-tool-result-text';
-import { VIBE_SQUIRE_TITLE_MARKER } from './vk-mcp-list-get-issue-response.schema';
+} from './mcp-result/mcp-tool-result-text';
+import { VIBE_SQUIRE_TITLE_MARKER } from './vk-contract';
 import { vkListRowCountsTowardBoardCap } from './vk-board-cap';
+import {
+  safeParseVkMcpGetIssueResponse,
+  safeParseVkMcpListIssuesResponse,
+} from './mcp-result/vk-mcp-list-get-issue-response.schema';
+import {
+  extractArrayFromMcpPayload,
+  normalizeIssue,
+  normalizeOrg,
+  normalizeProject,
+  normalizeRepo,
+  parseToolJson,
+  pickCreatedIssueId,
+  pickWorkspaceId,
+} from './mcp-result/vk-mcp-tool-result';
 
 export type {
   VkIssueRef,
@@ -24,187 +38,6 @@ export type {
   VkProjectRef,
   VkRepoRef,
 } from './vk-entities';
-
-function parseToolJson(result: unknown): unknown {
-  const r = result as {
-    structuredContent?: unknown;
-    content?: Array<{ type: string; text?: string }>;
-    toolResult?: unknown;
-  };
-  const sc = r.structuredContent ?? r.toolResult;
-  if (sc != null && typeof sc === 'object') {
-    return sc;
-  }
-  const texts =
-    r.content?.filter(
-      (c): c is { type: 'text'; text: string } =>
-        c.type === 'text' && typeof c.text === 'string',
-    ) ?? [];
-  for (const t of texts) {
-    try {
-      return JSON.parse(t.text) as unknown;
-    } catch {
-      // try next text block
-    }
-  }
-  return null;
-}
-
-function pickIssuesPayload(parsed: unknown): unknown[] {
-  if (parsed == null) {
-    return [];
-  }
-  if (Array.isArray(parsed)) {
-    return parsed;
-  }
-  if (typeof parsed !== 'object') {
-    return [];
-  }
-  const o = parsed as Record<string, unknown>;
-  for (const key of [
-    'issues',
-    'organizations',
-    'projects',
-    'repos',
-    'repositories',
-    'data',
-    'items',
-    'results',
-  ] as const) {
-    const v = o[key];
-    if (Array.isArray(v)) {
-      return v;
-    }
-  }
-  return [];
-}
-
-function unwrapListOrGetIssueRow(parsed: unknown): unknown {
-  if (parsed != null && typeof parsed === 'object') {
-    const inner = (parsed as { issue?: unknown }).issue;
-    if (inner != null && typeof inner === 'object') {
-      return inner;
-    }
-  }
-  return parsed;
-}
-
-function normalizeIssue(raw: unknown): VkIssueRef | null {
-  const row = unwrapListOrGetIssueRow(raw);
-  if (!row || typeof row !== 'object') {
-    return null;
-  }
-  const o = row as Record<string, unknown>;
-  const id =
-    (typeof o.id === 'string' && o.id) ||
-    (typeof o.issue_id === 'string' && o.issue_id) ||
-    (typeof o.issueId === 'string' && o.issueId);
-  if (!id) {
-    return null;
-  }
-  const status =
-    typeof o.status === 'string'
-      ? o.status
-      : typeof o.state === 'string'
-        ? o.state
-        : undefined;
-  const title = typeof o.title === 'string' ? o.title : undefined;
-  const description =
-    typeof o.description === 'string' ? o.description : undefined;
-  return { id, status, title, ...(description != null ? { description } : {}) };
-}
-
-function normalizeOrg(raw: unknown): VkOrgRef | null {
-  if (!raw || typeof raw !== 'object') {
-    return null;
-  }
-  const o = raw as Record<string, unknown>;
-  const id =
-    (typeof o.id === 'string' && o.id) ||
-    (typeof o.organization_id === 'string' && o.organization_id);
-  if (!id) {
-    return null;
-  }
-  const name = typeof o.name === 'string' ? o.name : undefined;
-  const slug = typeof o.slug === 'string' ? o.slug : undefined;
-  return { id, name, slug };
-}
-
-function normalizeProject(raw: unknown): VkProjectRef | null {
-  if (!raw || typeof raw !== 'object') {
-    return null;
-  }
-  const o = raw as Record<string, unknown>;
-  const id =
-    (typeof o.id === 'string' && o.id) ||
-    (typeof o.project_id === 'string' && o.project_id);
-  if (!id) {
-    return null;
-  }
-  const name = typeof o.name === 'string' ? o.name : undefined;
-  const organizationId =
-    typeof o.organization_id === 'string'
-      ? o.organization_id
-      : typeof o.organizationId === 'string'
-        ? o.organizationId
-        : undefined;
-  return { id, name, organizationId };
-}
-
-function normalizeRepo(raw: unknown): VkRepoRef | null {
-  if (!raw || typeof raw !== 'object') {
-    return null;
-  }
-  const o = raw as Record<string, unknown>;
-  const id =
-    (typeof o.id === 'string' && o.id) ||
-    (typeof o.repo_id === 'string' && o.repo_id);
-  if (!id) {
-    return null;
-  }
-  const name = typeof o.name === 'string' ? o.name : undefined;
-  return { id, name };
-}
-
-function pickWorkspaceId(parsed: unknown): string | null {
-  if (parsed == null) {
-    return null;
-  }
-  if (typeof parsed === 'string' && parsed.trim()) {
-    return parsed.trim();
-  }
-  if (typeof parsed !== 'object') {
-    return null;
-  }
-  const o = parsed as Record<string, unknown>;
-  for (const key of ['workspace_id', 'workspaceId', 'id'] as const) {
-    const v = o[key];
-    if (typeof v === 'string' && v) {
-      return v;
-    }
-  }
-  return null;
-}
-
-function pickCreatedIssueId(parsed: unknown): string | null {
-  if (parsed == null) {
-    return null;
-  }
-  if (typeof parsed === 'string') {
-    return parsed;
-  }
-  if (typeof parsed !== 'object') {
-    return null;
-  }
-  const o = parsed as Record<string, unknown>;
-  for (const key of ['issue_id', 'issueId', 'id'] as const) {
-    const v = o[key];
-    if (typeof v === 'string' && v) {
-      return v;
-    }
-  }
-  return null;
-}
 
 @Injectable()
 export class VibeKanbanMcpService {
@@ -232,6 +65,16 @@ export class VibeKanbanMcpService {
     throw new Error(`${toolName}: ${summary}`);
   }
 
+  private async callToolOk(
+    client: Client,
+    name: string,
+    args: Record<string, unknown>,
+  ): Promise<unknown> {
+    const result = await client.callTool({ name, arguments: args });
+    this.assertToolCallOk(name, result);
+    return result;
+  }
+
   /** Stdio: lazy long-lived child + serialized access. */
   async withClient<T>(fn: (client: Client) => Promise<T>): Promise<T> {
     if (!isVibeKanbanDestination(this.appEnv.destinationType)) {
@@ -251,13 +94,9 @@ export class VibeKanbanMcpService {
 
   async listOrganizations(): Promise<VkOrgRef[]> {
     return this.withClient(async (client) => {
-      const result = await client.callTool({
-        name: 'list_organizations',
-        arguments: {},
-      });
-      this.assertToolCallOk('list_organizations', result);
+      const result = await this.callToolOk(client, 'list_organizations', {});
       const parsed = parseToolJson(result);
-      return pickIssuesPayload(parsed)
+      return extractArrayFromMcpPayload(parsed)
         .map(normalizeOrg)
         .filter((x): x is VkOrgRef => x != null);
     });
@@ -265,13 +104,11 @@ export class VibeKanbanMcpService {
 
   async listProjects(organizationId: string): Promise<VkProjectRef[]> {
     return this.withClient(async (client) => {
-      const result = await client.callTool({
-        name: 'list_projects',
-        arguments: { organization_id: organizationId },
+      const result = await this.callToolOk(client, 'list_projects', {
+        organization_id: organizationId,
       });
-      this.assertToolCallOk('list_projects', result);
       const parsed = parseToolJson(result);
-      return pickIssuesPayload(parsed)
+      return extractArrayFromMcpPayload(parsed)
         .map(normalizeProject)
         .filter((x): x is VkProjectRef => x != null);
     });
@@ -279,13 +116,9 @@ export class VibeKanbanMcpService {
 
   async listRepos(): Promise<VkRepoRef[]> {
     return this.withClient(async (client) => {
-      const result = await client.callTool({
-        name: 'list_repos',
-        arguments: {},
-      });
-      this.assertToolCallOk('list_repos', result);
+      const result = await this.callToolOk(client, 'list_repos', {});
       const parsed = parseToolJson(result);
-      return pickIssuesPayload(parsed)
+      return extractArrayFromMcpPayload(parsed)
         .map(normalizeRepo)
         .filter((x): x is VkRepoRef => x != null);
     });
@@ -306,13 +139,15 @@ export class VibeKanbanMcpService {
       if (opts?.offset != null) {
         args.offset = opts.offset;
       }
-      const result = await client.callTool({
-        name: 'list_issues',
-        arguments: args,
-      });
-      this.assertToolCallOk('list_issues', result);
+      const result = await this.callToolOk(client, 'list_issues', args);
       const parsed = parseToolJson(result);
-      return pickIssuesPayload(parsed)
+      const structured = safeParseVkMcpListIssuesResponse(parsed);
+      if (structured) {
+        return structured.issues
+          .map((row) => normalizeIssue(row))
+          .filter((x): x is VkIssueRef => x != null);
+      }
+      return extractArrayFromMcpPayload(parsed)
         .map(normalizeIssue)
         .filter((x): x is VkIssueRef => x != null);
     });
@@ -359,6 +194,10 @@ export class VibeKanbanMcpService {
       }
       this.assertToolCallOk('get_issue', result);
       const parsed = parseToolJson(result);
+      const wrapped = safeParseVkMcpGetIssueResponse(parsed);
+      if (wrapped) {
+        return normalizeIssue(wrapped.issue);
+      }
       return normalizeIssue(parsed);
     });
   }
@@ -369,15 +208,11 @@ export class VibeKanbanMcpService {
     description: string;
   }): Promise<string> {
     return this.withClient(async (client) => {
-      const result = await client.callTool({
-        name: 'create_issue',
-        arguments: {
-          title: params.title,
-          project_id: params.projectId,
-          description: params.description,
-        },
+      const result = await this.callToolOk(client, 'create_issue', {
+        title: params.title,
+        project_id: params.projectId,
+        description: params.description,
       });
-      this.assertToolCallOk('create_issue', result);
       const parsed = parseToolJson(result);
       const id = pickCreatedIssueId(parsed);
       if (!id) {
@@ -396,11 +231,7 @@ export class VibeKanbanMcpService {
       if (fields.status != null) {
         args.status = fields.status;
       }
-      const result = await client.callTool({
-        name: 'update_issue',
-        arguments: args,
-      });
-      this.assertToolCallOk('update_issue', result);
+      await this.callToolOk(client, 'update_issue', args);
     });
   }
 
@@ -430,11 +261,7 @@ export class VibeKanbanMcpService {
       if (params.variant) {
         args.variant = params.variant;
       }
-      const result = await client.callTool({
-        name: 'start_workspace',
-        arguments: args,
-      });
-      this.assertToolCallOk('start_workspace', result);
+      const result = await this.callToolOk(client, 'start_workspace', args);
       const parsed = parseToolJson(result);
       const id = pickWorkspaceId(parsed);
       if (!id) {

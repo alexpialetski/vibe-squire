@@ -2,7 +2,7 @@ import type { SupportedDestinationType } from '../config/integration-types';
 import type { SettingsService } from '../settings/settings.service';
 import type { SetupEvaluationService } from '../setup/setup-evaluation.service';
 import type { VibeKanbanMcpService } from '../vibe-kanban/vibe-kanban-mcp.service';
-import { isVibeKanbanMcpConfigured } from '../vibe-kanban/mcp-transport-config';
+import { isVibeKanbanMcpConfigured } from '../vibe-kanban/transport/mcp-transport-config';
 import {
   normalizeVkWorkspaceExecutor,
   VK_WORKSPACE_EXECUTOR_OPTIONS,

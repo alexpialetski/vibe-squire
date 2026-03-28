@@ -1,5 +1,5 @@
 import type { GithubPrCandidate } from '../../scout/github-pr-scout.service';
-import { VIBE_SQUIRE_TITLE_MARKER } from '../../vibe-kanban/vk-mcp-list-get-issue-response.schema';
+import { VIBE_SQUIRE_TITLE_MARKER } from '../../vibe-kanban/vk-contract';
 import { PLACEHOLDER_VK_REPO_ID } from '../sync-constants';
 
 const MAX_WORKSPACE_NAME_LEN = 120;
