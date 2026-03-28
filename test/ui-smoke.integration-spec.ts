@@ -96,6 +96,8 @@ describe('App HTTP smoke (integration)', () => {
         .expect(200);
       expect(res.text).toContain('Dashboard');
       expect(res.text).toContain('Technical details (raw JSON)');
+      expect(res.text).toContain('operator-ui-shared.js');
+      expect(res.text).toContain('operator-shell.js');
     });
 
     it('GET /ui/settings renders general settings HTML', async () => {
@@ -113,6 +115,17 @@ describe('App HTTP smoke (integration)', () => {
         .expect(200);
       expect(res.text).toContain('Activity');
       expect(res.text).toContain('Per-sync');
+      expect(res.text).toContain('operator-ui-shared.js');
+      expect(res.text).toContain('operator-shell.js');
+      expect(res.text).toContain('operator-activity.js');
+    });
+
+    it('GET /api/activity/runs returns runs array', async () => {
+      const res = await request(app.getHttpServer())
+        .get('/api/activity/runs')
+        .expect(200);
+      const body = res.body as { runs: unknown[] };
+      expect(Array.isArray(body.runs)).toBe(true);
     });
 
     it('GET /api/status returns a valid snapshot', async () => {

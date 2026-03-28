@@ -46,16 +46,17 @@ export class StatusController {
   @ApiOperation({
     summary: 'Server-Sent Events stream of status snapshots',
     description:
-      'Emits JSON-encoded snapshots on change and at a low keep-alive interval.',
+      'Emits JSON-encoded snapshots on change; periodic keep-alive frames omit a snapshot (no DB work).',
   })
   @ApiProduces('text/event-stream')
   stream(): Observable<MessageEvent> {
-    return merge(
-      interval(30_000).pipe(map(() => undefined)),
-      this.statusEvents.updates().pipe(map(() => undefined)),
-    ).pipe(
+    const keepAlive = interval(30_000).pipe(
+      map((): MessageEvent => ({ data: ' ' })),
+    );
+    const onChange = this.statusEvents.updates().pipe(
       switchMap(() => from(this.status.getSnapshot())),
       map((snap) => ({ data: JSON.stringify(snap) })),
     );
+    return merge(keepAlive, onChange);
   }
 }

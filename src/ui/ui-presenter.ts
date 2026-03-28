@@ -7,11 +7,21 @@ export type PollRunRowForActivity = Awaited<
   ReturnType<PollRunHistoryService['listRecentForUi']>
 >[number];
 
+function formatActivityRunTime(d: Date): string {
+  const t = d.getTime();
+  if (Number.isNaN(t)) {
+    return d.toISOString();
+  }
+  return d.toLocaleString();
+}
+
 export function presentActivityRunsForView(
   rows: PollRunRowForActivity[],
 ): Array<{
   id: string;
   startedAt: string;
+  /** Locale-formatted start time for HTML / JSON consumers */
+  startedAtLabel: string;
   finishedAt: string | null;
   trigger: string;
   phase: string;
@@ -41,6 +51,7 @@ export function presentActivityRunsForView(
   return rows.map((r) => ({
     id: r.id,
     startedAt: r.startedAt.toISOString(),
+    startedAtLabel: formatActivityRunTime(r.startedAt),
     finishedAt: r.finishedAt?.toISOString() ?? null,
     trigger: r.trigger,
     phase: r.phase,

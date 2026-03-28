@@ -79,6 +79,19 @@ code {
   font-size: 0.95rem;
 }
 
+.nav-live {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.78rem;
+}
+
+.nav-live-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
 .nav {
   display: flex;
   flex-direction: column;
@@ -652,6 +665,11 @@ textarea.input {
 .activity-pill-phase-failed {
   background: rgba(196, 92, 92, 0.18);
   color: var(--danger);
+}
+
+.activity-pill-phase-running {
+  background: rgba(120, 160, 200, 0.2);
+  color: var(--accent);
 }
 
 .activity-details {

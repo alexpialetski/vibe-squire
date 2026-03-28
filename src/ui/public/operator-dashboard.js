@@ -1,31 +1,17 @@
 (function () {
+  const Ui = window.VibeSquireUi;
+  if (!Ui) return;
+
   const pre = document.getElementById('status-snap');
   const overview = document.getElementById('status-overview');
   const bootEl = document.getElementById('boot-snapshot');
-  const sseEl = document.getElementById('sse-state');
   const msgEl = document.getElementById('action-msg');
   const btnSync = document.getElementById('btn-sync');
   const btnReinit = document.getElementById('btn-reinit');
 
   const POLL_MS = 5 * 60 * 1000;
-
-  function esc(s) {
-    if (s == null || s === undefined) return '';
-    return String(s)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/"/g, '&quot;');
-  }
-
-  function fmtIso(iso) {
-    if (!iso) return '—';
-    try {
-      const d = new Date(iso);
-      return Number.isNaN(d.getTime()) ? String(iso) : d.toLocaleString();
-    } catch {
-      return String(iso);
-    }
-  }
+  const esc = Ui.esc;
+  const fmtIso = Ui.fmtIso;
 
   function setupReasonHuman(reason) {
     if (reason === 'vk_mcp_stdio_invalid') {
@@ -210,12 +196,6 @@
     overview.innerHTML = parts.join('');
   }
 
-  function setSse(s) {
-    if (!sseEl) return;
-    sseEl.textContent = s;
-    sseEl.className = 'sse sse-' + s;
-  }
-
   function setMsg(t) {
     if (!msgEl) return;
     msgEl.textContent = t || '';
@@ -267,18 +247,16 @@
   const boot = readBoot();
   if (boot) applySnapshot(boot);
 
-  const es = new EventSource('/api/status/stream');
-  setSse('connecting');
-  es.onopen = () => setSse('open');
-  es.onerror = () => setSse('closed');
-  es.onmessage = (ev) => {
-    try {
-      const snap = JSON.parse(ev.data);
-      applySnapshot(snap);
-    } catch {
-      /* ignore */
+  try {
+    const w = window;
+    if (w.__VS_STATUS_SNAPSHOT__) {
+      applySnapshot(w.__VS_STATUS_SNAPSHOT__);
     }
-  };
+  } catch {
+    /* ignore */
+  }
+
+  Ui.onStatusSnapshot((snap) => applySnapshot(snap));
 
   window.setInterval(() => void load(), POLL_MS);
   void load();
