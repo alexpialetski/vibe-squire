@@ -26,11 +26,6 @@
         class="nav-link nav-link-nested {{#if (eq active 'general')}}active{{/if}}"
         aria-labelledby="nav-heading-settings"
       >General</a>
-      <a
-        href="/ui/mappings"
-        class="nav-link nav-link-nested {{#if (eq active 'mappings')}}active{{/if}}"
-        aria-labelledby="nav-heading-settings"
-      >Mappings</a>
       {{#unless navMinimal}}
         {{#each integrationNavEntries}}
           <a
@@ -39,6 +34,11 @@
             aria-labelledby="nav-heading-settings"
           >{{label}}</a>
         {{/each}}
+        <a
+          href="/ui/mappings"
+          class="nav-link nav-link-nested {{#if (eq active 'mappings')}}active{{/if}}"
+          aria-labelledby="nav-heading-settings"
+        >Mappings</a>
       {{/unless}}
     </div>
   </nav>
