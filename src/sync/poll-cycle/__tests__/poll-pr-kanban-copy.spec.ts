@@ -4,7 +4,7 @@ import {
   workspaceNameForPr,
 } from '../poll-pr-kanban-copy';
 import { PLACEHOLDER_VK_REPO_ID } from '../../sync-constants';
-import { VIBE_SQUIRE_TITLE_MARKER } from '../../../vibe-kanban/vk-mcp-list-get-issue-response.schema';
+import { VIBE_SQUIRE_TITLE_MARKER } from '../../../vibe-kanban/vk-contract';
 
 const basePr = {
   number: 42,

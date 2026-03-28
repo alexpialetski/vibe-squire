@@ -2,10 +2,9 @@ import {
   BadRequestException,
   Controller,
   Get,
-  Inject,
   Query,
+  UseGuards,
 } from '@nestjs/common';
-import { APP_ENV, type AppEnv } from '../config/app-env.token';
 import {
   ApiBadRequestResponse,
   ApiOkResponse,
@@ -13,29 +12,15 @@ import {
   ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
-import { SettingsService } from '../settings/settings.service';
-import { isVibeKanbanMcpConfigured } from './mcp-transport-config';
+import { VibeKanbanMcpConfiguredGuard } from './vibe-kanban-mcp-configured.guard';
 import { VibeKanbanMcpService } from './vibe-kanban-mcp.service';
 import { listProjectsQuerySchema } from './vibe-kanban-query.schema';
 
 @ApiTags('vibe-kanban')
 @Controller('api/vibe-kanban')
+@UseGuards(VibeKanbanMcpConfiguredGuard)
 export class VibeKanbanContextController {
-  constructor(
-    private readonly settings: SettingsService,
-    private readonly vk: VibeKanbanMcpService,
-    @Inject(APP_ENV) private readonly appEnv: AppEnv,
-  ) {}
-
-  private assertMcpConfigured(): void {
-    if (
-      !isVibeKanbanMcpConfigured(this.settings, this.appEnv.destinationType)
-    ) {
-      throw new BadRequestException(
-        'Vibe Kanban MCP is not configured (valid vk_mcp_stdio_json for stdio spawn)',
-      );
-    }
-  }
+  constructor(private readonly vk: VibeKanbanMcpService) {}
 
   /** §4.3 — MCP `list_organizations` for setup UI. */
   @Get('organizations')
@@ -53,7 +38,6 @@ export class VibeKanbanContextController {
   })
   @ApiBadRequestResponse({ description: 'Vibe Kanban MCP not configured' })
   async organizations() {
-    this.assertMcpConfigured();
     const organizations = await this.vk.listOrganizations();
     return { organizations };
   }
@@ -74,7 +58,6 @@ export class VibeKanbanContextController {
     description: 'Missing organization_id or Vibe Kanban MCP not configured',
   })
   async projects(@Query() query: Record<string, unknown>) {
-    this.assertMcpConfigured();
     const q = listProjectsQuerySchema.safeParse(query);
     if (!q.success) {
       throw new BadRequestException(
@@ -98,7 +81,6 @@ export class VibeKanbanContextController {
   })
   @ApiBadRequestResponse({ description: 'Vibe Kanban MCP not configured' })
   async repos() {
-    this.assertMcpConfigured();
     const repos = await this.vk.listRepos();
     return { repos };
   }

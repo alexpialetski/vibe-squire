@@ -1,5 +1,5 @@
 import { buildPollIssueDescription } from '../ensure-issue-for-pr';
-import { buildVibeSquirePrDescriptionMarker } from '../../../vibe-kanban/vk-mcp-list-get-issue-response.schema';
+import { buildVibeSquirePrDescriptionMarker } from '../../../vibe-kanban/vk-contract';
 import type { SettingsService } from '../../../settings/settings.service';
 
 const pr = {

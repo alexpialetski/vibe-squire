@@ -1,13 +1,13 @@
 import { Inject, Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
-import { APP_ENV, type AppEnv } from '../config/app-env.token';
-import { SettingsService } from '../settings/settings.service';
+import { APP_ENV, type AppEnv } from '../../config/app-env.token';
+import { SettingsService } from '../../settings/settings.service';
 import {
   isVibeKanbanDestination,
   parseVkStdioCommand,
 } from './mcp-transport-config';
-import type { VkMcpStdioSessionPort } from '../ports/vk-mcp-stdio-session.port';
+import type { VkMcpStdioSessionPort } from '../../ports/vk-mcp-stdio-session.port';
 
 /**
  * One long-lived MCP client over stdio (spawned `npx vibe-kanban --mcp` or custom command).

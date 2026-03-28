@@ -11,7 +11,7 @@ import type { GithubPrCandidate } from '../../ports/github-pr-candidate';
 import {
   buildVibeSquirePrDescriptionMarker,
   VIBE_SQUIRE_TITLE_MARKER,
-} from '../../vibe-kanban/vk-mcp-list-get-issue-response.schema';
+} from '../../vibe-kanban/vk-contract';
 import { applyPrReviewBodyTemplate } from '../pr-review-template';
 import { redactHttpUrls } from '../../logging/redact-urls';
 import type { SyncRunStateService } from '../sync-run-state.service';

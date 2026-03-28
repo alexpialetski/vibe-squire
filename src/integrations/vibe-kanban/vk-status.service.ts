@@ -6,7 +6,7 @@ import {
   isVibeKanbanDestination,
   isVibeKanbanMcpConfigured,
   parseVkStdioCommand,
-} from '../../vibe-kanban/mcp-transport-config';
+} from '../../vibe-kanban/transport/mcp-transport-config';
 import type {
   DestinationReadinessResult,
   DestinationStatusProvider,

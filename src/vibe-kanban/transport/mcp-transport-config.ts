@@ -1,8 +1,12 @@
-import type { SupportedDestinationType } from '../config/integration-types';
-import type { SettingsService } from '../settings/settings.service';
+import type { SupportedDestinationType } from '../../config/integration-types';
+import type { SettingsService } from '../../settings/settings.service';
 import { parseVkStdioCommand } from './vk-stdio-command.schema';
 
 export { parseVkStdioCommand };
+
+/** Shared with {@link VibeKanbanMcpConfiguredGuard} and API consumers. */
+export const VK_MCP_NOT_CONFIGURED_MESSAGE =
+  'Vibe Kanban MCP is not configured (valid vk_mcp_stdio_json for stdio spawn)';
 
 /** Any object that can resolve effective settings (MCP / destination checks). */
 export type EffectiveSettings = Pick<SettingsService, 'getEffective'>;

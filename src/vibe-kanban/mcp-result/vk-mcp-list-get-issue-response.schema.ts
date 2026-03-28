@@ -6,22 +6,8 @@ import { z } from 'zod';
  * VK may add fields — sub-objects use {@link z.looseObject} so extras do not fail parse.
  * Tool names and parameters: `vibe-kanban-mcp-server.md`.
  *
- * **Contract:** vibe-squire only treats Kanban rows as its own when the title contains
- * {@link VIBE_SQUIRE_TITLE_MARKER} (see `list_issues` `search` / linking in `RunPollCycleService`).
- * Canonical PR URL is in the HTML comment in the body (`<!-- vibe-squire:pr:<url> -->`,
- * {@link buildVibeSquirePrDescriptionMarker}).
+ * **Contract:** title/body markers are defined in `vk-contract.ts` (see `list_issues` search / linking).
  */
-
-/** Visible title token for filtering via `list_issues` `search` (leading segment recommended). */
-export const VIBE_SQUIRE_TITLE_MARKER = '[vibe-squire]';
-
-/** Opening segment of the hidden PR marker line in issue description. */
-export const VIBE_SQUIRE_PR_COMMENT_PREFIX = '<!-- vibe-squire:pr:';
-
-/** `<!-- vibe-squire:pr:${url} -->` — same contract as `RunPollCycleService` issue bodies. */
-export function buildVibeSquirePrDescriptionMarker(prUrl: string): string {
-  return `${VIBE_SQUIRE_PR_COMMENT_PREFIX}${prUrl} -->`;
-}
 
 /** One row inside `list_issues` `issues[]` (observed VK ~2026-03). */
 export const vkMcpListIssuesRowSchema = z.looseObject({

@@ -1,9 +1,10 @@
 import {
   buildVibeSquirePrDescriptionMarker,
+  VIBE_SQUIRE_TITLE_MARKER,
+} from '../../vk-contract';
+import {
   safeParseVkMcpGetIssueResponse,
   safeParseVkMcpListIssuesResponse,
-  VIBE_SQUIRE_PR_COMMENT_PREFIX,
-  VIBE_SQUIRE_TITLE_MARKER,
 } from '../vk-mcp-list-get-issue-response.schema';
 
 describe('vk-mcp list_issues / get_issue response schemas', () => {
@@ -68,15 +69,5 @@ describe('vk-mcp list_issues / get_issue response schemas', () => {
     const r = safeParseVkMcpListIssuesResponse(extended);
     expect(r).not.toBeNull();
     expect((r!.issues[0] as { future_field?: number }).future_field).toBe(1);
-  });
-});
-
-describe('buildVibeSquirePrDescriptionMarker', () => {
-  it('builds stable HTML comment for PR URL', () => {
-    const url = 'https://example.com/a/pull/1';
-    expect(buildVibeSquirePrDescriptionMarker(url)).toBe(
-      `<!-- vibe-squire:pr:${url} -->`,
-    );
-    expect(VIBE_SQUIRE_PR_COMMENT_PREFIX).toBe('<!-- vibe-squire:pr:');
   });
 });

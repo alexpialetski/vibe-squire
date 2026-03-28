@@ -1,4 +1,4 @@
-import { VIBE_SQUIRE_TITLE_MARKER } from './vk-mcp-list-get-issue-response.schema';
+import { VIBE_SQUIRE_TITLE_MARKER } from './vk-contract';
 
 function isTerminalKanbanStatusString(status: string): boolean {
   const s = status.toLowerCase();

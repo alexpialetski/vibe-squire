@@ -4,7 +4,7 @@ import request from 'supertest';
 import { App } from 'supertest/types';
 import { testingAppModule } from './testing-app-module';
 import { VibeKanbanMcpService } from '../src/vibe-kanban/vibe-kanban-mcp.service';
-import { VkMcpStdioSessionService } from '../src/vibe-kanban/vk-mcp-stdio-session.service';
+import { VkMcpStdioSessionService } from '../src/vibe-kanban/transport/vk-mcp-stdio-session.service';
 import { PrismaService } from '../src/prisma/prisma.service';
 import { SettingsService } from '../src/settings/settings.service';
 import { SyncRunStateService } from '../src/sync/sync-run-state.service';

@@ -1,18 +1,24 @@
-/**
- * MCP tool failures: extract human-readable text from `callTool` result (for logging / classification).
- */
-export function summarizeMcpToolErrorText(result: unknown): string {
+/** Trimmed `text` parts from MCP `callTool` result `content` array. */
+export function mcpResultTextParts(result: unknown): string[] {
   const r = result as {
     content?: Array<{ type: string; text?: string }>;
   };
-  const parts =
+  return (
     r.content
       ?.filter(
         (c): c is { type: 'text'; text: string } =>
           c.type === 'text' && typeof c.text === 'string',
       )
       .map((c) => c.text.trim())
-      .filter(Boolean) ?? [];
+      .filter(Boolean) ?? []
+  );
+}
+
+/**
+ * MCP tool failures: extract human-readable text from `callTool` result (for logging / classification).
+ */
+export function summarizeMcpToolErrorText(result: unknown): string {
+  const parts = mcpResultTextParts(result);
   const s = parts.join(' | ').slice(0, 800);
   return s.length > 0 ? s : 'isError=true (no text in content)';
 }

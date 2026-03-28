@@ -13,7 +13,7 @@ import type { VkMcpStdioSessionPort } from '../../ports/vk-mcp-stdio-session.por
 import {
   isVibeKanbanDestination,
   isVibeKanbanMcpConfigured,
-} from '../../vibe-kanban/mcp-transport-config';
+} from '../../vibe-kanban/transport/mcp-transport-config';
 import { SyncRunStateService } from '../../sync/sync-run-state.service';
 import { StatusEventsService } from '../../events/status-events.service';
 import { INTEGRATION_SETTINGS_CHANGED } from '../../events/integration-settings.events';
