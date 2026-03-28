@@ -24,7 +24,7 @@ alwaysApply: true
 ```
 src/
 ├── config/            — Zod env schema, AppEnv token, EnvModule
-├── database/          — SQLite path resolution, Prisma migrate runner
+├── database/          — SQLite path resolution, SQLite migration runner
 ├── prisma/            — PrismaModule (client provider)
 ├── generated/prisma/  — Generated Prisma client (do not edit)
 ├── ports/             — Port interfaces and DI tokens (hexagonal boundary)

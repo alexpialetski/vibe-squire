@@ -26,14 +26,16 @@ graph LR
 ## Quick start
 
 ```bash
-git clone https://github.com/AliakseiPialetski/vibe-squire.git
-cd vibe-squire
-npm install
-cp .env.example .env          # review and adjust settings
-npm run start:dev              # dev mode with watch
+npx vibe-squire
 ```
 
-Open the operator UI at **http://127.0.0.1:3000/ui/dashboard** (root `/` redirects there).
+That's it. On first run the app resolves a SQLite database path automatically (see [Database location](#database-location)), applies migrations, and opens the operator UI at **http://127.0.0.1:3000/ui/dashboard**.
+
+Override defaults with environment variables:
+
+```bash
+PORT=4000 LOG_LEVEL=debug npx vibe-squire
+```
 
 ## Configuration
 
@@ -41,7 +43,6 @@ Open the operator UI at **http://127.0.0.1:3000/ui/dashboard** (root `/` redirec
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `DATABASE_URL` | `file:./dev.db` | SQLite URL for Prisma. If unset, resolved from `DATABASE_PATH`, `VIBE_SQUIRE_DATA_DIR`, or OS defaults. |
 | `HOST` | `127.0.0.1` | HTTP bind address. |
 | `PORT` | `3000` | HTTP bind port. |
 | `SOURCE_TYPE` | `github` | Scout adapter (`github`). |
@@ -66,7 +67,7 @@ For keys that have both an env var and a SQLite row: **env (non-empty) > SQLite 
 
 ### Database location
 
-When `DATABASE_URL` is not set, the app resolves a path automatically:
+When `DATABASE_URL` is not set (the default for `npx`), the app resolves a path automatically:
 
 | OS | Default directory |
 |----|-------------------|
@@ -74,7 +75,11 @@ When `DATABASE_URL` is not set, the app resolves a path automatically:
 | macOS | `~/Library/Application Support/vibe-squire/` |
 | Windows | `%APPDATA%\vibe-squire\` |
 
-Override with `VIBE_SQUIRE_DATA_DIR` (directory) or `DATABASE_PATH` (full file path).
+Override with `DATABASE_URL` (SQLite `file:` URL), `VIBE_SQUIRE_DATA_DIR` (directory), or `DATABASE_PATH` (full file path).
+
+SQLite migrations are applied automatically on every startup via a lightweight `better-sqlite3` runner — no Prisma CLI is needed at runtime.
+
+**Important:** Run a single vibe-squire process per SQLite file. Concurrent processes on the same database are unsupported.
 
 ## Operator UI
 
@@ -102,37 +107,7 @@ Server-rendered Handlebars templates served by the same Nest process — no sepa
 
 OpenAPI docs (when enabled): **http://127.0.0.1:3000/api/docs**
 
-## Scripts
-
-| Script | Purpose |
-|--------|---------|
-| `npm run build` | Compile with `nest build` |
-| `npm run start:dev` | Dev mode with file watching |
-| `npm run start:prod` | Production: `node dist/main` |
-| `npm test` | Unit tests |
-| `npm run test:cov` | Unit tests with coverage |
-| `npm run test:integration` | Integration tests (Prisma + migrations + Supertest) |
-| `npm run lint` | Lint and auto-fix |
-| `npm run typecheck` | TypeScript type checking |
-
-## Testing
-
-- **Unit tests** — `src/**/__tests__/**/*.spec.ts`. Pure logic, Zod schemas, helpers.
-- **Integration tests** — `test/*.integration-spec.ts`. Real Prisma + SQLite (`:memory:`), Nest module wiring, Supertest HTTP. External boundaries (GitHub `gh`, Vibe Kanban MCP) are stubbed.
-- CI runs lint, typecheck, build, unit, and integration tests on every push and PR.
-
-```bash
-npm test && npm run test:integration
-```
-
-## Deployment
-
-### Direct (recommended for development)
-
-```bash
-npm run build
-node dist/main
-```
+## Running as a service
 
 ### systemd (user unit)
 
@@ -143,37 +118,55 @@ After=network-online.target
 
 [Service]
 Type=simple
-WorkingDirectory=%h/projects/vibe-squire
 Environment=NODE_ENV=production
 Environment=HOST=127.0.0.1
 Environment=PORT=3000
-Environment=DATABASE_URL=file:%h/.local/share/vibe-squire/data.sqlite
-ExecStart=/usr/bin/node dist/main
+ExecStart=/usr/bin/npx vibe-squire
 Restart=on-failure
 
 [Install]
 WantedBy=default.target
 ```
 
-### Docker (optional)
+## Development
 
-```dockerfile
-FROM node:22-bookworm-slim
-WORKDIR /app
-COPY package.json package-lock.json ./
-RUN npm ci
-COPY . .
-RUN npx prisma generate && npm run build
-ENV NODE_ENV=production
-ENV HOST=0.0.0.0
-EXPOSE 3000
-CMD ["node", "dist/main"]
+```bash
+git clone https://github.com/alexpialetski/vibe-squire.git
+cd vibe-squire
+npm install
+npx prisma generate           # generate Prisma client
+cp .env.example .env           # review and adjust settings
+npm run start:dev              # dev mode with watch (loads .env automatically)
 ```
 
-Mount a volume for the SQLite database and set `DATABASE_URL=file:/data/vibe-squire.sqlite`.
+### Scripts
 
-**Important:** Run a single vibe-squire process per SQLite file. Concurrent processes on the same database are unsupported.
+| Script | Purpose |
+|--------|---------|
+| `npm run build` | Compile with `nest build` |
+| `npm run start:dev` | Dev mode with file watching (preloads `.env` via `-r dotenv/config`) |
+| `npm run start:prod` | Production: `node dist/main` |
+| `npm test` | Unit tests |
+| `npm run test:cov` | Unit tests with coverage |
+| `npm run test:integration` | Integration tests (Prisma + migrations + Supertest) |
+| `npm run lint` | Lint and auto-fix |
+| `npm run typecheck` | TypeScript type checking |
+
+### Testing
+
+- **Unit tests** — `src/**/__tests__/**/*.spec.ts`. Pure logic, Zod schemas, helpers.
+- **Integration tests** — `test/*.integration-spec.ts`. Real Prisma + SQLite, Nest module wiring, Supertest HTTP. External boundaries (GitHub `gh`, Vibe Kanban MCP) are stubbed.
+
+```bash
+npm test && npm run test:integration
+```
+
+### Commits and releases
+
+This project uses [Conventional Commits](https://www.conventionalcommits.org/). A `commitlint` hook enforces the format on every commit.
+
+Pushes to `main` trigger [semantic-release](https://semantic-release.gitbook.io/) via GitHub Actions, which determines the version bump from commit types (`fix` → patch, `feat` → minor, `feat!` → major) and publishes to npm automatically.
 
 ## License
 
-UNLICENSED
+MIT

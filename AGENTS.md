@@ -18,11 +18,16 @@ Hexagonal (ports & adapters). Core domain logic has no dependency on NestJS, Git
 
 **Key rule:** Domain code imports port interfaces, never concrete adapter types.
 
+## Distribution
+
+Published to npm; end users run `npx vibe-squire`. No clone required. SQLite migrations are applied at startup via a lightweight `better-sqlite3` runner (`src/database/sqlite-migrate.ts`) — the Prisma CLI is not needed at runtime.
+
 ## Key directories
 
 | Directory | Contents |
 |-----------|----------|
 | `src/config/` | Zod env schema (`parseAppEnv`), `AppEnv` token, `EnvModule` |
+| `src/database/` | SQLite path resolution, SQLite migration runner |
 | `src/ports/` | Port interfaces and DI injection tokens |
 | `src/integrations/github/` | `gh` CLI scout, PR search schema, GitHub settings |
 | `src/integrations/vibe-kanban/` | MCP stdio adapter, board adapter, VK settings |
@@ -36,15 +41,17 @@ Hexagonal (ports & adapters). Core domain logic has no dependency on NestJS, Git
 | `prisma/` | Schema and migrations |
 | `test/` | Integration specs (`*.integration-spec.ts`) |
 | `docs/` | Architecture documentation |
+| `bin/` | CLI entry point (`vibe-squire.js`) |
 
-## Build and run
+## Build and run (development)
 
 ```bash
-npm install               # install deps + generate Prisma client
-cp .env.example .env      # configure (DATABASE_URL at minimum)
-npm run start:dev          # dev mode with watch
-npm run build              # compile to dist/
-npm run start:prod         # production: node dist/main
+npm install                    # install deps
+npx prisma generate            # generate Prisma client
+cp .env.example .env           # configure settings
+npm run start:dev              # dev mode with watch (loads .env automatically)
+npm run build                  # compile to dist/
+npm run start:prod             # production: node dist/main
 ```
 
 ## Test
@@ -73,6 +80,7 @@ npm run typecheck          # tsc --noEmit
 - **Bootstrap:** Always use `AppModule.forRoot(env)`, never bare `AppModule`
 - **Config precedence:** env var > SQLite > code default (via `SettingsService`)
 - **No CLS for settings** — CLS is for per-request context only; process-wide config uses `SettingsService`
+- **Commits:** Conventional Commits format enforced by `commitlint` (husky `commit-msg` hook). Pushes to `main` trigger `semantic-release` → npm publish.
 
 ## Configuration
 
