@@ -1,20 +1,26 @@
-name: CI
+name: Release
 
 on:
-  pull_request:
+  push:
+    branches: [main]
 
 permissions:
-  contents: read
+  contents: write
+  issues: write
+  pull-requests: write
+  id-token: write
 
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  group: release-${{ github.workflow }}
+  cancel-in-progress: false
 
 jobs:
-  build-test:
+  release:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
@@ -42,3 +48,9 @@ jobs:
 
       - name: Integration tests
         run: npm run test:integration
+
+      - name: Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npx semantic-release

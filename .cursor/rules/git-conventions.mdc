@@ -1,0 +1,33 @@
+---
+description: Git commit message format and release workflow
+alwaysApply: true
+---
+
+# Git conventions
+
+## Commit messages
+
+This project uses **Conventional Commits** enforced by `commitlint` (husky `commit-msg` hook).
+
+Format: `<type>(<scope>): <description>`
+
+| Type | When |
+|------|------|
+| `feat` | New user-facing feature or capability |
+| `fix` | Bug fix |
+| `refactor` | Code change that neither fixes a bug nor adds a feature |
+| `docs` | Documentation only |
+| `test` | Adding or updating tests |
+| `chore` | Build, CI, tooling, dependencies |
+| `perf` | Performance improvement |
+
+Breaking changes: append `!` after type/scope — `feat!: drop Node 18 support`.
+
+Examples:
+- `feat(sync): add board-cap enforcement to poll cycle`
+- `fix(migrate): resolve CWD for npx installs`
+- `chore(ci): add release workflow`
+
+## Release
+
+Merges to `main` trigger `semantic-release` via GitHub Actions, which determines the version bump from commit types (`fix` → patch, `feat` → minor, `feat!` → major) and publishes to npm.
