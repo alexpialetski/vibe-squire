@@ -4,13 +4,14 @@ import { redactHttpUrls } from '../../logging/redact-urls';
 import { isTerminalKanbanStatus } from './kanban-terminal-status';
 
 /**
- * PRs no longer in the scout list: mark Kanban issue done (if needed) and drop sync row.
+ * PRs no longer in the scout list: mark Kanban issue done (if needed),
+ * tear down the workspace + branches, and drop the sync row.
  */
 export async function reconcileRemovedSyncRows(deps: {
   prisma: PrismaService;
   destinationBoard: Pick<
     DestinationBoardPort,
-    'getIssue' | 'updateIssueStatus'
+    'getIssue' | 'updateIssueStatus' | 'deleteWorkspace'
   >;
   urlsNow: Set<string>;
   kanbanDoneStatus: () => string;
@@ -32,6 +33,18 @@ export async function reconcileRemovedSyncRows(deps: {
     } catch (e) {
       const raw = e instanceof Error ? e.message : String(e);
       deps.warn(`Reconcile (pr ${row.prNumber}): ${redactHttpUrls(raw)}`);
+    }
+    if (row.vibeKanbanWorkspaceId && deps.destinationBoard.deleteWorkspace) {
+      try {
+        await deps.destinationBoard.deleteWorkspace(row.vibeKanbanWorkspaceId, {
+          deleteBranches: true,
+        });
+      } catch (e) {
+        const raw = e instanceof Error ? e.message : String(e);
+        deps.warn(
+          `Reconcile delete_workspace (pr ${row.prNumber}): ${redactHttpUrls(raw)}`,
+        );
+      }
     }
     try {
       await deps.prisma.syncedPullRequest.delete({ where: { id: row.id } });
