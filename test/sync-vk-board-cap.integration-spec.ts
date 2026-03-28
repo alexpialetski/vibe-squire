@@ -101,6 +101,7 @@ describe('Sync VK-first board cap (integration)', () => {
       data: [
         { key: 'default_organization_id', value: 'org-default-1' },
         { key: 'default_project_id', value: 'project-uuid-1' },
+        { key: 'max_board_pr_count', value: '5' },
       ],
     });
     await app.get(SettingsService).refreshCache();
