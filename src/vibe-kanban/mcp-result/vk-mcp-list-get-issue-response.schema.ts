@@ -4,7 +4,7 @@ import { z } from 'zod';
  * Documented shapes for **parsed** Vibe Kanban MCP tool results (`list_issues`, `get_issue`).
  *
  * VK may add fields — sub-objects use {@link z.looseObject} so extras do not fail parse.
- * Tool names and parameters: `vibe-kanban-mcp-server.md`.
+ * Tool names and parameters: https://vibekanban.com/docs
  *
  * **Contract:** title/body markers are defined in `vk-contract.ts` (see `list_issues` search / linking).
  */

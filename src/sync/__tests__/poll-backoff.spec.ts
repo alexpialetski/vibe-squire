@@ -1,6 +1,6 @@
 import { computeBackoffNextPollAtMs } from '../poll-backoff';
 
-describe('computeBackoffNextPollAtMs (§11)', () => {
+describe('computeBackoffNextPollAtMs', () => {
   const fromMs = Date.UTC(2025, 0, 1, 12, 0, 0);
 
   it('streak 1 uses 1× base interval (+ jitter)', () => {

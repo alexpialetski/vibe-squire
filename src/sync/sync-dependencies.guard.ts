@@ -14,7 +14,7 @@ import type { SourceStatusProvider } from '../ports/source-status.port';
 
 /**
  * Blocks manual sync when the source or destination {@link checkReadiness} reports `error`.
- * Does not block on `unknown` / `degraded` destination (e.g. before first poll). See PLUGIN-ARCHITECTURE-PLAN.md §9.
+ * Does not block on `unknown` / `degraded` destination (e.g. before first poll).
  */
 @Injectable()
 export class SyncDependenciesGuard implements CanActivate {

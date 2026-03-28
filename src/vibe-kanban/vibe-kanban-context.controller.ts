@@ -22,7 +22,7 @@ import { listProjectsQuerySchema } from './vibe-kanban-query.schema';
 export class VibeKanbanContextController {
   constructor(private readonly vk: VibeKanbanMcpService) {}
 
-  /** §4.3 — MCP `list_organizations` for setup UI. */
+  /** MCP `list_organizations` for setup UI. */
   @Get('organizations')
   @ApiOperation({ summary: 'List organizations via MCP (setup helper)' })
   @ApiOkResponse({
@@ -42,7 +42,7 @@ export class VibeKanbanContextController {
     return { organizations };
   }
 
-  /** §4.3 — MCP `list_projects` (requires `organization_id`). */
+  /** MCP `list_projects` (requires `organization_id`). */
   @Get('projects')
   @ApiOperation({ summary: 'List projects for an organization via MCP' })
   @ApiQuery({ name: 'organization_id', required: true })

@@ -3,7 +3,7 @@ import { StatusEventsService } from './status-events.service';
 import { IntegrationSettingsEmitterService } from './integration-settings-emitter.service';
 
 /**
- * Global providers for two concerns (see REFACTORING-PLAN §D):
+ * Global providers for two concerns:
  * - **Status** — `StatusEventsService`: broadcast status snapshot / scheduler refresh (SSE, UI).
  * - **Integration settings** — `IntegrationSettingsEmitterService`: settings keys changed → MCP / sync listeners.
  *

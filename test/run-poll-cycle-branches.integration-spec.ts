@@ -80,7 +80,7 @@ async function seedCompleteRouting(
 }
 
 /**
- * Phase 1 (REFACTORING-PLAN): lock RunPollCycleService branches before pipeline extraction.
+ * RunPollCycleService branches — lock before pipeline extraction.
  * HTTP guards skip some paths — those are exercised via execute() directly.
  */
 describe('RunPollCycleService branches (integration)', () => {

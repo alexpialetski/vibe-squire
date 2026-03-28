@@ -11,7 +11,7 @@ import { SettingsService } from '../src/settings/settings.service';
 import { DEFAULT_KANBAN_DONE_STATUS } from '../src/sync/sync-constants';
 
 /**
- * §16.5 — PR disappears from scout → reconcile calls update_issue to terminal status and drops sync row.
+ * PR disappears from scout → reconcile calls update_issue to terminal status and drops sync row.
  */
 describe('Sync reconciliation (integration)', () => {
   let app: INestApplication<App>;

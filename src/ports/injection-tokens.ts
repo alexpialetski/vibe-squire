@@ -1,4 +1,4 @@
-/** Nest DI tokens for hexagonal ports (§2). */
+/** Nest DI tokens for hexagonal ports. */
 export const GITHUB_PR_SCOUT_PORT = Symbol('GITHUB_PR_SCOUT_PORT');
 /** Sync orchestration: resolves to the adapter for `AppEnv.sourceType`. */
 export const SYNC_PR_SCOUT_PORT = Symbol('SYNC_PR_SCOUT_PORT');
