@@ -4,7 +4,7 @@ import type { SettingsService } from '../../settings/settings.service';
 /** Subset of {@link SettingsService} used by poll-scout-context. */
 type EffectiveReader = Pick<SettingsService, 'getEffective'>;
 import type { CoreSettings } from '../../settings/core-settings.service';
-import type { GithubPrCandidate } from '../../scout/github-pr-scout.service';
+import type { GithubPrCandidate } from '../../integrations/github/github-pr-scout.service';
 import { prIgnoreAuthorLoginsSchema } from '../../integrations/github/github-settings.schema';
 import { redactHttpUrls } from '../../logging/redact-urls';
 

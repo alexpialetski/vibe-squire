@@ -4,7 +4,7 @@ import request from 'supertest';
 import { App } from 'supertest/types';
 import { testingAppModule } from './testing-app-module';
 import { GhCliService } from '../src/integrations/github/gh-cli.service';
-import { GithubPrScoutService } from '../src/scout/github-pr-scout.service';
+import { GithubPrScoutService } from '../src/integrations/github/github-pr-scout.service';
 import { VibeKanbanMcpService } from '../src/vibe-kanban/vibe-kanban-mcp.service';
 import { PrismaService } from '../src/prisma/prisma.service';
 import { SettingsService } from '../src/settings/settings.service';

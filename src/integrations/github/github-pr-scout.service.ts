@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
-import type { GithubPrCandidate } from '../ports/github-pr-candidate';
-import type { GithubPrScoutPort } from '../ports/github-scout.port';
+import type { GithubPrCandidate } from '../../ports/github-pr-candidate';
+import type { GithubPrScoutPort } from '../../ports/github-scout.port';
 import { ghSearchPrsResponseSchema } from './github-search-prs.schema';
 
-export type { GithubPrCandidate } from '../ports/github-pr-candidate';
+export type { GithubPrCandidate } from '../../ports/github-pr-candidate';
 
 /** Branch passed to `start_workspace` for every PR (PR head not fetched). */
 const WORKSPACE_BRANCH = 'main';
