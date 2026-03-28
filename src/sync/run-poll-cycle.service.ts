@@ -94,6 +94,9 @@ export class RunPollCycleService {
       );
 
       if (pre.kind === 'aborted') {
+        this.logger.debug(
+          `Poll (${trigger}) skipped: prerequisites aborted (${pre.reason})`,
+        );
         await persistScoutSkippedAfterPoll({
           prisma: this.prisma,
           now: new Date(),
@@ -105,6 +108,9 @@ export class RunPollCycleService {
         return;
       }
       if (pre.kind === 'probe_failed') {
+        this.logger.warn(
+          `Poll (${trigger}) destination probe failed: ${redactHttpUrls(pre.message)}`,
+        );
         await persistScoutErrorAfterPoll({
           prisma: this.prisma,
           now: new Date(),

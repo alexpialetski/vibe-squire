@@ -44,6 +44,8 @@ async function bootstrap() {
   }
 
   await app.listen(env.port, env.host);
+  const logger = app.get(Logger);
+  logger.log(`HTTP server listening on ${await app.getUrl()}`);
 }
 
 void bootstrap();

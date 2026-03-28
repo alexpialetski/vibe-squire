@@ -14,6 +14,7 @@ import {
 import type { SourceStatusProvider } from '../ports/source-status.port';
 import type { DestinationStatusProvider } from '../ports/destination-status.port';
 import type { DestinationBoardPort } from '../ports/destination-board.port';
+import { redactHttpUrls } from '../logging/redact-urls';
 
 type SubsystemResult = { state: string; message?: string };
 
@@ -121,6 +122,22 @@ export class ReinitService {
     this.pollScheduler.reschedule('reinit');
     this.statusEvents.emitChanged();
     this.statusEvents.emitScheduleRefresh();
+
+    if (database.state !== 'ok') {
+      this.logger.warn(
+        `Reinit: database ${database.state}${database.message ? ` — ${redactHttpUrls(database.message)}` : ''}`,
+      );
+    }
+    if (source.state !== 'ok') {
+      this.logger.warn(
+        `Reinit: source ${source.state}${source.message ? ` — ${redactHttpUrls(source.message)}` : ''}`,
+      );
+    }
+    if (destination.state !== 'ok') {
+      this.logger.warn(
+        `Reinit: destination ${destination.state}${destination.message ? ` — ${redactHttpUrls(destination.message)}` : ''}`,
+      );
+    }
 
     this.logger.log('Soft reinit completed');
     return { ok: true, database, source, destination };
