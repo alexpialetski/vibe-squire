@@ -78,7 +78,7 @@ export const coreStorageSchema = z
       1,
       MAX_BOARD_PR_COUNT_CAP,
       'max_board_pr_count',
-      '5',
+      '1',
     ),
   })
   .strict();
