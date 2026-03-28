@@ -1,4 +1,3 @@
-import 'dotenv/config';
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
@@ -7,12 +6,15 @@ import { Logger } from 'nestjs-pino';
 import { AppModule } from './app.module';
 import { configureExpressApp } from './configure-express-app';
 import { parseAppEnv } from './config/env-schema';
-import { ensureDatabaseUrlFromEnv } from './database/resolve-database-url';
-import { runPrismaMigrateDeploy } from './database/prisma-migrate';
+import {
+  databaseUrlToFilePath,
+  ensureDatabaseUrlFromEnv,
+} from './database/resolve-database-url';
+import { runSqliteMigrations } from './database/sqlite-migrate';
 
 async function bootstrap() {
   ensureDatabaseUrlFromEnv();
-  runPrismaMigrateDeploy();
+  runSqliteMigrations(databaseUrlToFilePath(process.env.DATABASE_URL!));
   const env = parseAppEnv();
 
   const app = await NestFactory.create<NestExpressApplication>(

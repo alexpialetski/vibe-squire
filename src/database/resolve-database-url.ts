@@ -1,7 +1,7 @@
 import { mkdirSync } from 'node:fs';
 import { homedir } from 'node:os';
-import { dirname, join } from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 /**
  * If `DATABASE_URL` is unset, derive SQLite `file:` URL from
@@ -26,6 +26,19 @@ export function ensureDatabaseUrlFromEnv(): void {
   mkdirSync(dataDir, { recursive: true });
   const dbPath = join(dataDir, 'vibe-squire.db');
   process.env.DATABASE_URL = pathToFileURL(dbPath).href;
+}
+
+/**
+ * Extracts the absolute file path from a DATABASE_URL.
+ * Handles both proper `file:///…` URLs and Prisma's `file:./relative` shorthand.
+ */
+export function databaseUrlToFilePath(url: string): string {
+  if (url.startsWith('file://')) {
+    return fileURLToPath(url);
+  }
+  // Prisma shorthand: `file:./dev.db` or `file:/absolute/path.db`
+  const raw = url.replace(/^file:/, '');
+  return resolve(raw);
 }
 
 function defaultDataDirectory(): string {
