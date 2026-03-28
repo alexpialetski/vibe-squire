@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { POLL_RUN_PHASE } from './poll-run-decisions';
+import { POLL_RUN_PHASE, type PollRunItemDecision } from './poll-run-decisions';
 
 const DEFAULT_RETAIN_RUNS = 100;
 
@@ -26,7 +26,7 @@ export class PollRunHistoryService {
       prNumber: number;
       prTitle: string;
       authorLogin?: string | null;
-      decision: string;
+      decision: PollRunItemDecision;
       detail?: string | null;
       kanbanIssueId?: string | null;
     },

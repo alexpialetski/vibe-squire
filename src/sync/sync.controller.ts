@@ -37,10 +37,9 @@ export class SyncController {
     status: 503,
     description: 'GitHub CLI or Vibe Kanban destination reported error',
   })
-  runNow() {
-    return this.sync.requestManualSync().then((r) => {
-      this.pollScheduler.reschedule('manual_run_complete');
-      return r;
-    });
+  async runNow() {
+    const r = await this.sync.requestManualSync();
+    this.pollScheduler.reschedule('manual_run_complete');
+    return r;
   }
 }

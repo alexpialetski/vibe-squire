@@ -32,6 +32,7 @@ import {
 } from './poll-cycle/persist-scout-run-outcome';
 import { ensureIssueForPr } from './poll-cycle/ensure-issue-for-pr';
 import { looksLikeMcpOrNetworkError } from './poll-cycle/mcp-network-error-heuristic';
+import type { PollRunItemDecision } from './poll-run-decisions';
 
 export type { VkCreateQuota } from './poll-cycle/poll-scout-context';
 
@@ -227,7 +228,7 @@ export class RunPollCycleService {
   private async appendPollRunItem(
     runId: string,
     pr: GithubPrCandidate,
-    decision: string,
+    decision: PollRunItemDecision,
     opts?: { detail?: string; kanbanIssueId?: string },
   ): Promise<void> {
     await this.pollRunHistory.appendItem(runId, {

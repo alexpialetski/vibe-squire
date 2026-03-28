@@ -8,6 +8,9 @@ import { StatusEventsService } from '../events/status-events.service';
 import { IntegrationSettingsEmitterService } from '../events/integration-settings-emitter.service';
 import type { SettingsGroupId } from './settings-group.tokens';
 
+/** Narrow read-only view used by poll-cycle helpers that only need `getEffective`. */
+export type EffectiveSettingsReader = Pick<SettingsService, 'getEffective'>;
+
 @Injectable()
 export class SettingsService implements OnModuleInit {
   private readonly logger = new Logger(SettingsService.name);

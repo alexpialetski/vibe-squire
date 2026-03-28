@@ -1,13 +1,16 @@
 import type { GithubPrCandidate } from '../../ports/github-pr-candidate';
 import { isIgnoredAuthorLogin } from '../pr-ignore-author-logins';
-import { POLL_RUN_ITEM_DECISION } from '../poll-run-decisions';
+import {
+  POLL_RUN_ITEM_DECISION,
+  type PollRunItemDecision,
+} from '../poll-run-decisions';
 import type { VkCreateQuota } from './poll-scout-context';
 import type { EnsureIssueOutcome } from './ensure-issue-outcome';
 
 export type PollRunAppendItemFn = (
   runId: string,
   pr: GithubPrCandidate,
-  decision: string,
+  decision: PollRunItemDecision,
   opts?: { detail?: string; kanbanIssueId?: string },
 ) => Promise<void>;
 
@@ -85,12 +88,14 @@ export async function processPollCandidatesLoop(deps: {
         kanbanIssueId: outcome.kanbanIssueId,
         detail: 'Already synced; Kanban issue unchanged',
       });
-    } else {
+    } else if (outcome.kind === 'linked_existing') {
       skippedLinkedExisting += 1;
       await deps.appendItem(runId, pr, POLL_RUN_ITEM_DECISION.linkedExisting, {
         kanbanIssueId: outcome.kanbanIssueId,
         detail: 'Matched existing Kanban issue; linked for tracking',
       });
+    } else {
+      outcome satisfies never;
     }
   }
 

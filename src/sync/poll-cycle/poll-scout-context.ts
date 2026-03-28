@@ -1,8 +1,6 @@
 import type { SyncPrScoutPort } from '../../ports/sync-pr-scout.port';
 import type { DestinationBoardPort } from '../../ports/destination-board.port';
-import type { SettingsService } from '../../settings/settings.service';
-/** Subset of {@link SettingsService} used by poll-scout-context. */
-type EffectiveReader = Pick<SettingsService, 'getEffective'>;
+import type { EffectiveSettingsReader } from '../../settings/settings.service';
 import type { CoreSettings } from '../../settings/core-settings.service';
 import type { GithubPrCandidate } from '../../ports/github-pr-candidate';
 import { prIgnoreAuthorLoginsSchema } from '../../integrations/github/github-settings.schema';
@@ -28,7 +26,7 @@ export type PollScoutContext = {
  */
 export async function buildPollScoutContext(deps: {
   prScout: SyncPrScoutPort;
-  settings: EffectiveReader;
+  settings: EffectiveSettingsReader;
   coreSettings: Pick<CoreSettings, 'maxBoardPrCount'>;
   destinationBoard: Pick<DestinationBoardPort, 'countActiveIssues'>;
   warn: (msg: string) => void;

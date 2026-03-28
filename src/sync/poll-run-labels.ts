@@ -1,43 +1,31 @@
-/**
- * English labels for poll run phases and per-PR decisions (activity UI, etc.).
- * Codes are defined in `poll-run-decisions.ts`.
- */
+import { POLL_RUN_ITEM_DECISION, POLL_RUN_PHASE } from './poll-run-decisions';
+
+const DECISION_LABELS: Record<string, string> = {
+  [POLL_RUN_ITEM_DECISION.created]: 'Created Kanban issue',
+  [POLL_RUN_ITEM_DECISION.alreadyTracked]: 'Already tracked',
+  [POLL_RUN_ITEM_DECISION.linkedExisting]: 'Linked existing issue',
+  [POLL_RUN_ITEM_DECISION.skippedUnmapped]: 'Skipped (unmapped)',
+  [POLL_RUN_ITEM_DECISION.skippedBot]: 'Skipped (bot author)',
+  [POLL_RUN_ITEM_DECISION.skippedBoardLimit]: 'Skipped (board limit)',
+};
+
+const PHASE_LABELS: Record<string, string> = {
+  [POLL_RUN_PHASE.completed]: 'Completed',
+  [POLL_RUN_PHASE.aborted]: 'Aborted',
+  [POLL_RUN_PHASE.failed]: 'Failed',
+  [POLL_RUN_PHASE.running]: 'Running',
+};
+
 export function pollDecisionLabel(decision: unknown): string {
   if (typeof decision !== 'string') {
     return '';
   }
-  switch (decision) {
-    case 'created':
-      return 'Created Kanban issue';
-    case 'already_tracked':
-      return 'Already tracked';
-    case 'linked_existing':
-      return 'Linked existing issue';
-    case 'skipped_unmapped':
-      return 'Skipped (unmapped)';
-    case 'skipped_bot':
-      return 'Skipped (bot author)';
-    case 'skipped_board_limit':
-      return 'Skipped (board limit)';
-    default:
-      return decision;
-  }
+  return DECISION_LABELS[decision] ?? decision;
 }
 
 export function pollPhaseLabel(phase: unknown): string {
   if (typeof phase !== 'string') {
     return '';
   }
-  switch (phase) {
-    case 'completed':
-      return 'Completed';
-    case 'aborted':
-      return 'Aborted';
-    case 'failed':
-      return 'Failed';
-    case 'running':
-      return 'Running';
-    default:
-      return phase;
-  }
+  return PHASE_LABELS[phase] ?? phase;
 }

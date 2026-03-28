@@ -17,3 +17,5 @@ export const POLL_RUN_PHASE = {
   aborted: 'aborted',
   failed: 'failed',
 } as const;
+
+export type PollRunPhase = (typeof POLL_RUN_PHASE)[keyof typeof POLL_RUN_PHASE];
