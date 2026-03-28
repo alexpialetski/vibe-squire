@@ -36,9 +36,9 @@ export class GithubUiController {
       return;
     }
     const values = this.settings.listEffectiveNonSecret();
-    const ev = await this.setupEvaluation.evaluate();
+    await this.setupEvaluation.evaluate();
     res.render('github', {
-      ...uiNavLocals(ev, this.uiNav.getEntries()),
+      ...uiNavLocals(this.uiNav.getEntries()),
       saved: saved === '1',
       error: err ? decodeURIComponent(err) : null,
       fields: integrationFieldsForUi(GITHUB_SOURCE_UI_KEYS, values),

@@ -3,6 +3,8 @@ import {
   destinationTypeLabel,
   escapeForPre,
   presentActivityRunsForView,
+  SETUP_REASON_MESSAGES,
+  setupReasonHuman,
   sourceTypeLabel,
   uiNavLocals,
   type PollRunRowForActivity,
@@ -30,8 +32,9 @@ const sampleNav: UiNavEntry[] = [
 
 describe('ui-presenter', () => {
   describe('escapeForPre', () => {
-    it('escapes ampersand and angle brackets', () => {
+    it('escapes ampersand, angle brackets, and double quotes', () => {
       expect(escapeForPre('a<b>&c')).toBe('a&lt;b&gt;&amp;c');
+      expect(escapeForPre('x="1"')).toBe('x=&quot;1&quot;');
     });
   });
 
@@ -102,9 +105,26 @@ describe('ui-presenter', () => {
     });
   });
 
+  describe('setupReasonHuman', () => {
+    it('returns message for known reason codes', () => {
+      expect(setupReasonHuman('no_mappings')).toBe(
+        SETUP_REASON_MESSAGES['no_mappings'],
+      );
+      expect(setupReasonHuman('vk_mcp_stdio_invalid')).toBe(
+        SETUP_REASON_MESSAGES['vk_mcp_stdio_invalid'],
+      );
+    });
+    it('returns fallback for unknown reason', () => {
+      expect(setupReasonHuman('something_new')).toBe('something_new');
+    });
+    it('returns default for undefined', () => {
+      expect(setupReasonHuman(undefined)).toBe('Incomplete setup.');
+    });
+  });
+
   describe('uiNavLocals', () => {
     it('passes entries through for the nav partial', () => {
-      const l = uiNavLocals(baseEv(), sampleNav);
+      const l = uiNavLocals(sampleNav);
       expect(l.navMinimal).toBe(false);
       expect(l.integrationNavEntries).toBe(sampleNav);
     });
