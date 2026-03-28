@@ -7,7 +7,6 @@ import {
   DESTINATION_STATUS_PORT,
   SYNC_DESTINATION_BOARD_PORT,
   UI_NAV_ENTRIES,
-  VIBE_KANBAN_BOARD_PORT,
   VK_MCP_STDIO_SESSION_PORT,
 } from '../../ports/injection-tokens';
 import type { UiNavEntry } from '../../ports/ui-nav.types';
@@ -61,10 +60,6 @@ const VK_NAV_BOARD: UiNavEntry = {
       multi: true,
     } as Provider,
     {
-      provide: VIBE_KANBAN_BOARD_PORT,
-      useExisting: VibeKanbanMcpService,
-    },
-    {
       provide: VK_MCP_STDIO_SESSION_PORT,
       useExisting: VkMcpStdioSessionService,
     },
@@ -88,7 +83,6 @@ const VK_NAV_BOARD: UiNavEntry = {
     VkMcpStdioSessionService,
     VkBoardAdapterService,
     VkSettings,
-    VIBE_KANBAN_BOARD_PORT,
     VK_MCP_STDIO_SESSION_PORT,
     DESTINATION_BOARD_PORT,
     SYNC_DESTINATION_BOARD_PORT,

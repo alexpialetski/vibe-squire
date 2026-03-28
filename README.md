@@ -49,7 +49,7 @@ Effective precedence where an env var exists for a key: **env (non-empty) → SQ
 | Role | Env var (default) | Orchestration token (internal) | Adapter today |
 |------|-------------------|-------------------------------|---------------|
 | PR scout | `SOURCE_TYPE` (`github`) | `SYNC_PR_SCOUT_PORT` | GitHub `gh` scout via `GITHUB_PR_SCOUT_PORT` |
-| Destination board | `DESTINATION_TYPE` (`vibe_kanban`) | `SYNC_DESTINATION_BOARD_PORT` | Vibe Kanban MCP via `VIBE_KANBAN_BOARD_PORT` |
+| Destination board | `DESTINATION_TYPE` (`vibe_kanban`) | `SYNC_DESTINATION_BOARD_PORT` | `VkBoardAdapterService` (`DestinationBoardPort`) → `VibeKanbanMcpService` |
 
 Unsupported **`SOURCE_TYPE`** / **`DESTINATION_TYPE`** values **fail at startup** (Zod). After boot, if a future code path delegates to an adapter that does not match the configured type, sync may still throw (e.g. `Sync source not supported: …`).
 
