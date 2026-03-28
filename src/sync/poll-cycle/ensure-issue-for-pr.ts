@@ -1,19 +1,17 @@
 import type { Logger } from '@nestjs/common';
 import type { PrismaService } from '../../prisma/prisma.service';
 import type { SettingsService } from '../../settings/settings.service';
-/** Subset of {@link SettingsService} used here. */
-type EffectiveReader = Pick<SettingsService, 'getEffective'>;
 import type {
   BoardIssueRef,
   DestinationBoardPort,
 } from '../../ports/destination-board.port';
 import type { GithubPrCandidate } from '../../ports/github-pr-candidate';
+import { redactHttpUrls } from '../../logging/redact-urls';
 import {
   buildVibeSquirePrDescriptionMarker,
   VIBE_SQUIRE_TITLE_MARKER,
 } from '../../vibe-kanban/vk-contract';
 import { applyPrReviewBodyTemplate } from '../pr-review-template';
-import { redactHttpUrls } from '../../logging/redact-urls';
 import type { SyncRunStateService } from '../sync-run-state.service';
 import type { EnsureIssueOutcome } from './ensure-issue-outcome';
 import type { VkCreateQuota } from './poll-scout-context';
@@ -22,6 +20,9 @@ import {
   issueTitleForPr,
   workspaceNameForPr,
 } from './poll-pr-kanban-copy';
+
+/** Subset of {@link SettingsService} used here. */
+type EffectiveReader = Pick<SettingsService, 'getEffective'>;
 
 export type EnsureIssueForPrDeps = {
   prisma: PrismaService;

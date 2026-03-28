@@ -1,4 +1,4 @@
-import type { GithubPrCandidate } from '../../integrations/github/github-pr-scout.service';
+import type { GithubPrCandidate } from '../../ports/github-pr-candidate';
 import { isIgnoredAuthorLogin } from '../pr-ignore-author-logins';
 import { POLL_RUN_ITEM_DECISION } from '../poll-run-decisions';
 import type { VkCreateQuota } from './poll-scout-context';
