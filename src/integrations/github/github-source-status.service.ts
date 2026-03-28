@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { GhCliService } from '../../gh/gh-cli.service';
+import { GhCliService } from './gh-cli.service';
 import type {
   SourceReadinessResult,
   SourceStatusProvider,
