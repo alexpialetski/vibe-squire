@@ -16,7 +16,7 @@ function guardFor(appEnv: AppEnv): VibeKanbanMcpConfiguredGuard {
 }
 
 describe('VibeKanbanMcpConfiguredGuard', () => {
-  it('allows when DESTINATION_TYPE is vibe_kanban', () => {
+  it('allows when VIBE_SQUIRE_DESTINATION_TYPE resolves to vibe_kanban', () => {
     expect(guardFor(vkEnv()).canActivate()).toBe(true);
   });
 

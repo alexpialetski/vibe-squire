@@ -60,7 +60,7 @@ bin/                   — CLI entry point (vibe-squire.js)
 ## Key patterns
 
 - `AppModule.forRoot(env)` is the only valid way to boot the module graph. Never use bare `AppModule`.
-- Integration adapters are registered dynamically by `IntegrationsModule.register(env)` based on `SOURCE_TYPE` / `DESTINATION_TYPE`.
+- Integration adapters are registered dynamically by `IntegrationsModule.register(env)` based on `VIBE_SQUIRE_SOURCE_TYPE` / `VIBE_SQUIRE_DESTINATION_TYPE`.
 - Settings follow env > SQLite > code-default precedence (`SettingsService.resolveEffectiveSetting`).
 - The sync pipeline is guarded: setup must be complete, `gh` authenticated, and MCP reachable before polls run.
 - SSE pushes status snapshots on material state changes (poll start/end, settings change, reinit).

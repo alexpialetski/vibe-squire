@@ -2,7 +2,7 @@ import { SCHEDULER_TEXT_FIELD_KEYS } from './integration-ui-registry';
 
 export const SETTING_LABELS: Record<string, string> = {
   scheduled_sync_enabled:
-    'Automatic polling — timer runs on the interval below. Manual Sync now always works. Override: SCHEDULED_SYNC_ENABLED',
+    'Automatic polling — timer runs on the interval below. Manual Sync now always works. Override: VIBE_SQUIRE_SCHEDULED_SYNC_ENABLED',
   poll_interval_minutes:
     'Poll interval (minutes, min 5; manual Sync now ignores)',
   jitter_max_seconds: 'Jitter max (seconds)',

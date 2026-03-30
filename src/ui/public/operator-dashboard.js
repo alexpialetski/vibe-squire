@@ -136,7 +136,7 @@
       const sched = snap.scheduled_sync || {};
       if (sched.enabled === false) {
         scLines.push(
-          'Automatic polling is disabled — enable scheduled_sync_enabled in General settings (or SCHEDULED_SYNC_ENABLED).',
+          'Automatic polling is disabled — enable scheduled_sync_enabled in General settings or VIBE_SQUIRE_SCHEDULED_SYNC_ENABLED in the environment.',
         );
       }
       if (scout.state === 'running') {

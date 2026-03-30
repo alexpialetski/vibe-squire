@@ -12,7 +12,7 @@ import { SETTING_LABELS } from './setting-labels';
 import { uiNavLocals } from './ui-presenter';
 
 export const VK_PAGE_ORG_ERROR_NO_MCP =
-  'Vibe Kanban MCP is not available (this UI requires DESTINATION_TYPE=vibe_kanban).';
+  'Vibe Kanban MCP is not available (this UI requires VIBE_SQUIRE_DESTINATION_TYPE=vibe_kanban).';
 
 /**
  * Template locals for `/ui/vibe-kanban` (board picker, executor, labels).

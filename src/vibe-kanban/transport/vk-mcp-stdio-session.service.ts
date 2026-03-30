@@ -74,7 +74,7 @@ export class VkMcpStdioSessionService
   private async ensureConnected(): Promise<void> {
     if (!isVibeKanbanDestination(this.appEnv.destinationType)) {
       throw new Error(
-        'Vibe Kanban MCP (stdio): DESTINATION_TYPE is not vibe_kanban',
+        'Vibe Kanban MCP (stdio): VIBE_SQUIRE_DESTINATION_TYPE is not vibe_kanban',
       );
     }
     const key = this.buildConfigKey();

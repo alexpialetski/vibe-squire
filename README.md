@@ -34,7 +34,7 @@ That's it. On first run the app resolves a SQLite database path automatically (s
 Override defaults with environment variables:
 
 ```bash
-PORT=4000 LOG_LEVEL=debug npx vibe-squire
+VIBE_SQUIRE_PORT=4000 VIBE_SQUIRE_LOG_LEVEL=debug npx vibe-squire
 ```
 
 ## Configuration
@@ -43,17 +43,17 @@ PORT=4000 LOG_LEVEL=debug npx vibe-squire
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `HOST` | `127.0.0.1` | HTTP bind address. |
-| `PORT` | `3000` | HTTP bind port. |
-| `SOURCE_TYPE` | `github` | Scout adapter (`github`). |
-| `DESTINATION_TYPE` | `vibe_kanban` | Board adapter (`vibe_kanban`). |
-| `SCHEDULED_SYNC_ENABLED` | `true` | Set `false` to disable the automatic poll timer (manual "Sync now" still works). |
-| `POLL_INTERVAL_MINUTES` | `10` | Minutes between scheduled polls (minimum 5, clamped). |
-| `JITTER_MAX_SECONDS` | `30` | Random jitter added to the poll interval. |
-| `RUN_NOW_COOLDOWN_SECONDS` | `60` | Minimum gap after a manual sync before another is allowed. |
-| `LOG_LEVEL` | `info` | Pino log level (`fatal` / `error` / `warn` / `info` / `debug` / `trace` / `silent`). |
-| `LOG_FILE_PATH` | — | Path for JSON file logging (in addition to console). |
-| `OPENAPI_ENABLED` | `true` | Expose Swagger UI at `/api/docs`. |
+| `VIBE_SQUIRE_HOST` | `127.0.0.1` | HTTP bind address. |
+| `VIBE_SQUIRE_PORT` | `3000` | HTTP bind port. |
+| `VIBE_SQUIRE_SOURCE_TYPE` | `github` | Scout adapter (`github`). |
+| `VIBE_SQUIRE_DESTINATION_TYPE` | `vibe_kanban` | Board adapter (`vibe_kanban`). |
+| `VIBE_SQUIRE_SCHEDULED_SYNC_ENABLED` | `true` | Set `false` to disable the automatic poll timer (manual "Sync now" still works). |
+| `VIBE_SQUIRE_POLL_INTERVAL_MINUTES` | `10` | Minutes between scheduled polls (minimum 5, clamped). |
+| `VIBE_SQUIRE_JITTER_MAX_SECONDS` | `30` | Random jitter added to the poll interval. |
+| `VIBE_SQUIRE_RUN_NOW_COOLDOWN_SECONDS` | `60` | Minimum gap after a manual sync before another is allowed. |
+| `VIBE_SQUIRE_LOG_LEVEL` | `info` | Pino log level (`fatal` / `error` / `warn` / `info` / `debug` / `trace` / `silent`). |
+| `VIBE_SQUIRE_LOG_FILE_PATH` | — | Path for JSON file logging (in addition to console). |
+| `VIBE_SQUIRE_OPENAPI_ENABLED` | `true` | Expose Swagger UI at `/api/docs`. |
 
 ### Runtime settings (SQLite)
 
@@ -67,7 +67,7 @@ For keys that have both an env var and a SQLite row: **env (non-empty) > SQLite 
 
 ### Database location
 
-When `DATABASE_URL` is not set (the default for `npx`), the app resolves a path automatically:
+When `VIBE_SQUIRE_DATABASE_URL` is not set (the default for `npx`), the app resolves a path automatically:
 
 | OS | Default directory |
 |----|-------------------|
@@ -75,7 +75,7 @@ When `DATABASE_URL` is not set (the default for `npx`), the app resolves a path 
 | macOS | `~/Library/Application Support/vibe-squire/` |
 | Windows | `%APPDATA%\vibe-squire\` |
 
-Override with `DATABASE_URL` (SQLite `file:` URL), `VIBE_SQUIRE_DATA_DIR` (directory), or `DATABASE_PATH` (full file path).
+Override with `VIBE_SQUIRE_DATABASE_URL` (SQLite `file:` URL), `VIBE_SQUIRE_DATA_DIR` (directory), or `VIBE_SQUIRE_DATABASE_PATH` (full file path).
 
 SQLite migrations are applied automatically on every startup via a lightweight `better-sqlite3` runner — no Prisma CLI is needed at runtime.
 
@@ -119,8 +119,8 @@ After=network-online.target
 [Service]
 Type=simple
 Environment=NODE_ENV=production
-Environment=HOST=127.0.0.1
-Environment=PORT=3000
+Environment=VIBE_SQUIRE_HOST=127.0.0.1
+Environment=VIBE_SQUIRE_PORT=3000
 ExecStart=/usr/bin/npx vibe-squire
 Restart=on-failure
 

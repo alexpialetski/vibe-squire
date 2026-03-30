@@ -40,7 +40,7 @@ graph TB
 | `SourceStatusPort` | `SOURCE_STATUS_PORT` | Source health for status API and sync guards |
 | `DestinationStatusPort` | `DESTINATION_STATUS_PORT` | Destination setup + health checks |
 
-Tokens are defined in `src/ports/injection-tokens.ts`. Adapters are registered by `IntegrationsModule.register(env)` based on `SOURCE_TYPE` / `DESTINATION_TYPE` at boot time.
+Tokens are defined in `src/ports/injection-tokens.ts`. Adapters are registered by `IntegrationsModule.register(env)` based on `VIBE_SQUIRE_SOURCE_TYPE` / `VIBE_SQUIRE_DESTINATION_TYPE` at boot time.
 
 ## Module graph
 
@@ -75,7 +75,7 @@ For each tunable key, the effective value is resolved in order:
 2. **SQLite `Setting` row** (user-edited via UI or API)
 3. **Code default** (compiled-in)
 
-Boot-time env (`AppEnv`) is validated by Zod in `src/config/env-schema.ts` and injected via `EnvModule`. Runtime settings are managed by `SettingsService` which reads both `process.env` and the `Setting` table.
+Boot-time env (`AppEnv`) is validated by Zod in `src/config/env-schema.ts` and injected via `EnvModule`. Runtime settings are managed by `SettingsService` which reads `VIBE_SQUIRE_*` env overrides and the `Setting` table.
 
 ## Data model (Prisma / SQLite)
 

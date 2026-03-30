@@ -84,7 +84,7 @@ npm run typecheck          # tsc --noEmit
 
 ## Configuration
 
-Boot-time env validated by Zod (`src/config/env-schema.ts`): `DATABASE_URL`, `HOST`, `PORT`, `SOURCE_TYPE`, `DESTINATION_TYPE`, `LOG_LEVEL`, etc.
+Boot-time env validated by Zod (`src/config/env-schema.ts`): `VIBE_SQUIRE_DATABASE_URL`, `VIBE_SQUIRE_HOST`, `VIBE_SQUIRE_PORT`, `VIBE_SQUIRE_SOURCE_TYPE`, `VIBE_SQUIRE_DESTINATION_TYPE`, `VIBE_SQUIRE_LOG_LEVEL`, etc.
 
 Runtime settings stored in SQLite `Setting` table, managed via `SettingsService` and exposed at `PATCH /api/settings`.
 

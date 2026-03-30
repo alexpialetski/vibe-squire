@@ -9,7 +9,7 @@ import { VibeKanbanMcpService } from '../src/vibe-kanban/vibe-kanban-mcp.service
 import { PollSchedulerService } from '../src/sync/poll-scheduler.service';
 import { validateStatusSnapshot } from '../src/status/status-snapshot.contract';
 
-const HTTP_SMOKE_ENV_KEYS = ['SOURCE_TYPE'] as const;
+const HTTP_SMOKE_ENV_KEYS = ['VIBE_SQUIRE_SOURCE_TYPE'] as const;
 
 function snapshotHttpSmokeEnv(): Record<string, string | undefined> {
   const out: Record<string, string | undefined> = {};
@@ -67,13 +67,13 @@ async function createSmokeApp(): Promise<NestExpressApplication> {
  * HBS + Express wiring, status/reinit/sync contracts — real Prisma + migrations, stubbed gh / MCP.
  */
 describe('App HTTP smoke (integration)', () => {
-  describe('default operator env (no SOURCE_TYPE / VK MCP env)', () => {
+  describe('default operator env (no VIBE_SQUIRE_SOURCE_TYPE / VK MCP env)', () => {
     let app: NestExpressApplication;
     let prevEnv: Record<string, string | undefined>;
 
     beforeAll(async () => {
       prevEnv = snapshotHttpSmokeEnv();
-      delete process.env.SOURCE_TYPE;
+      delete process.env.VIBE_SQUIRE_SOURCE_TYPE;
       app = await createSmokeApp();
     });
 
