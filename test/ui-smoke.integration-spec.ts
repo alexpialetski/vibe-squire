@@ -97,6 +97,7 @@ describe('App HTTP smoke (integration)', () => {
       expect(res.text).toContain('Technical details (raw JSON)');
       expect(res.text).toContain('operator-ui-shared.js');
       expect(res.text).toContain('operator-shell.js');
+      expect(res.text).toContain('favicon.svg');
     });
 
     it('GET /ui/settings renders general settings HTML', async () => {
