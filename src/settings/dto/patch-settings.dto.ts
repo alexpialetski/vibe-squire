@@ -9,5 +9,5 @@ export const PATCH_SETTINGS_SCHEMA = {
   additionalProperties: { type: 'string' },
   example: exampleCore,
   description:
-    'Key-value map of setting keys to string values for the partition path (`/core`, `/source`, or `/destination`). Source/destination kinds use SOURCE_TYPE / DESTINATION_TYPE env at boot.',
+    'Key-value map of setting keys to string values for the partition path (`/core`, `/source`, or `/destination`). Source/destination kinds use VIBE_SQUIRE_SOURCE_TYPE / VIBE_SQUIRE_DESTINATION_TYPE at boot.',
 } as const;

@@ -92,12 +92,12 @@ export const CORE_STORAGE_DEFAULTS: CoreStorageValues = coreStorageSchema.parse(
   {},
 );
 
-/** Option A: env var names per key (merged only in SettingsService.getEffective). */
+/** Full env var names for {@link SettingsService.getEffective} overrides. */
 export const CORE_SETTING_ENV = {
-  scheduled_sync_enabled: 'SCHEDULED_SYNC_ENABLED',
-  poll_interval_minutes: 'POLL_INTERVAL_MINUTES',
-  jitter_max_seconds: 'JITTER_MAX_SECONDS',
-  run_now_cooldown_seconds: 'RUN_NOW_COOLDOWN_SECONDS',
+  scheduled_sync_enabled: 'VIBE_SQUIRE_SCHEDULED_SYNC_ENABLED',
+  poll_interval_minutes: 'VIBE_SQUIRE_POLL_INTERVAL_MINUTES',
+  jitter_max_seconds: 'VIBE_SQUIRE_JITTER_MAX_SECONDS',
+  run_now_cooldown_seconds: 'VIBE_SQUIRE_RUN_NOW_COOLDOWN_SECONDS',
 } as const satisfies Partial<Record<keyof CoreStorageValues, string>>;
 
 export const CORE_STORAGE_KEYS = Object.keys(

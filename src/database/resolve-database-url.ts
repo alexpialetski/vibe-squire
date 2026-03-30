@@ -4,20 +4,24 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 /**
- * If `DATABASE_URL` is unset, derive SQLite `file:` URL from
- * `DATABASE_PATH`, then `VIBE_SQUIRE_DATA_DIR`, then OS defaults.
- * Creates parent directories. Mutates `process.env.DATABASE_URL`.
+ * If `VIBE_SQUIRE_DATABASE_URL` is unset, derive a `file:` URL from `VIBE_SQUIRE_DATABASE_PATH`,
+ * then `VIBE_SQUIRE_DATA_DIR`, then OS defaults.
+ * Creates parent directories. Sets `process.env.DATABASE_URL` and mirrors the same URL to
+ * `VIBE_SQUIRE_DATABASE_URL` when derived so {@link parseAppEnv} can read `process.env` directly.
  */
 export function ensureDatabaseUrlFromEnv(): void {
-  const existing = process.env.DATABASE_URL?.trim();
-  if (existing) {
+  const resolved = process.env.VIBE_SQUIRE_DATABASE_URL?.trim();
+  if (resolved) {
+    process.env.DATABASE_URL = resolved;
     return;
   }
 
-  const explicitFile = process.env.DATABASE_PATH?.trim();
+  const explicitFile = process.env.VIBE_SQUIRE_DATABASE_PATH?.trim();
   if (explicitFile) {
     mkdirSync(dirname(explicitFile), { recursive: true });
-    process.env.DATABASE_URL = pathToFileURL(explicitFile).href;
+    const url = pathToFileURL(explicitFile).href;
+    process.env.DATABASE_URL = url;
+    process.env.VIBE_SQUIRE_DATABASE_URL = url;
     return;
   }
 
@@ -25,7 +29,9 @@ export function ensureDatabaseUrlFromEnv(): void {
     process.env.VIBE_SQUIRE_DATA_DIR?.trim() || defaultDataDirectory();
   mkdirSync(dataDir, { recursive: true });
   const dbPath = join(dataDir, 'vibe-squire.db');
-  process.env.DATABASE_URL = pathToFileURL(dbPath).href;
+  const url = pathToFileURL(dbPath).href;
+  process.env.DATABASE_URL = url;
+  process.env.VIBE_SQUIRE_DATABASE_URL = url;
 }
 
 /**

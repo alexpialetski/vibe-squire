@@ -6,8 +6,9 @@ import { runSqliteMigrations } from '../src/database/sqlite-migrate';
 
 const intDir = mkdtempSync(join(tmpdir(), 'vs-int-'));
 const dbFile = join(intDir, 'integration.sqlite');
-process.env.DATABASE_URL = pathToFileURL(dbFile).href;
-process.env.RUN_NOW_COOLDOWN_SECONDS = '0';
-process.env.LOG_LEVEL = process.env.LOG_LEVEL ?? 'silent';
+process.env.VIBE_SQUIRE_DATABASE_URL = pathToFileURL(dbFile).href;
+process.env.VIBE_SQUIRE_RUN_NOW_COOLDOWN_SECONDS = '0';
+process.env.VIBE_SQUIRE_LOG_LEVEL =
+  process.env.VIBE_SQUIRE_LOG_LEVEL ?? 'silent';
 
 runSqliteMigrations(dbFile);

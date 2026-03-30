@@ -14,8 +14,8 @@
     <div class="card">
       <h2>Sync adapters</h2>
       <p class="muted">
-        PR source and work board are set at <strong>process start</strong> via environment variables
-        <code>SOURCE_TYPE</code> and <code>DESTINATION_TYPE</code> (defaults: <code>github</code> → <code>vibe_kanban</code>).
+        PR source and work board are set at <strong>process start</strong> via
+        <code>VIBE_SQUIRE_SOURCE_TYPE</code> and <code>VIBE_SQUIRE_DESTINATION_TYPE</code> (defaults: <code>github</code> → <code>vibe_kanban</code>).
         They are not stored in the database. Change env and restart to switch adapters.
       </p>
       <p class="muted"><strong>Resolved for this process:</strong> {{resolvedSourceLabel}} → {{resolvedDestinationLabel}}</p>
@@ -30,7 +30,7 @@
         <fieldset class="fieldset-plain">
           <legend class="field-label">Automatic polling</legend>
           <p class="muted" style="margin: 0 0 0.75rem 0">
-            When off, the scheduled timer does not run. Env: <code>SCHEDULED_SYNC_ENABLED</code>. Setting key: <code>scheduled_sync_enabled</code>
+            When off, the scheduled timer does not run. Env: <code>VIBE_SQUIRE_SCHEDULED_SYNC_ENABLED</code>. Setting key: <code>scheduled_sync_enabled</code>
           </p>
           <label class="check-row">
             <input

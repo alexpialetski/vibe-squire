@@ -13,9 +13,9 @@ export type AppEnv = {
   logLevel: LevelWithSilent;
   /** When set, JSON logs are also written to this path (in addition to console). */
   logFilePath: string | undefined;
-  /** PR / SCM adapter key (from `SOURCE_TYPE` + default). Invalid env fails at boot. */
+  /** PR / SCM adapter key (from `VIBE_SQUIRE_SOURCE_TYPE` + default). Invalid env fails at boot. */
   sourceType: SupportedSourceType;
-  /** Work-board adapter key (from `DESTINATION_TYPE` + default). Invalid env fails at boot. */
+  /** Work-board adapter key (from `VIBE_SQUIRE_DESTINATION_TYPE` + default). Invalid env fails at boot. */
   destinationType: SupportedDestinationType;
 };
 

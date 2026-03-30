@@ -160,12 +160,12 @@ export function uiNavLocals(integrationNavEntries: UiNavEntry[]): {
 
 export function githubNotSourceRedirectUrl(): string {
   return `/ui/settings?err=${encodeURIComponent(
-    'The GitHub page applies when SOURCE_TYPE is github (default). Change SOURCE_TYPE in the process environment and restart.',
+    'The GitHub page applies when the source type is github (default). Change VIBE_SQUIRE_SOURCE_TYPE in the process environment and restart.',
   )}`;
 }
 
 export function vibeKanbanNotDestinationRedirectUrl(): string {
   return `/ui/settings?err=${encodeURIComponent(
-    'The Vibe Kanban page applies when DESTINATION_TYPE is vibe_kanban (default). Change DESTINATION_TYPE in the process environment and restart.',
+    'The Vibe Kanban page applies when the destination type is vibe_kanban (default). Change VIBE_SQUIRE_DESTINATION_TYPE in the process environment and restart.',
   )}`;
 }

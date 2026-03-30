@@ -10,7 +10,7 @@ const REDACT = {
 };
 
 /**
- * File logging is enabled when `LOG_FILE_PATH` is set to a non-empty value (after trim).
+ * File logging is enabled when `VIBE_SQUIRE_LOG_FILE_PATH` is set to a non-empty value (after trim).
  */
 function resolveLogFilePath(env: Pick<AppEnv, 'logFilePath'>): string | null {
   const raw = env.logFilePath?.trim();
@@ -22,7 +22,7 @@ function resolveLogFilePath(env: Pick<AppEnv, 'logFilePath'>): string | null {
 
 /**
  * nestjs-pino / pino-http options. Kept out of AppModule to avoid clutter.
- * When `LOG_FILE_PATH` is set, also writes JSON lines to that file alongside the console.
+ * When `VIBE_SQUIRE_LOG_FILE_PATH` is set, also writes JSON lines to that file alongside the console.
  */
 export function createLoggerModuleParams(
   env: Pick<AppEnv, 'logLevel' | 'logFilePath' | 'nodeEnv'>,

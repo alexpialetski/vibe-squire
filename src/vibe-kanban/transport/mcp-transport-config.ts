@@ -7,7 +7,7 @@ export {
 
 /** Shared with {@link VibeKanbanMcpConfiguredGuard} and API consumers. */
 export const VK_MCP_NOT_CONFIGURED_MESSAGE =
-  'Vibe Kanban MCP routes require DESTINATION_TYPE=vibe_kanban';
+  'Vibe Kanban MCP routes require VIBE_SQUIRE_DESTINATION_TYPE=vibe_kanban';
 
 export function isVibeKanbanDestination(
   destinationType: SupportedDestinationType,

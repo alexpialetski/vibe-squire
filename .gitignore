@@ -58,7 +58,7 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 # Prisma generated client (restored by `npm install` → postinstall `prisma generate`)
 /src/generated/prisma
 
-# Local SQLite database (see DATABASE_URL in .env)
+# Local SQLite database (see VIBE_SQUIRE_DATABASE_URL in .env)
 *.db
 *.db-journal
 *.db-wal

@@ -79,7 +79,7 @@ export class VibeKanbanMcpService {
   async withClient<T>(fn: (client: Client) => Promise<T>): Promise<T> {
     if (!isVibeKanbanDestination(this.appEnv.destinationType)) {
       throw new Error(
-        'Vibe Kanban MCP: DESTINATION_TYPE must be vibe_kanban for this adapter',
+        'Vibe Kanban MCP: VIBE_SQUIRE_DESTINATION_TYPE must be vibe_kanban for this adapter',
       );
     }
     return this.stdioSession.runWithClient(fn);
