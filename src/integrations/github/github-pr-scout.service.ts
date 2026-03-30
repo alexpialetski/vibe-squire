@@ -31,7 +31,7 @@ function compareCandidatesOldestFirst(
 @Injectable()
 export class GithubPrScoutService implements GithubPrScoutPort {
   /**
-   * Open PRs requesting review from the authenticated `gh` user.
+   * Open, non-draft PRs requesting review from the authenticated `gh` user.
    * Uses `gh search prs` (no local git repo required); host comes from `gh` auth default.
    * Results are ordered oldest PR first (`createdAt` ascending) for stable board limits.
    */
@@ -43,6 +43,7 @@ export class GithubPrScoutService implements GithubPrScoutPort {
         'prs',
         '--review-requested=@me',
         '--state=open',
+        '--draft=false',
         '--json',
         'number,title,url,createdAt,repository,author',
         '--limit',
