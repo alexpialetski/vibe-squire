@@ -90,10 +90,12 @@ export class UiController {
     const values = this.settings.listEffectiveNonSecret();
     const ev = await this.setupEvaluation.evaluate();
     const scheduledSyncEnabled = this.coreSettings.scheduledSyncEnabled;
+    const autoCreateIssues = this.coreSettings.autoCreateIssues;
     return {
       ...uiNavLocals(this.uiNav.getEntries()),
       fields: schedulerTextFieldsForUi(values),
       scheduledSyncEnabled,
+      autoCreateIssues,
       saved: saved === '1',
       error: err ? decodeURIComponent(err) : null,
       resolvedSourceLabel: sourceTypeLabel(ev.sourceType),
