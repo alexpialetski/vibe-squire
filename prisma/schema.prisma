@@ -60,6 +60,8 @@ model PollRun {
   skippedBoardLimit       Int?
   skippedAlreadyTracked   Int?
   skippedLinkedExisting   Int?
+  skippedTriage           Int?
+  skippedDeclined         Int?
   items PollRunItem[]
 
   @@index([startedAt(sort: Desc)])
@@ -75,12 +77,19 @@ model PollRunItem {
   prNumber        Int
   prTitle         String
   authorLogin     String?
-  /// created | already_tracked | linked_existing | skipped_unmapped | skipped_bot | skipped_board_limit
+  /// created | already_tracked | linked_existing | skipped_unmapped | skipped_bot | skipped_board_limit | skipped_triage | skipped_declined
   decision        String
   detail          String?
   kanbanIssueId   String?
 
   @@index([runId])
+}
+
+/// PRs the operator explicitly declined in triage mode (suppressed until PR leaves scout results).
+model DeclinedPullRequest {
+  id         String   @id @default(cuid())
+  prUrl      String   @unique
+  declinedAt DateTime @default(now())
 }
 
 /// Tracks Kanban issues created for a GitHub PR (dedupe + reconciliation when PR leaves review queue).

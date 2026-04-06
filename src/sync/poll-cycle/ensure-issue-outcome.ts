@@ -4,4 +4,6 @@ export type EnsureIssueOutcome =
   | { kind: 'already_tracked'; kanbanIssueId: string }
   | { kind: 'linked_existing'; kanbanIssueId: string }
   | { kind: 'skipped_unmapped' }
-  | { kind: 'skipped_board_limit' };
+  | { kind: 'skipped_board_limit' }
+  | { kind: 'skipped_triage' }
+  | { kind: 'skipped_declined' };

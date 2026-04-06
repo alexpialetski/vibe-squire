@@ -83,6 +83,8 @@ describe('ui-presenter', () => {
         skippedBoardLimit: 0,
         skippedAlreadyTracked: 0,
         skippedLinkedExisting: 0,
+        skippedTriage: 0,
+        skippedDeclined: 0,
         items: [
           {
             id: 'item1',

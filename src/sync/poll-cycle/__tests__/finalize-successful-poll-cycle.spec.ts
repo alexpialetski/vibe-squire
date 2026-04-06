@@ -14,11 +14,13 @@ describe('formatPollSuccessLog', () => {
         skippedUnmapped: 0,
         skippedBot: 2,
         skippedBoardLimit: 0,
+        skippedTriage: 0,
+        skippedDeclined: 0,
       }),
-    ).toContain('skipped (bot)');
+    ).toContain('2 bot');
   });
 
-  it('uses short line when no unmapped/bot/board-limit skips', () => {
+  it('uses short line when no skips', () => {
     expect(
       formatPollSuccessLog('scheduled', {
         candidatesLength: 2,
@@ -26,8 +28,24 @@ describe('formatPollSuccessLog', () => {
         skippedUnmapped: 0,
         skippedBot: 0,
         skippedBoardLimit: 0,
+        skippedTriage: 0,
+        skippedDeclined: 0,
       }),
     ).toBe('Sync (scheduled): 2 PR(s), 2 created');
+  });
+
+  it('includes triage and declined counts', () => {
+    const msg = formatPollSuccessLog('manual', {
+      candidatesLength: 5,
+      created: 0,
+      skippedUnmapped: 0,
+      skippedBot: 0,
+      skippedBoardLimit: 0,
+      skippedTriage: 3,
+      skippedDeclined: 2,
+    });
+    expect(msg).toContain('3 pending triage');
+    expect(msg).toContain('2 declined');
   });
 });
 

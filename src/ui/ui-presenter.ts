@@ -35,6 +35,8 @@ export function presentActivityRunsForView(
   skippedBoardLimit: number | null;
   skippedAlreadyTracked: number | null;
   skippedLinkedExisting: number | null;
+  skippedTriage: number | null;
+  skippedDeclined: number | null;
   itemCount: number;
   items: Array<{
     prUrl: string;
@@ -65,6 +67,8 @@ export function presentActivityRunsForView(
     skippedBoardLimit: r.skippedBoardLimit,
     skippedAlreadyTracked: r.skippedAlreadyTracked,
     skippedLinkedExisting: r.skippedLinkedExisting,
+    skippedTriage: r.skippedTriage,
+    skippedDeclined: r.skippedDeclined,
     itemCount: r.items.length,
     items: r.items.map((i) => ({
       prUrl: i.prUrl,

@@ -45,10 +45,18 @@ export function formatPollSuccessLog(
     skippedUnmapped: number;
     skippedBot: number;
     skippedBoardLimit: number;
+    skippedTriage: number;
+    skippedDeclined: number;
   },
 ): string {
-  if (p.skippedUnmapped > 0 || p.skippedBot > 0 || p.skippedBoardLimit > 0) {
-    return `Sync (${trigger}): ${p.candidatesLength} PR(s), ${p.created} created, ${p.skippedUnmapped} skipped (unmapped), ${p.skippedBot} skipped (bot), ${p.skippedBoardLimit} skipped (board limit)`;
-  }
-  return `Sync (${trigger}): ${p.candidatesLength} PR(s), ${p.created} created`;
+  const parts: string[] = [
+    `${p.candidatesLength} PR(s)`,
+    `${p.created} created`,
+  ];
+  if (p.skippedUnmapped > 0) parts.push(`${p.skippedUnmapped} unmapped`);
+  if (p.skippedBot > 0) parts.push(`${p.skippedBot} bot`);
+  if (p.skippedBoardLimit > 0) parts.push(`${p.skippedBoardLimit} board limit`);
+  if (p.skippedTriage > 0) parts.push(`${p.skippedTriage} pending triage`);
+  if (p.skippedDeclined > 0) parts.push(`${p.skippedDeclined} declined`);
+  return `Sync (${trigger}): ${parts.join(', ')}`;
 }

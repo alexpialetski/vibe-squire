@@ -148,6 +148,7 @@ export class RunPollCycleService {
         logger: this.logger,
         runState: this.runState,
         destinationHealthId: this.appEnv.destinationType,
+        autoCreateIssues: this.coreSettings.autoCreateIssues,
       };
 
       const {
@@ -157,6 +158,8 @@ export class RunPollCycleService {
         skippedBoardLimit,
         skippedAlreadyTracked,
         skippedLinkedExisting,
+        skippedTriage,
+        skippedDeclined,
       } = await processPollCandidatesLoop({
         runId,
         candidates,
@@ -198,6 +201,8 @@ export class RunPollCycleService {
         skippedBoardLimit,
         skippedAlreadyTracked,
         skippedLinkedExisting,
+        skippedTriage,
+        skippedDeclined,
       });
 
       this.logger.log(
@@ -207,6 +212,8 @@ export class RunPollCycleService {
           skippedUnmapped,
           skippedBot,
           skippedBoardLimit,
+          skippedTriage,
+          skippedDeclined,
         }),
       );
     } catch (e) {

@@ -13,9 +13,60 @@
     return v == null ? '—' : String(v);
   }
 
+  var TRIAGEABLE_DECISIONS = {
+    skipped_triage: true,
+    skipped_board_limit: true,
+  };
+
+  function isTriageable(decision) {
+    return TRIAGEABLE_DECISIONS[decision] === true;
+  }
+
+  function triageSortKey(it) {
+    if (isTriageable(it.decision)) return 0;
+    if (it.decision === 'skipped_declined') return 1;
+    return 2;
+  }
+
+  function sortItemsForTriage(items) {
+    return items.slice().sort(function (a, b) {
+      var ka = triageSortKey(a);
+      var kb = triageSortKey(b);
+      if (ka !== kb) return ka - kb;
+      return (a.prNumber || 0) - (b.prNumber || 0);
+    });
+  }
+
+  function triageActionButtons(it) {
+    var url = esc(it.prUrl);
+    if (isTriageable(it.decision)) {
+      return (
+        '<div class="triage-actions" style="margin-top:0.3rem">' +
+        '<button class="btn btn-sm primary js-triage-accept" data-pr-url="' +
+        url +
+        '">Review</button> ' +
+        '<button class="btn btn-sm ghost js-triage-decline" data-pr-url="' +
+        url +
+        '">Decline</button>' +
+        '</div>'
+      );
+    }
+    if (it.decision === 'skipped_declined') {
+      return (
+        '<div class="triage-actions" style="margin-top:0.3rem">' +
+        '<button class="btn btn-sm ghost js-triage-reconsider" data-pr-url="' +
+        url +
+        '">Reconsider</button>' +
+        '</div>'
+      );
+    }
+    return '';
+  }
+
   function renderItemsTable(items) {
     if (!items || !items.length) return '';
-    var rows = items
+    var sorted = sortItemsForTriage(items);
+    var rows = sorted
       .map(function (it) {
         var detailParts = [];
         if (it.kanbanIssueId) {
@@ -35,8 +86,15 @@
           '<div class="muted" style="font-size:0.8rem">@' +
             esc(it.authorLogin) +
             '</div>';
+        var rowClass = isTriageable(it.decision)
+          ? ' class="triage-pending-row"'
+          : it.decision === 'skipped_declined'
+            ? ' class="triage-declined-row"'
+            : '';
         return (
-          '<tr>' +
+          '<tr' +
+          rowClass +
+          '>' +
           '<td class="mono">' +
           '<a href="' +
           esc(it.prUrl) +
@@ -53,6 +111,7 @@
           '</td>' +
           '<td>' +
           esc(it.decisionLabel) +
+          triageActionButtons(it) +
           '</td>' +
           '<td class="wrap muted">' +
           detail +
@@ -113,7 +172,14 @@
         fmtCount(r.skippedAlreadyTracked) +
         ' already tracked · ' +
         fmtCount(r.skippedLinkedExisting) +
-        ' linked existing</p>';
+        ' linked existing' +
+        (r.skippedTriage
+          ? ' · ' + fmtCount(r.skippedTriage) + ' pending triage'
+          : '') +
+        (r.skippedDeclined
+          ? ' · ' + fmtCount(r.skippedDeclined) + ' declined'
+          : '') +
+        '</p>';
     }
     if (r.phase === 'aborted') {
       summaryBody +=
@@ -214,6 +280,40 @@
       pollWanted = false;
     }
   }
+
+  function triageAction(endpoint, prUrl, btn) {
+    btn.disabled = true;
+    fetch('/api/pr/' + endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prUrl: prUrl }),
+    })
+      .then(function (res) {
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        void load();
+      })
+      .catch(function () {
+        btn.disabled = false;
+      });
+  }
+
+  root.addEventListener('click', function (e) {
+    var btn = e.target.closest('.js-triage-accept');
+    if (btn) {
+      triageAction('accept', btn.getAttribute('data-pr-url'), btn);
+      return;
+    }
+    btn = e.target.closest('.js-triage-decline');
+    if (btn) {
+      triageAction('decline', btn.getAttribute('data-pr-url'), btn);
+      return;
+    }
+    btn = e.target.closest('.js-triage-reconsider');
+    if (btn) {
+      triageAction('reconsider', btn.getAttribute('data-pr-url'), btn);
+      return;
+    }
+  });
 
   Ui.onStatusSnapshot(function () {
     void load();
