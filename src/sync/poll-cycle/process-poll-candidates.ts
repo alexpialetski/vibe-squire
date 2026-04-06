@@ -21,6 +21,8 @@ export type PollCandidatesLoopSummary = {
   skippedBoardLimit: number;
   skippedAlreadyTracked: number;
   skippedLinkedExisting: number;
+  skippedTriage: number;
+  skippedDeclined: number;
 };
 
 /**
@@ -46,6 +48,8 @@ export async function processPollCandidatesLoop(deps: {
   let skippedBoardLimit = 0;
   let skippedAlreadyTracked = 0;
   let skippedLinkedExisting = 0;
+  let skippedTriage = 0;
+  let skippedDeclined = 0;
 
   const { runId, boardLimit, activeVkIssueCount } = deps;
 
@@ -94,6 +98,16 @@ export async function processPollCandidatesLoop(deps: {
         kanbanIssueId: outcome.kanbanIssueId,
         detail: 'Matched existing Kanban issue; linked for tracking',
       });
+    } else if (outcome.kind === 'skipped_triage') {
+      skippedTriage += 1;
+      await deps.appendItem(runId, pr, POLL_RUN_ITEM_DECISION.skippedTriage, {
+        detail: 'Triage mode: awaiting review or decline',
+      });
+    } else if (outcome.kind === 'skipped_declined') {
+      skippedDeclined += 1;
+      await deps.appendItem(runId, pr, POLL_RUN_ITEM_DECISION.skippedDeclined, {
+        detail: 'Declined by operator',
+      });
     } else {
       outcome satisfies never;
     }
@@ -106,5 +120,7 @@ export async function processPollCandidatesLoop(deps: {
     skippedBoardLimit,
     skippedAlreadyTracked,
     skippedLinkedExisting,
+    skippedTriage,
+    skippedDeclined,
   };
 }

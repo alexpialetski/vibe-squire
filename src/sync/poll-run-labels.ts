@@ -7,6 +7,8 @@ const DECISION_LABELS: Record<string, string> = {
   [POLL_RUN_ITEM_DECISION.skippedUnmapped]: 'Skipped (unmapped)',
   [POLL_RUN_ITEM_DECISION.skippedBot]: 'Skipped (bot author)',
   [POLL_RUN_ITEM_DECISION.skippedBoardLimit]: 'Skipped (board limit)',
+  [POLL_RUN_ITEM_DECISION.skippedTriage]: 'Pending triage',
+  [POLL_RUN_ITEM_DECISION.skippedDeclined]: 'Declined',
 };
 
 const PHASE_LABELS: Record<string, string> = {

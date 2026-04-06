@@ -102,6 +102,8 @@ describe('processPollCandidatesLoop', () => {
       skippedBoardLimit: 0,
       skippedAlreadyTracked: 1,
       skippedLinkedExisting: 1,
+      skippedTriage: 0,
+      skippedDeclined: 0,
     });
     expect(appendItem).toHaveBeenCalledTimes(4);
   });

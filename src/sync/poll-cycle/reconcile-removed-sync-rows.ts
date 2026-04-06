@@ -5,7 +5,8 @@ import { isTerminalKanbanStatus } from './kanban-terminal-status';
 
 /**
  * PRs no longer in the scout list: mark Kanban issue done (if needed),
- * tear down the workspace + branches, and drop the sync row.
+ * tear down the workspace + branches, drop the sync row, and remove
+ * any declined-PR records for URLs that are no longer in the scout results.
  */
 export async function reconcileRemovedSyncRows(deps: {
   prisma: PrismaService;
@@ -51,5 +52,28 @@ export async function reconcileRemovedSyncRows(deps: {
     } catch {
       /* row may already be gone */
     }
+  }
+
+  await reconcileDeclinedPullRequests(deps.prisma, deps.urlsNow);
+}
+
+/**
+ * Declined PRs that are no longer returned by the scout (merged/closed/review removed)
+ * get cleaned up so they don't accumulate stale rows.
+ */
+async function reconcileDeclinedPullRequests(
+  prisma: PrismaService,
+  urlsNow: Set<string>,
+): Promise<void> {
+  const declined = await prisma.declinedPullRequest.findMany({
+    select: { id: true, prUrl: true },
+  });
+  const idsToRemove = declined
+    .filter((d) => !urlsNow.has(d.prUrl))
+    .map((d) => d.id);
+  if (idsToRemove.length > 0) {
+    await prisma.declinedPullRequest.deleteMany({
+      where: { id: { in: idsToRemove } },
+    });
   }
 }

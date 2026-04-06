@@ -28,6 +28,10 @@ export class CoreSettings {
     return this.getAll().scheduled_sync_enabled;
   }
 
+  get autoCreateIssues(): boolean {
+    return this.getAll().auto_create_issues;
+  }
+
   get pollIntervalMinutes(): number {
     return Math.max(
       MIN_POLL_INTERVAL_MINUTES,

@@ -7,6 +7,11 @@ type ReconcileBoardDeps = Pick<
   'getIssue' | 'updateIssueStatus' | 'deleteWorkspace'
 >;
 
+const declinedStub = {
+  findMany: jest.fn().mockResolvedValue([]),
+  deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
+};
+
 describe('reconcileRemovedSyncRows', () => {
   it('updates non-terminal issue and deletes row when PR URL not in current scout set', async () => {
     const row = {
@@ -23,6 +28,7 @@ describe('reconcileRemovedSyncRows', () => {
         findMany,
         delete: deleteMany,
       },
+      declinedPullRequest: declinedStub,
     } as unknown as PrismaService;
 
     const getIssue = jest
@@ -61,6 +67,7 @@ describe('reconcileRemovedSyncRows', () => {
         findMany: jest.fn().mockResolvedValue([row]),
         delete: deleteMany,
       },
+      declinedPullRequest: declinedStub,
     } as unknown as PrismaService;
 
     await reconcileRemovedSyncRows({
@@ -90,6 +97,7 @@ describe('reconcileRemovedSyncRows', () => {
         findMany: jest.fn().mockResolvedValue([row]),
         delete: jest.fn().mockResolvedValue(undefined),
       },
+      declinedPullRequest: declinedStub,
     } as unknown as PrismaService;
 
     const deleteWorkspace = jest.fn().mockResolvedValue(undefined);
@@ -125,6 +133,7 @@ describe('reconcileRemovedSyncRows', () => {
         findMany: jest.fn().mockResolvedValue([row]),
         delete: jest.fn().mockResolvedValue(undefined),
       },
+      declinedPullRequest: declinedStub,
     } as unknown as PrismaService;
 
     const deleteWorkspace = jest.fn();
@@ -159,6 +168,7 @@ describe('reconcileRemovedSyncRows', () => {
         findMany: jest.fn().mockResolvedValue([row]),
         delete: deleteFn,
       },
+      declinedPullRequest: declinedStub,
     } as unknown as PrismaService;
 
     const deleteWorkspace = jest

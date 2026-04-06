@@ -6,6 +6,8 @@ export const POLL_RUN_ITEM_DECISION = {
   skippedUnmapped: 'skipped_unmapped',
   skippedBot: 'skipped_bot',
   skippedBoardLimit: 'skipped_board_limit',
+  skippedTriage: 'skipped_triage',
+  skippedDeclined: 'skipped_declined',
 } as const;
 
 export type PollRunItemDecision =

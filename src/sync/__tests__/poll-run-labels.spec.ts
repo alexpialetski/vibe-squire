@@ -10,6 +10,8 @@ describe('poll-run-labels', () => {
       expect(pollDecisionLabel('created')).toBe('Created Kanban issue');
       expect(pollDecisionLabel('already_tracked')).toBe('Already tracked');
       expect(pollDecisionLabel('skipped_bot')).toBe('Skipped (bot author)');
+      expect(pollDecisionLabel('skipped_triage')).toBe('Pending triage');
+      expect(pollDecisionLabel('skipped_declined')).toBe('Declined');
     });
     it('passes through unknown codes', () => {
       expect(pollDecisionLabel('future_code')).toBe('future_code');

@@ -36,26 +36,29 @@ function digitStringField(
 }
 
 /** Canonical `'true' | 'false'` strings for DB / effective layer. */
-const scheduledSyncStorageField = z
-  .string()
-  .default('true')
-  .superRefine((val, ctx) => {
-    const r = z.stringbool().safeParse(val.trim());
-    if (!r.success) {
-      ctx.addIssue({
-        code: 'custom',
-        message: 'Use true, false, 1, 0, yes, or no',
-      });
-    }
-  })
-  .transform((val) => (z.stringbool().parse(val.trim()) ? 'true' : 'false'));
+function boolStorageField(defaultVal: 'true' | 'false') {
+  return z
+    .string()
+    .default(defaultVal)
+    .superRefine((val, ctx) => {
+      const r = z.stringbool().safeParse(val.trim());
+      if (!r.success) {
+        ctx.addIssue({
+          code: 'custom',
+          message: 'Use true, false, 1, 0, yes, or no',
+        });
+      }
+    })
+    .transform((val) => (z.stringbool().parse(val.trim()) ? 'true' : 'false'));
+}
 
 /**
  * Core settings as stored (string values only). Single source for validation + defaults.
  */
 export const coreStorageSchema = z
   .object({
-    scheduled_sync_enabled: scheduledSyncStorageField,
+    scheduled_sync_enabled: boolStorageField('true'),
+    auto_create_issues: boolStorageField('true'),
     poll_interval_minutes: digitStringField(
       MIN_POLL_INTERVAL_MINUTES,
       99_999,
@@ -95,6 +98,7 @@ export const CORE_STORAGE_DEFAULTS: CoreStorageValues = coreStorageSchema.parse(
 /** Full env var names for {@link SettingsService.getEffective} overrides. */
 export const CORE_SETTING_ENV = {
   scheduled_sync_enabled: 'VIBE_SQUIRE_SCHEDULED_SYNC_ENABLED',
+  auto_create_issues: 'VIBE_SQUIRE_AUTO_CREATE_ISSUES',
   poll_interval_minutes: 'VIBE_SQUIRE_POLL_INTERVAL_MINUTES',
   jitter_max_seconds: 'VIBE_SQUIRE_JITTER_MAX_SECONDS',
   run_now_cooldown_seconds: 'VIBE_SQUIRE_RUN_NOW_COOLDOWN_SECONDS',
@@ -109,6 +113,7 @@ export type CoreStorageKey = keyof CoreStorageValues;
 /** Typed core values for app code (numbers + boolean). */
 export const coreRuntimeSchema = z.object({
   scheduled_sync_enabled: z.stringbool(),
+  auto_create_issues: z.stringbool(),
   poll_interval_minutes: z.coerce.number().int().min(MIN_POLL_INTERVAL_MINUTES),
   jitter_max_seconds: z.coerce.number().int().min(0),
   run_now_cooldown_seconds: z.coerce.number().int().min(0),

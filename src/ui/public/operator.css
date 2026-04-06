@@ -704,3 +704,18 @@ textarea.input {
   margin-top: 0.2rem;
   max-width: 28rem;
 }
+
+/* Triage rows */
+.triage-pending-row {
+  background: rgba(61, 159, 122, 0.06);
+}
+
+.triage-declined-row {
+  opacity: 0.55;
+}
+
+.triage-actions {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}

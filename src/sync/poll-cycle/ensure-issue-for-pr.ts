@@ -28,6 +28,7 @@ export type EnsureIssueForPrDeps = {
   logger: Pick<Logger, 'debug' | 'warn' | 'log'>;
   runState: Pick<SyncRunStateService, 'setDestinationHealth'>;
   destinationHealthId: string;
+  autoCreateIssues: boolean;
 };
 
 export function buildPollIssueDescription(
@@ -177,6 +178,17 @@ export async function ensureIssueForPr(
       `Kanban issue ${existing.kanbanIssueId} missing for ${pr.url}; removed sync row (re-link or create follows same quota as other PRs)`,
     );
     await prisma.syncedPullRequest.delete({ where: { id: existing.id } });
+  }
+
+  const declined = await prisma.declinedPullRequest.findUnique({
+    where: { prUrl: pr.url },
+  });
+  if (declined) {
+    return { kind: 'skipped_declined' };
+  }
+
+  if (!deps.autoCreateIssues) {
+    return { kind: 'skipped_triage' };
   }
 
   let hitCandidates: BoardIssueRef[] = [];

@@ -56,6 +56,8 @@ export class PollRunHistoryService {
       skippedBoardLimit: number;
       skippedAlreadyTracked: number;
       skippedLinkedExisting: number;
+      skippedTriage: number;
+      skippedDeclined: number;
     },
   ): Promise<void> {
     const finishedAt = new Date();
@@ -71,6 +73,8 @@ export class PollRunHistoryService {
         skippedBoardLimit: summary.skippedBoardLimit,
         skippedAlreadyTracked: summary.skippedAlreadyTracked,
         skippedLinkedExisting: summary.skippedLinkedExisting,
+        skippedTriage: summary.skippedTriage,
+        skippedDeclined: summary.skippedDeclined,
       },
     });
     await this.pruneOldRuns(DEFAULT_RETAIN_RUNS);
