@@ -2,6 +2,7 @@ import type { SetupEvaluation } from '../setup/setup-evaluation.service';
 import type { PollRunHistoryService } from '../sync/poll-run-history.service';
 import type { UiNavEntry } from '../ports/ui-nav.types';
 import { pollDecisionLabel, pollPhaseLabel } from '../sync/poll-run-labels';
+import { POLL_RUN_ITEM_DECISION } from '../sync/poll-run-decisions';
 
 export type PollRunRowForActivity = Awaited<
   ReturnType<PollRunHistoryService['listRecentForUi']>
@@ -15,12 +16,58 @@ function formatActivityRunTime(d: Date): string {
   return d.toLocaleString();
 }
 
+const TRIAGE_DECISIONS = new Set<string>([
+  POLL_RUN_ITEM_DECISION.skippedTriage,
+  POLL_RUN_ITEM_DECISION.skippedBoardLimit,
+]);
+
+export type TriageLiveState = {
+  acceptedPrUrls: ReadonlySet<string>;
+  declinedPrUrls: ReadonlySet<string>;
+};
+
+const EMPTY_LIVE_STATE: TriageLiveState = {
+  acceptedPrUrls: new Set(),
+  declinedPrUrls: new Set(),
+};
+
+/**
+ * Resolve the effective decision for an item, cross-referencing live
+ * SyncedPullRequest / DeclinedPullRequest state so the Activity UI
+ * reflects triage actions that occurred after the poll run.
+ */
+function resolveEffectiveDecision(
+  decision: string,
+  prUrl: string,
+  live: TriageLiveState,
+): string {
+  if (!TRIAGE_DECISIONS.has(decision)) return decision;
+  if (live.acceptedPrUrls.has(prUrl))
+    return POLL_RUN_ITEM_DECISION.linkedExisting;
+  if (live.declinedPrUrls.has(prUrl))
+    return POLL_RUN_ITEM_DECISION.skippedDeclined;
+  return decision;
+}
+
+export type ActivityItem = {
+  prUrl: string;
+  githubRepo: string;
+  prNumber: number;
+  prTitle: string;
+  authorLogin: string | null;
+  decision: string;
+  effectiveDecision: string;
+  decisionLabel: string;
+  detail: string | null;
+  kanbanIssueId: string | null;
+};
+
 export function presentActivityRunsForView(
   rows: PollRunRowForActivity[],
+  live: TriageLiveState = EMPTY_LIVE_STATE,
 ): Array<{
   id: string;
   startedAt: string;
-  /** Locale-formatted start time for HTML / JSON consumers */
   startedAtLabel: string;
   finishedAt: string | null;
   trigger: string;
@@ -38,17 +85,7 @@ export function presentActivityRunsForView(
   skippedTriage: number | null;
   skippedDeclined: number | null;
   itemCount: number;
-  items: Array<{
-    prUrl: string;
-    githubRepo: string;
-    prNumber: number;
-    prTitle: string;
-    authorLogin: string | null;
-    decision: string;
-    decisionLabel: string;
-    detail: string | null;
-    kanbanIssueId: string | null;
-  }>;
+  items: ActivityItem[];
 }> {
   return rows.map((r) => ({
     id: r.id,
@@ -70,17 +107,21 @@ export function presentActivityRunsForView(
     skippedTriage: r.skippedTriage,
     skippedDeclined: r.skippedDeclined,
     itemCount: r.items.length,
-    items: r.items.map((i) => ({
-      prUrl: i.prUrl,
-      githubRepo: i.githubRepo,
-      prNumber: i.prNumber,
-      prTitle: i.prTitle,
-      authorLogin: i.authorLogin,
-      decision: i.decision,
-      decisionLabel: pollDecisionLabel(i.decision),
-      detail: i.detail,
-      kanbanIssueId: i.kanbanIssueId,
-    })),
+    items: r.items.map((i) => {
+      const eff = resolveEffectiveDecision(i.decision, i.prUrl, live);
+      return {
+        prUrl: i.prUrl,
+        githubRepo: i.githubRepo,
+        prNumber: i.prNumber,
+        prTitle: i.prTitle,
+        authorLogin: i.authorLogin,
+        decision: i.decision,
+        effectiveDecision: eff,
+        decisionLabel: pollDecisionLabel(eff),
+        detail: i.detail,
+        kanbanIssueId: i.kanbanIssueId,
+      };
+    }),
   }));
 }
 

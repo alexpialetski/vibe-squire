@@ -1,5 +1,6 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { PrismaService } from '../prisma/prisma.service';
 import { PollRunHistoryService } from '../sync/poll-run-history.service';
 import { presentActivityRunsForView } from './ui-presenter';
 
@@ -9,7 +10,10 @@ const MAX_LIMIT = 100;
 @ApiTags('activity')
 @Controller('api/activity')
 export class ActivityApiController {
-  constructor(private readonly pollRunHistory: PollRunHistoryService) {}
+  constructor(
+    private readonly pollRunHistory: PollRunHistoryService,
+    private readonly prisma: PrismaService,
+  ) {}
 
   @Get('runs')
   @ApiOperation({
@@ -28,6 +32,34 @@ export class ActivityApiController {
       }
     }
     const rows = await this.pollRunHistory.listRecentForUi(limit);
-    return { runs: presentActivityRunsForView(rows) };
+
+    const allPrUrls = new Set(rows.flatMap((r) => r.items.map((i) => i.prUrl)));
+    const [syncedRows, declinedRows] = await Promise.all([
+      allPrUrls.size > 0
+        ? this.prisma.syncedPullRequest.findMany({
+            where: { prUrl: { in: [...allPrUrls] } },
+            select: { prUrl: true },
+          })
+        : [],
+      allPrUrls.size > 0
+        ? this.prisma.declinedPullRequest.findMany({
+            where: { prUrl: { in: [...allPrUrls] } },
+            select: { prUrl: true },
+          })
+        : [],
+    ]);
+    const acceptedPrUrls = new Set(
+      syncedRows.map((r: { prUrl: string }) => r.prUrl),
+    );
+    const declinedPrUrls = new Set(
+      declinedRows.map((r: { prUrl: string }) => r.prUrl),
+    );
+
+    return {
+      runs: presentActivityRunsForView(rows, {
+        acceptedPrUrls,
+        declinedPrUrls,
+      }),
+    };
   }
 }

@@ -66,17 +66,18 @@ describe('ui-presenter', () => {
   });
 
   describe('presentActivityRunsForView', () => {
-    it('adds phaseLabel and decisionLabel', () => {
-      const startedAt = new Date('2025-01-01T12:00:00.000Z');
-      const row = {
+    function makeRow(
+      items: PollRunRowForActivity['items'],
+    ): PollRunRowForActivity {
+      return {
         id: 'run1',
-        startedAt,
-        finishedAt: startedAt,
+        startedAt: new Date('2025-01-01T12:00:00.000Z'),
+        finishedAt: new Date('2025-01-01T12:00:00.000Z'),
         trigger: 'manual',
         phase: 'completed',
         abortReason: null,
         errorMessage: null,
-        candidatesCount: 1,
+        candidatesCount: items.length,
         issuesCreated: 0,
         skippedUnmapped: 0,
         skippedBot: 0,
@@ -85,26 +86,89 @@ describe('ui-presenter', () => {
         skippedLinkedExisting: 0,
         skippedTriage: 0,
         skippedDeclined: 0,
-        items: [
-          {
-            id: 'item1',
-            runId: 'run1',
-            prUrl: 'https://github.com/o/r/pull/1',
-            githubRepo: 'o/r',
-            prNumber: 1,
-            prTitle: 'T',
-            authorLogin: null,
-            decision: 'created',
-            detail: null,
-            kanbanIssueId: 'k1',
-          },
-        ],
-      } satisfies PollRunRowForActivity;
+        items,
+      };
+    }
+
+    function makeItem(
+      overrides: Partial<PollRunRowForActivity['items'][number]> = {},
+    ): PollRunRowForActivity['items'][number] {
+      return {
+        id: 'item1',
+        runId: 'run1',
+        prUrl: 'https://github.com/o/r/pull/1',
+        githubRepo: 'o/r',
+        prNumber: 1,
+        prTitle: 'T',
+        authorLogin: null,
+        decision: 'created',
+        detail: null,
+        kanbanIssueId: 'k1',
+        ...overrides,
+      };
+    }
+
+    it('adds phaseLabel and decisionLabel', () => {
+      const row = makeRow([makeItem()]);
       const [out] = presentActivityRunsForView([row]);
       expect(out.phaseLabel).toBe('Completed');
       expect(out.phase).toBe('completed');
       expect(out.items[0]?.decisionLabel).toBe('Created Kanban issue');
       expect(out.items[0]?.decision).toBe('created');
+      expect(out.items[0]?.effectiveDecision).toBe('created');
+    });
+
+    it('overrides triage item to linked_existing when PR is in acceptedPrUrls', () => {
+      const prUrl = 'https://github.com/o/r/pull/42';
+      const row = makeRow([
+        makeItem({ prUrl, decision: 'skipped_triage', kanbanIssueId: null }),
+      ]);
+      const [out] = presentActivityRunsForView([row], {
+        acceptedPrUrls: new Set([prUrl]),
+        declinedPrUrls: new Set(),
+      });
+      expect(out.items[0]?.decision).toBe('skipped_triage');
+      expect(out.items[0]?.effectiveDecision).toBe('linked_existing');
+      expect(out.items[0]?.decisionLabel).toBe('Linked existing issue');
+    });
+
+    it('overrides triage item to skipped_declined when PR is in declinedPrUrls', () => {
+      const prUrl = 'https://github.com/o/r/pull/42';
+      const row = makeRow([
+        makeItem({ prUrl, decision: 'skipped_triage', kanbanIssueId: null }),
+      ]);
+      const [out] = presentActivityRunsForView([row], {
+        acceptedPrUrls: new Set(),
+        declinedPrUrls: new Set([prUrl]),
+      });
+      expect(out.items[0]?.effectiveDecision).toBe('skipped_declined');
+      expect(out.items[0]?.decisionLabel).toBe('Declined');
+    });
+
+    it('does not override non-triage decisions', () => {
+      const prUrl = 'https://github.com/o/r/pull/42';
+      const row = makeRow([makeItem({ prUrl, decision: 'created' })]);
+      const [out] = presentActivityRunsForView([row], {
+        acceptedPrUrls: new Set([prUrl]),
+        declinedPrUrls: new Set(),
+      });
+      expect(out.items[0]?.effectiveDecision).toBe('created');
+    });
+
+    it('also overrides skipped_board_limit when accepted', () => {
+      const prUrl = 'https://github.com/o/r/pull/42';
+      const row = makeRow([
+        makeItem({
+          prUrl,
+          decision: 'skipped_board_limit',
+          kanbanIssueId: null,
+        }),
+      ]);
+      const [out] = presentActivityRunsForView([row], {
+        acceptedPrUrls: new Set([prUrl]),
+        declinedPrUrls: new Set(),
+      });
+      expect(out.items[0]?.effectiveDecision).toBe('linked_existing');
     });
   });
 
