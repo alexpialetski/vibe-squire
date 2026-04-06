@@ -18,13 +18,79 @@
     skipped_board_limit: true,
   };
 
+  var OPTIMISTIC_KEY = 'vs_triage_optimistic';
+
+  function loadOptimistic() {
+    try {
+      return JSON.parse(localStorage.getItem(OPTIMISTIC_KEY) || '{}');
+    } catch {
+      return {};
+    }
+  }
+
+  function saveOptimistic(map) {
+    try {
+      localStorage.setItem(OPTIMISTIC_KEY, JSON.stringify(map));
+    } catch {
+      /* quota exceeded — ignore */
+    }
+  }
+
+  function markOptimistic(prUrl, action) {
+    var map = loadOptimistic();
+    map[prUrl] = action;
+    saveOptimistic(map);
+  }
+
+  function clearOptimistic(prUrl) {
+    var map = loadOptimistic();
+    delete map[prUrl];
+    saveOptimistic(map);
+  }
+
+  function applyOptimistic(items) {
+    var map = loadOptimistic();
+    var dirty = false;
+    for (var i = 0; i < items.length; i++) {
+      var it = items[i];
+      var opt = map[it.prUrl];
+      if (!opt) continue;
+      var eff = it.effectiveDecision || it.decision;
+      if (opt === 'accept' && !isTriageable(eff)) {
+        delete map[it.prUrl];
+        dirty = true;
+      } else if (opt === 'decline' && eff === 'skipped_declined') {
+        delete map[it.prUrl];
+        dirty = true;
+      } else if (opt === 'reconsider' && isTriageable(eff)) {
+        delete map[it.prUrl];
+        dirty = true;
+      } else if (opt === 'accept') {
+        it.effectiveDecision = 'linked_existing';
+        it.decisionLabel = 'Accepted (pending refresh)';
+      } else if (opt === 'decline') {
+        it.effectiveDecision = 'skipped_declined';
+        it.decisionLabel = 'Declined (pending refresh)';
+      } else if (opt === 'reconsider') {
+        it.effectiveDecision = 'skipped_triage';
+        it.decisionLabel = 'Pending triage';
+      }
+    }
+    if (dirty) saveOptimistic(map);
+  }
+
   function isTriageable(decision) {
     return TRIAGEABLE_DECISIONS[decision] === true;
   }
 
+  function effectiveOf(it) {
+    return it.effectiveDecision || it.decision;
+  }
+
   function triageSortKey(it) {
-    if (isTriageable(it.decision)) return 0;
-    if (it.decision === 'skipped_declined') return 1;
+    var eff = effectiveOf(it);
+    if (isTriageable(eff)) return 0;
+    if (eff === 'skipped_declined') return 1;
     return 2;
   }
 
@@ -39,7 +105,8 @@
 
   function triageActionButtons(it) {
     var url = esc(it.prUrl);
-    if (isTriageable(it.decision)) {
+    var eff = effectiveOf(it);
+    if (isTriageable(eff)) {
       return (
         '<div class="triage-actions" style="margin-top:0.3rem">' +
         '<button class="btn btn-sm primary js-triage-accept" data-pr-url="' +
@@ -51,7 +118,7 @@
         '</div>'
       );
     }
-    if (it.decision === 'skipped_declined') {
+    if (eff === 'skipped_declined') {
       return (
         '<div class="triage-actions" style="margin-top:0.3rem">' +
         '<button class="btn btn-sm ghost js-triage-reconsider" data-pr-url="' +
@@ -65,6 +132,7 @@
 
   function renderItemsTable(items) {
     if (!items || !items.length) return '';
+    applyOptimistic(items);
     var sorted = sortItemsForTriage(items);
     var rows = sorted
       .map(function (it) {
@@ -86,9 +154,10 @@
           '<div class="muted" style="font-size:0.8rem">@' +
             esc(it.authorLogin) +
             '</div>';
-        var rowClass = isTriageable(it.decision)
+        var eff = effectiveOf(it);
+        var rowClass = isTriageable(eff)
           ? ' class="triage-pending-row"'
-          : it.decision === 'skipped_declined'
+          : eff === 'skipped_declined'
             ? ' class="triage-declined-row"'
             : '';
         return (
@@ -283,6 +352,8 @@
 
   function triageAction(endpoint, prUrl, btn) {
     btn.disabled = true;
+    markOptimistic(prUrl, endpoint);
+    void load();
     fetch('/api/pr/' + endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -293,7 +364,8 @@
         void load();
       })
       .catch(function () {
-        btn.disabled = false;
+        clearOptimistic(prUrl);
+        void load();
       });
   }
 
