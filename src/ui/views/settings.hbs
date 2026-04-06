@@ -8,7 +8,7 @@
       <div class="banner banner-error">{{error}}</div>
     {{/if}}
     {{#if saved}}
-      <div class="banner banner-ok">Poll schedule saved. Scheduler refreshed if the interval changed.</div>
+      <div class="banner banner-ok">Settings saved. Scheduler refreshed if the interval changed.</div>
     {{/if}}
 
     <div class="card">
@@ -51,6 +51,30 @@
             <span>Off — timer disabled only</span>
           </label>
         </fieldset>
+        <fieldset class="fieldset-plain" style="margin-top: 1rem">
+          <legend class="field-label">Kanban issue creation</legend>
+          <p class="muted" style="margin: 0 0 0.75rem 0">
+            When off, matching PRs stay in triage until you create an issue from the operator UI. Env: <code>VIBE_SQUIRE_AUTO_CREATE_ISSUES</code>. Setting key: <code>auto_create_issues</code>
+          </p>
+          <label class="check-row">
+            <input
+              type="radio"
+              name="auto_create_issues"
+              value="true"
+              {{#if autoCreateIssues}}checked{{/if}}
+            />
+            <span>On — create board issues during sync when caps allow</span>
+          </label>
+          <label class="check-row">
+            <input
+              type="radio"
+              name="auto_create_issues"
+              value="false"
+              {{#unless autoCreateIssues}}checked{{/unless}}
+            />
+            <span>Off — triage only (no automatic issue creation)</span>
+          </label>
+        </fieldset>
         <div class="form-grid" style="margin-top: 1rem">
           {{#each fields}}
             <label class="field">
@@ -61,7 +85,7 @@
           {{/each}}
         </div>
         <div class="actions-row">
-          <button type="submit" class="btn primary">Save schedule</button>
+          <button type="submit" class="btn primary">Save settings</button>
         </div>
       </form>
     </div>

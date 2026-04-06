@@ -107,6 +107,8 @@ describe('App HTTP smoke (integration)', () => {
       expect(res.text).toContain('General');
       expect(res.text).toContain('Sync adapters');
       expect(res.text).toContain('Resolved for this process');
+      expect(res.text).toContain('Kanban issue creation');
+      expect(res.text).toContain('name="auto_create_issues"');
     });
 
     it('GET /ui/activity renders activity HTML', async () => {

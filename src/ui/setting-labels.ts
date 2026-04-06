@@ -3,6 +3,8 @@ import { SCHEDULER_TEXT_FIELD_KEYS } from './integration-ui-registry';
 export const SETTING_LABELS: Record<string, string> = {
   scheduled_sync_enabled:
     'Automatic polling — timer runs on the interval below. Manual Sync now always works. Override: VIBE_SQUIRE_SCHEDULED_SYNC_ENABLED',
+  auto_create_issues:
+    'Create Kanban issues automatically for matching PRs. When off, PRs appear in triage only until you promote them. Override: VIBE_SQUIRE_AUTO_CREATE_ISSUES',
   poll_interval_minutes:
     'Poll interval (minutes, min 5; manual Sync now ignores)',
   jitter_max_seconds: 'Jitter max (seconds)',
@@ -22,7 +24,7 @@ export const SETTING_LABELS: Record<string, string> = {
 };
 
 /**
- * General `/ui/settings` poll form: text fields only (`scheduled_sync_enabled` is a radio group in the template).
+ * General `/ui/settings` poll form: text fields only (booleans use radio groups in the template).
  */
 export function schedulerTextFieldsForUi(
   values: Record<string, string>,

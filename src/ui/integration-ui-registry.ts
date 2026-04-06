@@ -3,6 +3,7 @@ import { VIBE_KANBAN_UI_KEYS } from '../integrations/vibe-kanban/vk-settings.sch
 /** Poll / scheduler fields on `/ui/settings` (general). */
 export const SCHEDULER_UI_KEYS: readonly string[] = [
   'scheduled_sync_enabled',
+  'auto_create_issues',
   'poll_interval_minutes',
   'jitter_max_seconds',
   'run_now_cooldown_seconds',
