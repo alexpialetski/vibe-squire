@@ -16,6 +16,7 @@ const lastPollSchema = z.looseObject({
 
 export const statusSnapshotSchema = z.object({
   timestamp: z.string(),
+  pending_triage_count: z.number().int().nonnegative().optional(),
   gh: z.looseObject({
     state: ghState,
     message: z.string().optional(),

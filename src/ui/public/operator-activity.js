@@ -134,6 +134,9 @@
     if (!items || !items.length) return '';
     applyOptimistic(items);
     var sorted = sortItemsForTriage(items);
+    var hasTriageable = sorted.some(function (it) {
+      return isTriageable(effectiveOf(it));
+    });
     var rows = sorted
       .map(function (it) {
         var detailParts = [];
@@ -190,10 +193,16 @@
       })
       .join('');
     return (
-      '<details class="activity-details">' +
+      '<details class="activity-details"' +
+      (hasTriageable ? ' open' : '') +
+      '>' +
       '<summary class="activity-details-summary">PR details (' +
       items.length +
-      ')</summary>' +
+      ')' +
+      (hasTriageable
+        ? ' · <span class="triage-attention-hint">needs attention</span>'
+        : '') +
+      '</summary>' +
       '<div class="table-wrap activity-items-wrap">' +
       '<table class="data-table activity-items-table">' +
       '<thead><tr><th>PR</th><th>Repo</th><th>Outcome</th><th>Detail</th></tr></thead>' +
@@ -278,6 +287,37 @@
     );
   }
 
+  function countUniqueTriageable(runs) {
+    var seen = {};
+    var count = 0;
+    for (var r = 0; r < runs.length; r++) {
+      var items = runs[r].items || [];
+      for (var i = 0; i < items.length; i++) {
+        var eff = items[i].effectiveDecision || items[i].decision;
+        if (isTriageable(eff) && !seen[items[i].prUrl]) {
+          seen[items[i].prUrl] = true;
+          count++;
+        }
+      }
+    }
+    return count;
+  }
+
+  function renderTriageBanner(runs) {
+    applyOptimistic((runs[0] && runs[0].items) || []);
+    var count = countUniqueTriageable(runs);
+    if (count === 0) return '';
+    return (
+      '<div class="banner banner-triage-attention">' +
+      '<strong>' +
+      count +
+      ' PR' +
+      (count === 1 ? '' : 's') +
+      '</strong> awaiting your review or decline decision.' +
+      '</div>'
+    );
+  }
+
   function renderRuns(runs) {
     if (!runs || !runs.length) {
       return (
@@ -286,7 +326,7 @@
         '</div>'
       );
     }
-    return runs.map(renderRun).join('');
+    return renderTriageBanner(runs) + runs.map(renderRun).join('');
   }
 
   var pollTimer = null;
