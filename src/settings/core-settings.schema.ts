@@ -58,7 +58,7 @@ function boolStorageField(defaultVal: 'true' | 'false') {
 export const coreStorageSchema = z
   .object({
     scheduled_sync_enabled: boolStorageField('true'),
-    auto_create_issues: boolStorageField('true'),
+    auto_create_issues: boolStorageField('false'),
     poll_interval_minutes: digitStringField(
       MIN_POLL_INTERVAL_MINUTES,
       99_999,

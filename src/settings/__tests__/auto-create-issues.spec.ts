@@ -5,10 +5,10 @@ import {
 } from '../core-settings.schema';
 
 describe('auto_create_issues (core setting)', () => {
-  it('defaults to true', () => {
-    expect(CORE_STORAGE_DEFAULTS.auto_create_issues).toBe('true');
+  it('defaults to false (triage: no automatic board issues)', () => {
+    expect(CORE_STORAGE_DEFAULTS.auto_create_issues).toBe('false');
     const runtime = coreRuntimeSchema.parse(CORE_STORAGE_DEFAULTS);
-    expect(runtime.auto_create_issues).toBe(true);
+    expect(runtime.auto_create_issues).toBe(false);
   });
 
   it('accepts boolean strings and normalizes to true/false', () => {
