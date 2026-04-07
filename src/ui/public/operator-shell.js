@@ -52,6 +52,45 @@
     });
   }
 
+  /* ── Favicon notification dot ── */
+
+  var faviconLink = document.querySelector('link[rel="icon"]');
+  var baseFaviconImg = null;
+  var faviconCanvas = null;
+  var faviconReady = false;
+  var lastFaviconHasDot = false;
+
+  (function initFavicon() {
+    if (!faviconLink) return;
+    var img = new Image();
+    img.onload = function () {
+      baseFaviconImg = img;
+      faviconCanvas = document.createElement('canvas');
+      faviconCanvas.width = 32;
+      faviconCanvas.height = 32;
+      faviconReady = true;
+    };
+    img.src = '/ui/assets/favicon.svg';
+  })();
+
+  function setFaviconDot(show) {
+    if (!faviconReady || show === lastFaviconHasDot) return;
+    lastFaviconHasDot = show;
+    var ctx = faviconCanvas.getContext('2d');
+    ctx.clearRect(0, 0, 32, 32);
+    ctx.drawImage(baseFaviconImg, 0, 0, 32, 32);
+    if (show) {
+      ctx.beginPath();
+      ctx.arc(25, 7, 6, 0, 2 * Math.PI);
+      ctx.fillStyle = '#c9a227';
+      ctx.fill();
+      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = '#121815';
+      ctx.stroke();
+    }
+    faviconLink.href = faviconCanvas.toDataURL('image/png');
+  }
+
   /* ── Snapshot dispatch ── */
 
   function publishSnapshot(snap) {
@@ -67,6 +106,7 @@
         : 0;
     updateTriageBadge(triageCount);
     maybeNotifyTriage(triageCount);
+    setFaviconDot(triageCount > 0);
     g.dispatchEvent(new CustomEvent(SSE_EVENT, { detail: snap }));
   }
 

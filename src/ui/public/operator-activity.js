@@ -130,13 +130,16 @@
     return '';
   }
 
-  function renderItemsTable(items) {
+  function renderItemsTable(items, opts) {
     if (!items || !items.length) return '';
+    var highlight = opts && opts.highlight;
     applyOptimistic(items);
     var sorted = sortItemsForTriage(items);
-    var hasTriageable = sorted.some(function (it) {
-      return isTriageable(effectiveOf(it));
-    });
+    var hasTriageable =
+      highlight &&
+      sorted.some(function (it) {
+        return isTriageable(effectiveOf(it));
+      });
     var rows = sorted
       .map(function (it) {
         var detailParts = [];
@@ -212,7 +215,8 @@
     );
   }
 
-  function renderRun(r) {
+  function renderRun(r, opts) {
+    var highlight = opts && opts.highlight;
     var meta =
       '<div class="activity-run-meta">' +
       '<span class="activity-run-time mono">' +
@@ -274,7 +278,9 @@
         '</p>';
     }
 
-    var details = r.itemCount ? renderItemsTable(r.items) : '';
+    var details = r.itemCount
+      ? renderItemsTable(r.items, { highlight: highlight })
+      : '';
 
     return (
       '<div class="card activity-run">' +
@@ -287,25 +293,32 @@
     );
   }
 
-  function countUniqueTriageable(runs) {
+  function findLatestCompletedRun(runs) {
+    for (var i = 0; i < runs.length; i++) {
+      if (runs[i].phase === 'completed') return runs[i];
+    }
+    return null;
+  }
+
+  function countTriageableInRun(run) {
+    if (!run) return 0;
+    var items = run.items || [];
     var seen = {};
     var count = 0;
-    for (var r = 0; r < runs.length; r++) {
-      var items = runs[r].items || [];
-      for (var i = 0; i < items.length; i++) {
-        var eff = items[i].effectiveDecision || items[i].decision;
-        if (isTriageable(eff) && !seen[items[i].prUrl]) {
-          seen[items[i].prUrl] = true;
-          count++;
-        }
+    for (var i = 0; i < items.length; i++) {
+      var eff = items[i].effectiveDecision || items[i].decision;
+      if (isTriageable(eff) && !seen[items[i].prUrl]) {
+        seen[items[i].prUrl] = true;
+        count++;
       }
     }
     return count;
   }
 
-  function renderTriageBanner(runs) {
-    applyOptimistic((runs[0] && runs[0].items) || []);
-    var count = countUniqueTriageable(runs);
+  function renderTriageBanner(latestRun) {
+    if (!latestRun) return '';
+    applyOptimistic(latestRun.items || []);
+    var count = countTriageableInRun(latestRun);
     if (count === 0) return '';
     return (
       '<div class="banner banner-triage-attention">' +
@@ -326,7 +339,16 @@
         '</div>'
       );
     }
-    return renderTriageBanner(runs) + runs.map(renderRun).join('');
+    var latestCompleted = findLatestCompletedRun(runs);
+    var latestId = latestCompleted && latestCompleted.id;
+    return (
+      renderTriageBanner(latestCompleted) +
+      runs
+        .map(function (r) {
+          return renderRun(r, { highlight: r.id === latestId });
+        })
+        .join('')
+    );
   }
 
   var pollTimer = null;
