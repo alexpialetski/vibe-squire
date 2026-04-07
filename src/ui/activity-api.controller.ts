@@ -2,6 +2,7 @@ import { Controller, Get, Query } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { PrismaService } from '../prisma/prisma.service';
 import { PollRunHistoryService } from '../sync/poll-run-history.service';
+import { fetchTriageLiveState } from '../sync/triage-live-state.queries';
 import { presentActivityRunsForView } from './ui-presenter';
 
 const DEFAULT_LIMIT = 40;
@@ -32,34 +33,11 @@ export class ActivityApiController {
       }
     }
     const rows = await this.pollRunHistory.listRecentForUi(limit);
-
     const allPrUrls = new Set(rows.flatMap((r) => r.items.map((i) => i.prUrl)));
-    const [syncedRows, declinedRows] = await Promise.all([
-      allPrUrls.size > 0
-        ? this.prisma.syncedPullRequest.findMany({
-            where: { prUrl: { in: [...allPrUrls] } },
-            select: { prUrl: true },
-          })
-        : [],
-      allPrUrls.size > 0
-        ? this.prisma.declinedPullRequest.findMany({
-            where: { prUrl: { in: [...allPrUrls] } },
-            select: { prUrl: true },
-          })
-        : [],
-    ]);
-    const acceptedPrUrls = new Set(
-      syncedRows.map((r: { prUrl: string }) => r.prUrl),
-    );
-    const declinedPrUrls = new Set(
-      declinedRows.map((r: { prUrl: string }) => r.prUrl),
-    );
+    const live = await fetchTriageLiveState(this.prisma, allPrUrls);
 
     return {
-      runs: presentActivityRunsForView(rows, {
-        acceptedPrUrls,
-        declinedPrUrls,
-      }),
+      runs: presentActivityRunsForView(rows, live),
     };
   }
 }

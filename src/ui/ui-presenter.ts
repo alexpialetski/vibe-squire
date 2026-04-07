@@ -3,6 +3,9 @@ import type { PollRunHistoryService } from '../sync/poll-run-history.service';
 import type { UiNavEntry } from '../ports/ui-nav.types';
 import { pollDecisionLabel, pollPhaseLabel } from '../sync/poll-run-labels';
 import { POLL_RUN_ITEM_DECISION } from '../sync/poll-run-decisions';
+import type { TriageLiveState } from '../sync/triage-live-state.queries';
+
+export type { TriageLiveState } from '../sync/triage-live-state.queries';
 
 export type PollRunRowForActivity = Awaited<
   ReturnType<PollRunHistoryService['listRecentForUi']>
@@ -20,11 +23,6 @@ const TRIAGE_DECISIONS = new Set<string>([
   POLL_RUN_ITEM_DECISION.skippedTriage,
   POLL_RUN_ITEM_DECISION.skippedBoardLimit,
 ]);
-
-export type TriageLiveState = {
-  acceptedPrUrls: ReadonlySet<string>;
-  declinedPrUrls: ReadonlySet<string>;
-};
 
 const EMPTY_LIVE_STATE: TriageLiveState = {
   acceptedPrUrls: new Set(),

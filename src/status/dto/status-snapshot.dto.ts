@@ -71,6 +71,12 @@ export class StatusSnapshotDto {
   @ApiProperty()
   timestamp!: string;
 
+  @ApiProperty({
+    description:
+      'Number of distinct PRs pending triage (awaiting review/decline) from the latest poll run',
+  })
+  pending_triage_count!: number;
+
   @ApiProperty({ type: StatusGhDto })
   gh!: StatusGhDto;
 
