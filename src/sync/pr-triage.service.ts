@@ -15,6 +15,7 @@ import type { DestinationBoardPort } from '../ports/destination-board.port';
 import type { SourceStatusProvider } from '../ports/source-status.port';
 import type { GithubPrCandidate } from '../ports/github-pr-candidate';
 import { SyncRunStateService } from './sync-run-state.service';
+import { StatusEventsService } from '../events/status-events.service';
 import { APP_ENV, type AppEnv } from '../config/app-env.token';
 import { ensureIssueForPr } from './poll-cycle/ensure-issue-for-pr';
 import { POLL_RUN_ITEM_DECISION } from './poll-run-decisions';
@@ -31,6 +32,7 @@ export class PrTriageService {
     @Inject(SOURCE_STATUS_PORT)
     private readonly sourceStatus: SourceStatusProvider,
     private readonly runState: SyncRunStateService,
+    private readonly statusEvents: StatusEventsService,
     @Inject(APP_ENV) private readonly appEnv: AppEnv,
   ) {}
 
@@ -58,9 +60,11 @@ export class PrTriageService {
     );
 
     if (outcome.kind === 'created' || outcome.kind === 'linked_existing') {
+      this.statusEvents.emitChanged();
       return { kanbanIssueId: outcome.kanbanIssueId };
     }
     if (outcome.kind === 'already_tracked') {
+      this.statusEvents.emitChanged();
       return { kanbanIssueId: outcome.kanbanIssueId };
     }
     if (outcome.kind === 'skipped_unmapped') {
@@ -95,6 +99,7 @@ export class PrTriageService {
       create: { prUrl },
       update: { declinedAt: new Date() },
     });
+    this.statusEvents.emitChanged();
   }
 
   async reconsider(prUrl: string): Promise<void> {
@@ -107,6 +112,7 @@ export class PrTriageService {
         HttpStatus.NOT_FOUND,
       );
     }
+    this.statusEvents.emitChanged();
   }
 
   /**
