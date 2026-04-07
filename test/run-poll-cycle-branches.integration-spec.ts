@@ -59,6 +59,7 @@ async function seedCompleteRouting(
           'default_project_id',
           'scheduled_sync_enabled',
           'max_board_pr_count',
+          'auto_create_issues',
         ],
       },
     },
@@ -74,6 +75,7 @@ async function seedCompleteRouting(
       { key: 'default_organization_id', value: 'org-default-1' },
       { key: 'default_project_id', value: 'project-uuid-1' },
       { key: 'scheduled_sync_enabled', value: 'false' },
+      { key: 'auto_create_issues', value: 'true' },
     ],
   });
   await settings.refreshCache();

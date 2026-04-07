@@ -89,6 +89,7 @@ describe('Sync reconciliation (integration)', () => {
       data: [
         { key: 'default_organization_id', value: 'org-default-1' },
         { key: 'default_project_id', value: 'project-uuid-1' },
+        { key: 'auto_create_issues', value: 'true' },
       ],
     });
     await app.get(SettingsService).refreshCache();
