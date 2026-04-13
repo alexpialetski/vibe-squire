@@ -1,6 +1,6 @@
 /**
  * Generic work-board surface for sync (`RunPollCycleService`, `poll-cycle/*`).
- * VK-specific listing APIs for the operator UI stay on {@link VibeKanbanMcpService}.
+ * VK-specific listing APIs for the operator UI stay on {@link VibeKanbanBoardService}.
  *
  * Sync also needs issue search / fetch; those are included here (orchestration), not in the
  * minimal sketch in docs/ARCHITECTURE.md.

@@ -1,6 +1,6 @@
 # vibe-squire
 
-Local background orchestrator that polls **GitHub** for PRs requesting your review and syncs them as issues into **[Vibe Kanban](https://vibekanban.com)** over MCP (Model Context Protocol).
+Local background orchestrator that polls **GitHub** for PRs requesting your review and syncs them as issues into **[Vibe Kanban](https://vibekanban.com)** over its **local HTTP API** (same backend the desktop app exposes).
 
 Built with [NestJS](https://nestjs.com), [Prisma](https://www.prisma.io) + SQLite, and a hexagonal architecture that keeps source/destination adapters pluggable.
 
@@ -9,19 +9,19 @@ Built with [NestJS](https://nestjs.com), [Prisma](https://www.prisma.io) + SQLit
 ```mermaid
 graph LR
     GH["GitHub (PRs)"] -- "gh pr list<br/>review-requested:@me" --> VS["vibe-squire<br/>(localhost)"]
-    VS -- "MCP stdio<br/>create / update issue" --> VK["Vibe Kanban<br/>(board)"]
+    VS -- "local HTTP API<br/>create / update issue" --> VK["Vibe Kanban<br/>(board)"]
     VS -- "state" --> DB["SQLite"]
 ```
 
 1. **Scout** — polls GitHub via `gh pr list --search "review-requested:@me"` on a configurable interval.
-2. **Dispatcher** — routes each PR to a Kanban project based on `owner/repo` mappings, deduplicates, and creates/updates issues via the Vibe Kanban MCP server.
+2. **Dispatcher** — routes each PR to a Kanban project based on `owner/repo` mappings, deduplicates, and creates/updates issues via the Vibe Kanban local API.
 3. **Reconciliation** — when a PR leaves your review queue, the matching Kanban issue is closed automatically.
 
 ## Prerequisites
 
 - **Node.js** >= 20 (LTS)
 - **[`gh`](https://cli.github.com/)** — installed and authenticated (`gh auth login`)
-- **[Vibe Kanban](https://vibekanban.com)** — the MCP server is spawned automatically as a stdio subprocess (`npx vibe-kanban@latest --mcp`)
+- **[Vibe Kanban](https://vibekanban.com)** — run the desktop app on the same machine so the local HTTP API (and OAuth session) are available to vibe-squire
 
 ## Quick start
 
@@ -99,11 +99,11 @@ Server-rendered Handlebars templates served by the same Nest process — no sepa
 | `GET` | `/api/status` | Aggregate health, setup, and scheduler snapshot |
 | `GET` | `/api/status/stream` | SSE status stream (heartbeat + events) |
 | `POST` | `/api/sync/run` | Trigger manual sync (cooldown + guards) |
-| `POST` | `/api/reinit` | Soft reinit: re-probe `gh`, DB, MCP; reset backoff |
+| `POST` | `/api/reinit` | Soft reinit: re-probe `gh`, DB, Vibe Kanban API; reset backoff |
 | `CRUD` | `/api/settings` | Runtime settings |
 | `CRUD` | `/api/mappings` | Repo → project mappings |
-| `GET` | `/api/vibe-kanban/organizations` | MCP `list_organizations` |
-| `GET` | `/api/vibe-kanban/projects?organization_id=` | MCP `list_projects` |
+| `GET` | `/api/vibe-kanban/organizations` | Proxies VK `GET /api/organizations` |
+| `GET` | `/api/vibe-kanban/projects?organization_id=` | Proxies VK `GET /api/remote/projects` |
 
 OpenAPI docs (when enabled): **http://127.0.0.1:3000/api/docs**
 
@@ -155,7 +155,7 @@ npm run start:dev              # dev mode with watch (loads .env automatically)
 ### Testing
 
 - **Unit tests** — `src/**/__tests__/**/*.spec.ts`. Pure logic, Zod schemas, helpers.
-- **Integration tests** — `test/*.integration-spec.ts`. Real Prisma + SQLite, Nest module wiring, Supertest HTTP. External boundaries (GitHub `gh`, Vibe Kanban MCP) are stubbed.
+- **Integration tests** — `test/*.integration-spec.ts`. Real Prisma + SQLite, Nest module wiring, Supertest HTTP. External boundaries (GitHub `gh`, Vibe Kanban HTTP client) are stubbed.
 
 ```bash
 npm test && npm run test:integration

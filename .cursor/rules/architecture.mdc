@@ -64,12 +64,11 @@ The poll cycle in `src/sync/poll-cycle/` follows this sequence:
 
 Both scheduled and manual ("Sync now") runs execute the same pipeline. After a manual run, the next scheduled tick resets to `now + interval + jitter`.
 
-## Vibe Kanban MCP
+## Vibe Kanban HTTP API
 
-- Spawned as a **stdio subprocess** (`npx -y vibe-kanban@latest --mcp`).
-- Uses `@modelcontextprotocol/sdk` with stdio transport — not HTTP, not raw REST.
-- Session is lazy-initialized and serialized (one concurrent MCP call).
-- Tool reference: [vibekanban.com/docs](https://vibekanban.com/docs).
+- Uses `fetch` against the local Vibe Kanban backend URL (`resolveVkBackendBaseUrl`).
+- OAuth-backed routes (e.g. organizations) return **401** until the user signs in inside Vibe Kanban on the same machine.
+- Product reference: [vibekanban.com/docs](https://vibekanban.com/docs).
 
 ## Database
 

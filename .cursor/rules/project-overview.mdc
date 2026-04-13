@@ -5,14 +5,14 @@ alwaysApply: true
 
 # Project overview
 
-**vibe-squire** is a local background orchestrator that polls GitHub for PRs requesting your review and syncs them as Kanban issues into Vibe Kanban via MCP (Model Context Protocol).
+**vibe-squire** is a local background orchestrator that polls GitHub for PRs requesting your review and syncs them as Kanban issues into Vibe Kanban via its **local HTTP API**.
 
 ## Tech stack
 
 - **Runtime:** Node.js >= 20 (LTS)
 - **Framework:** NestJS 11 (modules, DI, lifecycle hooks, schedulers, HTTP/SSE)
 - **Database:** SQLite via Prisma (with `@prisma/adapter-better-sqlite3`)
-- **MCP client:** `@modelcontextprotocol/sdk` — stdio transport to `npx vibe-kanban@latest --mcp`
+- **Vibe Kanban:** `fetch` to the desktop app's local HTTP API (`src/vibe-kanban/rest/`)
 - **GitHub:** `gh` CLI via `child_process`
 - **Validation:** Zod (env/schemas), class-validator (DTOs)
 - **UI:** Server-rendered Handlebars templates (no SPA framework)
@@ -30,7 +30,7 @@ src/
 ├── ports/             — Port interfaces and DI tokens (hexagonal boundary)
 ├── integrations/
 │   ├── github/        — gh CLI scout, PR search schema, GitHub settings
-│   └── vibe-kanban/   — MCP stdio adapter, board adapter, VK settings
+│   └── vibe-kanban/   — HTTP board adapter, VK settings
 ├── sync/              — Poll scheduler, dispatcher, reconciliation, poll-cycle
 ├── settings/          — SettingsService, key-value CRUD, effective precedence
 ├── mappings/          — Repo → project mapping CRUD
@@ -62,5 +62,5 @@ bin/                   — CLI entry point (vibe-squire.js)
 - `AppModule.forRoot(env)` is the only valid way to boot the module graph. Never use bare `AppModule`.
 - Integration adapters are registered dynamically by `IntegrationsModule.register(env)` based on `VIBE_SQUIRE_SOURCE_TYPE` / `VIBE_SQUIRE_DESTINATION_TYPE`.
 - Settings follow env > SQLite > code-default precedence (`SettingsService.resolveEffectiveSetting`).
-- The sync pipeline is guarded: setup must be complete, `gh` authenticated, and MCP reachable before polls run.
+- The sync pipeline is guarded: setup must be complete, `gh` authenticated, and the Vibe Kanban API probe must succeed before polls run.
 - SSE pushes status snapshots on material state changes (poll start/end, settings change, reinit).

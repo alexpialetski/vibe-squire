@@ -36,7 +36,7 @@
           repoSel.appendChild(opt);
         }
         if (!repos.length) {
-          setMkErr('No repositories returned from MCP.');
+          setMkErr('No repositories returned from Vibe Kanban.');
         }
       } catch (e) {
         setMkErr(e instanceof Error ? e.message : String(e));

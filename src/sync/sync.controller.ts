@@ -31,7 +31,7 @@ export class SyncController {
   @ApiResponse({
     status: 409,
     description:
-      'Minimum setup not complete (PR source, destination, MCP URL, routing as required)',
+      'Minimum setup not complete (PR source, destination, Kanban API reachability, routing as required)',
   })
   @ApiResponse({
     status: 503,

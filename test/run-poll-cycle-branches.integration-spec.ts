@@ -5,7 +5,7 @@ import { App } from 'supertest/types';
 import { testingAppModule } from './testing-app-module';
 import { GhCliService } from '../src/integrations/github/gh-cli.service';
 import { GithubPrScoutService } from '../src/integrations/github/github-pr-scout.service';
-import { VibeKanbanMcpService } from '../src/vibe-kanban/vibe-kanban-mcp.service';
+import { VibeKanbanBoardService } from '../src/vibe-kanban/vibe-kanban-board.service';
 import { PrismaService } from '../src/prisma/prisma.service';
 import { SettingsService } from '../src/settings/settings.service';
 import { RunPollCycleService } from '../src/sync/run-poll-cycle.service';
@@ -106,7 +106,7 @@ describe('RunPollCycleService branches (integration)', () => {
         .useValue({
           listReviewRequestedForMe,
         })
-        .overrideProvider(VibeKanbanMcpService)
+        .overrideProvider(VibeKanbanBoardService)
         .useValue(vkStub)
         .compile();
 
@@ -207,7 +207,7 @@ describe('RunPollCycleService branches (integration)', () => {
       );
     });
 
-    it('execute() fails run when MCP probe throws', async () => {
+    it('execute() fails run when Vibe Kanban probe throws', async () => {
       vkStub.probe.mockRejectedValue(new Error('probe failed'));
 
       await runPoll.execute('manual');
@@ -216,7 +216,7 @@ describe('RunPollCycleService branches (integration)', () => {
         orderBy: { startedAt: 'desc' },
       });
       expect(run?.phase).toBe(POLL_RUN_PHASE.failed);
-      expect(run?.errorMessage).toContain('mcp_probe: probe failed');
+      expect(run?.errorMessage).toContain('destination_probe: probe failed');
     });
   });
 
@@ -242,7 +242,7 @@ describe('RunPollCycleService branches (integration)', () => {
         .useValue({
           listReviewRequestedForMe: () => [humanPr],
         })
-        .overrideProvider(VibeKanbanMcpService)
+        .overrideProvider(VibeKanbanBoardService)
         .useValue(vkStub)
         .compile();
 

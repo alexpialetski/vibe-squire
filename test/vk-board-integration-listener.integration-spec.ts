@@ -3,8 +3,7 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import { testingAppModule } from './testing-app-module';
-import { VibeKanbanMcpService } from '../src/vibe-kanban/vibe-kanban-mcp.service';
-import { VkMcpStdioSessionService } from '../src/vibe-kanban/transport/vk-mcp-stdio-session.service';
+import { VibeKanbanBoardService } from '../src/vibe-kanban/vibe-kanban-board.service';
 import { PrismaService } from '../src/prisma/prisma.service';
 import { SettingsService } from '../src/settings/settings.service';
 import { SyncRunStateService } from '../src/sync/sync-run-state.service';
@@ -26,29 +25,23 @@ function buildVkStub() {
 }
 
 /**
- * VK MCP integration listener + IntegrationSettingsEmitter path.
+ * Vibe Kanban destination listener + IntegrationSettingsEmitter path.
  */
-describe('VkMcpIntegrationListener (integration)', () => {
+describe('VkBoardIntegrationListener (integration)', () => {
   let app: INestApplication<App>;
   let prisma: PrismaService;
   let settings: SettingsService;
   let runState: SyncRunStateService;
   let vkStub: ReturnType<typeof buildVkStub>;
-  let stdioShutdown: jest.Mock;
 
   beforeAll(async () => {
     vkStub = buildVkStub();
-    stdioShutdown = jest.fn().mockResolvedValue(undefined);
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [testingAppModule()],
     })
-      .overrideProvider(VibeKanbanMcpService)
+      .overrideProvider(VibeKanbanBoardService)
       .useValue(vkStub)
-      .overrideProvider(VkMcpStdioSessionService)
-      .useValue({
-        shutdown: stdioShutdown,
-      })
       .compile();
 
     app = moduleFixture.createNestApplication();
@@ -87,14 +80,12 @@ describe('VkMcpIntegrationListener (integration)', () => {
   beforeEach(() => {
     vkStub.probe.mockClear();
     vkStub.probe.mockResolvedValue(undefined);
-    stdioShutdown.mockClear();
-    stdioShutdown.mockResolvedValue(undefined);
   });
 
-  it('PATCH destination rejects unknown vk_mcp_stdio_json key', async () => {
+  it('PATCH destination rejects unknown keys (strict schema)', async () => {
     await request(app.getHttpServer())
       .patch('/api/settings/destination')
-      .send({ vk_mcp_stdio_json: '[]' })
+      .send({ not_a_valid_destination_setting: 'x' })
       .expect(400);
   });
 

@@ -12,19 +12,19 @@ import {
   ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
-import { VibeKanbanMcpConfiguredGuard } from './vibe-kanban-mcp-configured.guard';
-import { VibeKanbanMcpService } from './vibe-kanban-mcp.service';
+import { VibeKanbanDestinationConfiguredGuard } from './vibe-kanban-destination-configured.guard';
+import { VibeKanbanBoardService } from './vibe-kanban-board.service';
 import { listProjectsQuerySchema } from './vibe-kanban-query.schema';
 
 @ApiTags('vibe-kanban')
 @Controller('api/vibe-kanban')
-@UseGuards(VibeKanbanMcpConfiguredGuard)
+@UseGuards(VibeKanbanDestinationConfiguredGuard)
 export class VibeKanbanContextController {
-  constructor(private readonly vk: VibeKanbanMcpService) {}
+  constructor(private readonly vk: VibeKanbanBoardService) {}
 
-  /** MCP `list_organizations` for setup UI. */
+  /** Vibe Kanban `GET /api/organizations` for setup UI. */
   @Get('organizations')
-  @ApiOperation({ summary: 'List organizations via MCP (setup helper)' })
+  @ApiOperation({ summary: 'List organizations (Vibe Kanban local API)' })
   @ApiOkResponse({
     schema: {
       type: 'object',
@@ -36,15 +36,17 @@ export class VibeKanbanContextController {
       },
     },
   })
-  @ApiBadRequestResponse({ description: 'Vibe Kanban MCP not configured' })
+  @ApiBadRequestResponse({ description: 'Vibe Kanban destination not active' })
   async organizations() {
     const organizations = await this.vk.listOrganizations();
     return { organizations };
   }
 
-  /** MCP `list_projects` (requires `organization_id`). */
+  /** `GET /api/remote/projects` (requires `organization_id`). */
   @Get('projects')
-  @ApiOperation({ summary: 'List projects for an organization via MCP' })
+  @ApiOperation({
+    summary: 'List projects for an organization (Vibe Kanban local API)',
+  })
   @ApiQuery({ name: 'organization_id', required: true })
   @ApiOkResponse({
     schema: {
@@ -55,7 +57,8 @@ export class VibeKanbanContextController {
     },
   })
   @ApiBadRequestResponse({
-    description: 'Missing organization_id or Vibe Kanban MCP not configured',
+    description:
+      'Missing organization_id or Vibe Kanban destination not active',
   })
   async projects(@Query() query: Record<string, unknown>) {
     const q = listProjectsQuerySchema.safeParse(query);
@@ -68,9 +71,9 @@ export class VibeKanbanContextController {
     return { projects };
   }
 
-  /** MCP `list_repos` for mappings UI. */
+  /** `GET /api/repos` for mappings UI. */
   @Get('repos')
-  @ApiOperation({ summary: 'List Vibe Kanban repositories via MCP' })
+  @ApiOperation({ summary: 'List Vibe Kanban repositories (local API)' })
   @ApiOkResponse({
     schema: {
       type: 'object',
@@ -79,7 +82,7 @@ export class VibeKanbanContextController {
       },
     },
   })
-  @ApiBadRequestResponse({ description: 'Vibe Kanban MCP not configured' })
+  @ApiBadRequestResponse({ description: 'Vibe Kanban destination not active' })
   async repos() {
     const repos = await this.vk.listRepos();
     return { repos };

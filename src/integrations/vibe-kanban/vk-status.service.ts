@@ -3,9 +3,9 @@ import { APP_ENV, type AppEnv } from '../../config/app-env.token';
 import { PrismaService } from '../../prisma/prisma.service';
 import { SettingsService } from '../../settings/settings.service';
 import {
+  isVibeKanbanBoardDestination,
   isVibeKanbanDestination,
-  isVibeKanbanMcpConfigured,
-} from '../../vibe-kanban/transport/mcp-transport-config';
+} from '../../vibe-kanban/vibe-kanban-destination';
 import type {
   DestinationReadinessResult,
   DestinationStatusProvider,
@@ -26,7 +26,9 @@ export class VkStatusService implements DestinationStatusProvider {
 
   async checkReadiness(): Promise<DestinationReadinessResult> {
     const configuration: Record<string, unknown> = {
-      vk_mcp_configured: isVibeKanbanMcpConfigured(this.appEnv.destinationType),
+      vibe_kanban_board_active: isVibeKanbanBoardDestination(
+        this.appEnv.destinationType,
+      ),
     };
 
     if (!isVibeKanbanDestination(this.appEnv.destinationType)) {
@@ -38,7 +40,7 @@ export class VkStatusService implements DestinationStatusProvider {
     const defaultOrganizationId = this.settings.getEffective(
       'default_organization_id',
     );
-    const destinationMcpConfigured = isVibeKanbanMcpConfigured(
+    const vibeKanbanBoardActive = isVibeKanbanBoardDestination(
       this.appEnv.destinationType,
     );
 
@@ -47,7 +49,7 @@ export class VkStatusService implements DestinationStatusProvider {
       defaultProjectId.trim().length > 0;
 
     const hasRouting = defaultBoardReady && mappingCount > 0;
-    const setupComplete = hasRouting && destinationMcpConfigured;
+    const setupComplete = hasRouting && vibeKanbanBoardActive;
 
     const errors: IntegrationError[] = [];
     if (!defaultBoardReady) {
@@ -75,7 +77,7 @@ export class VkStatusService implements DestinationStatusProvider {
       ...(errors.length > 0 ? { errors } : {}),
       configuration,
       setupMeta: {
-        destinationMcpConfigured,
+        vibeKanbanBoardActive,
         hasRouting,
         mappingCount,
       },

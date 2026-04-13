@@ -64,8 +64,4 @@ describe('partition patchSchema (destination / vk)', () => {
     const r = schema.safeParse({ poll_interval_minutes: '5' });
     expect(r.success).toBe(false);
   });
-
-  it('rejects removed vk_mcp_stdio_json key', () => {
-    expect(schema.safeParse({ vk_mcp_stdio_json: '[]' }).success).toBe(false);
-  });
 });

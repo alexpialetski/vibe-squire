@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { VibeKanbanMcpService } from '../../vibe-kanban/vibe-kanban-mcp.service';
+import { VibeKanbanBoardService } from '../../vibe-kanban/vibe-kanban-board.service';
 import type {
   BoardIssueRef,
   DestinationBoardPort,
@@ -22,7 +22,7 @@ function toBoardIssue(row: {
 
 @Injectable()
 export class VkBoardAdapterService implements DestinationBoardPort {
-  constructor(private readonly vk: VibeKanbanMcpService) {}
+  constructor(private readonly vk: VibeKanbanBoardService) {}
 
   probe(): Promise<void> {
     return this.vk.probe();

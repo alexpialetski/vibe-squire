@@ -55,7 +55,7 @@ describe('runPollPrerequisites', () => {
     });
   });
 
-  it('returns probe_failed and calls onMcpProbeFailed when probe throws', async () => {
+  it('returns probe_failed and calls onDestinationProbeFailed when probe throws', async () => {
     const onOk = jest.fn();
     const onFail = jest.fn();
     const r = await runPollPrerequisites(
@@ -70,7 +70,7 @@ describe('runPollPrerequisites', () => {
     expect(onFail).toHaveBeenCalledWith('boom');
   });
 
-  it('returns ok and calls onMcpHealthy when probe succeeds', async () => {
+  it('returns ok and calls onDestinationHealthy when probe succeeds', async () => {
     const onOk = jest.fn();
     const onFail = jest.fn();
     const r = await runPollPrerequisites(

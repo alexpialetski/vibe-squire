@@ -1,8 +1,8 @@
 import type { SupportedDestinationType } from '../config/integration-types';
 import type { SettingsService } from '../settings/settings.service';
 import type { SetupEvaluationService } from '../setup/setup-evaluation.service';
-import type { VibeKanbanMcpService } from '../vibe-kanban/vibe-kanban-mcp.service';
-import { isVibeKanbanMcpConfigured } from '../vibe-kanban/transport/mcp-transport-config';
+import type { VibeKanbanBoardService } from '../vibe-kanban/vibe-kanban-board.service';
+import { isVibeKanbanBoardDestination } from '../vibe-kanban/vibe-kanban-destination';
 import {
   normalizeVkWorkspaceExecutor,
   VK_WORKSPACE_EXECUTOR_OPTIONS,
@@ -11,18 +11,18 @@ import type { UiNavEntry } from '../ports/ui-nav.types';
 import { SETTING_LABELS } from './setting-labels';
 import { uiNavLocals } from './ui-presenter';
 
-export const VK_PAGE_ORG_ERROR_NO_MCP =
-  'Vibe Kanban MCP is not available (this UI requires VIBE_SQUIRE_DESTINATION_TYPE=vibe_kanban).';
+export const VK_PAGE_ORG_ERROR_WRONG_DESTINATION =
+  'Vibe Kanban is not available (this UI requires VIBE_SQUIRE_DESTINATION_TYPE=vibe_kanban).';
 
 /**
  * Template locals for `/ui/vibe-kanban` (board picker, executor, labels).
- * Async only for MCP list calls and setup evaluation.
+ * Async only for Vibe Kanban API list calls and setup evaluation.
  */
 export async function buildVibeKanbanPageLocals(deps: {
   settings: SettingsService;
   destinationType: SupportedDestinationType;
   setupEvaluation: Pick<SetupEvaluationService, 'evaluate'>;
-  vk: Pick<VibeKanbanMcpService, 'listOrganizations' | 'listProjects'>;
+  vk: Pick<VibeKanbanBoardService, 'listOrganizations' | 'listProjects'>;
   uiNavEntries: UiNavEntry[];
   saved?: string;
   err?: string;
@@ -38,8 +38,8 @@ export async function buildVibeKanbanPageLocals(deps: {
   } = deps;
   const values = settings.listEffectiveNonSecret();
   await setupEvaluation.evaluate();
-  const mcpBoardPicker = isVibeKanbanMcpConfigured(destinationType);
-  const orgError = !mcpBoardPicker ? VK_PAGE_ORG_ERROR_NO_MCP : null;
+  const vkBoardPicker = isVibeKanbanBoardDestination(destinationType);
+  const orgError = !vkBoardPicker ? VK_PAGE_ORG_ERROR_WRONG_DESTINATION : null;
   const boardOrg = settings.getEffective('default_organization_id');
   const boardProj = settings.getEffective('default_project_id');
 
@@ -47,7 +47,7 @@ export async function buildVibeKanbanPageLocals(deps: {
   let vkBoardProjects: { id: string; name?: string }[] = [];
   let vkBoardListError: string | null = null;
 
-  if (mcpBoardPicker) {
+  if (vkBoardPicker) {
     try {
       vkBoardOrganizations = await vk.listOrganizations();
     } catch (e) {
@@ -66,7 +66,7 @@ export async function buildVibeKanbanPageLocals(deps: {
   }
 
   const hasVkProjectPick =
-    mcpBoardPicker &&
+    vkBoardPicker &&
     boardOrg.trim().length > 0 &&
     vkBoardOrganizations.some((o) => o.id === boardOrg.trim());
   const vkBoardProjectsEmpty = hasVkProjectPick && vkBoardProjects.length === 0;
@@ -80,7 +80,7 @@ export async function buildVibeKanbanPageLocals(deps: {
     ...uiNavLocals(uiNavEntries),
     saved: saved === '1',
     error: err ? decodeURIComponent(err) : null,
-    mcpBoardPicker,
+    vkBoardPicker,
     boardOrg,
     boardProj,
     kanbanDoneStatus: values.kanban_done_status ?? '',

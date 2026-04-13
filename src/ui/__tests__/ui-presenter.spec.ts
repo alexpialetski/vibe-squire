@@ -18,7 +18,7 @@ function baseEv(over: Partial<SetupEvaluation> = {}): SetupEvaluation {
     mappingCount: 0,
     sourceType: '',
     destinationType: '',
-    destinationMcpConfigured: false,
+    vibeKanbanBoardActive: false,
     hasRouting: false,
     ...over,
   };
@@ -57,7 +57,7 @@ describe('ui-presenter', () => {
       const rows = buildSetupChecklist(
         baseEv({
           destinationType: 'vibe_kanban',
-          destinationMcpConfigured: true,
+          vibeKanbanBoardActive: true,
           reason: 'no_mappings',
         }),
       );

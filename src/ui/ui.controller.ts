@@ -133,7 +133,7 @@ export class UiController {
       ...uiNavLocals(this.uiNav.getEntries()),
       rows,
       error: err ? decodeURIComponent(err) : null,
-      kanbanMcpPicker: ev.destinationMcpConfigured,
+      kanbanBoardPicker: ev.vibeKanbanBoardActive,
     };
   }
 

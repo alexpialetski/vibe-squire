@@ -39,7 +39,7 @@
     const m = {
       ok: 'Reachable.',
       degraded: 'Degraded — some calls may fail.',
-      error: 'Error — check MCP stdio command and server.',
+      error: 'Error — check Vibe Kanban is running and signed in on this machine.',
       unknown: 'Not probed yet.',
     };
     return m[d.state] || String(d.state);
@@ -110,7 +110,7 @@
           'Mappings: ' + String(setup.mappingCount ?? 0),
         ]
       : [
-          'Finish MCP and routing (see checklist on dashboard).',
+          'Finish board settings and routing (see checklist on dashboard).',
           setupReasonHuman(setup.reason),
         ];
     parts.push(card('Setup', setupDot, setupLines));
@@ -120,7 +120,7 @@
     if (dest.state === 'ok') destDot = 'status-ok';
     else if (dest.state === 'degraded') destDot = 'status-warn';
     else if (dest.state === 'error') destDot = 'status-err';
-    const destLines = ['Vibe Kanban (MCP).', destHuman(dest)];
+    const destLines = ['Vibe Kanban (local API).', destHuman(dest)];
     if (dest.message) destLines.push(dest.message);
     if (dest.lastOkAt) destLines.push('Last OK: ' + fmtIso(dest.lastOkAt));
     parts.push(card('Destination', destDot, destLines));

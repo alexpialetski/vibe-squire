@@ -1,5 +1,5 @@
 /**
- * Avoid leaking full URLs (MCP endpoints, PR links with tokens) into log lines.
+ * Avoid leaking full URLs (local backend URLs, PR links with tokens) into log lines.
  */
 export function redactHttpUrls(message: string): string {
   return message.replace(/https?:\/\/[^\s"'<>]+/g, '[url]');

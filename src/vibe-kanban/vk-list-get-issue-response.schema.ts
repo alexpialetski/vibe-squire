@@ -1,16 +1,15 @@
 import { z } from 'zod';
 
 /**
- * Documented shapes for **parsed** Vibe Kanban MCP tool results (`list_issues`, `get_issue`).
+ * Zod shapes for **parsed** Vibe Kanban list/get issue payloads (historical JSON shapes).
  *
  * VK may add fields — sub-objects use {@link z.looseObject} so extras do not fail parse.
- * Tool names and parameters: https://vibekanban.com/docs
  *
- * **Contract:** title/body markers are defined in `vk-contract.ts` (see `list_issues` search / linking).
+ * **Contract:** title/body markers are defined in `vk-contract.ts`.
  */
 
-/** One row inside `list_issues` `issues[]` (observed VK ~2026-03). */
-export const vkMcpListIssuesRowSchema = z.looseObject({
+/** One row inside `issues[]` (observed VK ~2026-03). */
+export const vkListIssuesRowSchema = z.looseObject({
   id: z.string().min(1),
   title: z.string(),
   simple_id: z.string().optional(),
@@ -24,9 +23,8 @@ export const vkMcpListIssuesRowSchema = z.looseObject({
   latest_pr_status: z.string().nullable().optional(),
 });
 
-/** Top-level parsed JSON from MCP `list_issues`. */
-export const vkMcpListIssuesResponseSchema = z.looseObject({
-  issues: z.array(vkMcpListIssuesRowSchema),
+export const vkListIssuesResponseSchema = z.looseObject({
+  issues: z.array(vkListIssuesRowSchema),
   total_count: z.number(),
   returned_count: z.number(),
   limit: z.number(),
@@ -34,8 +32,7 @@ export const vkMcpListIssuesResponseSchema = z.looseObject({
   project_id: z.string().optional(),
 });
 
-/** `get_issue` → `issue` object (observed VK ~2026-03). */
-export const vkMcpGetIssueDetailSchema = z.looseObject({
+export const vkGetIssueDetailSchema = z.looseObject({
   id: z.string().min(1),
   title: z.string(),
   simple_id: z.string().optional(),
@@ -55,28 +52,25 @@ export const vkMcpGetIssueDetailSchema = z.looseObject({
   sub_issues: z.array(z.unknown()).optional(),
 });
 
-/** Top-level parsed JSON from MCP `get_issue` (payload wraps `issue`). */
-export const vkMcpGetIssueResponseSchema = z.looseObject({
-  issue: vkMcpGetIssueDetailSchema,
+export const vkGetIssueResponseSchema = z.looseObject({
+  issue: vkGetIssueDetailSchema,
 });
 
-export type VkMcpListIssuesRow = z.infer<typeof vkMcpListIssuesRowSchema>;
-export type VkMcpListIssuesResponse = z.infer<
-  typeof vkMcpListIssuesResponseSchema
->;
-export type VkMcpGetIssueDetail = z.infer<typeof vkMcpGetIssueDetailSchema>;
-export type VkMcpGetIssueResponse = z.infer<typeof vkMcpGetIssueResponseSchema>;
+export type VkListIssuesRow = z.infer<typeof vkListIssuesRowSchema>;
+export type VkListIssuesResponse = z.infer<typeof vkListIssuesResponseSchema>;
+export type VkGetIssueDetail = z.infer<typeof vkGetIssueDetailSchema>;
+export type VkGetIssueResponse = z.infer<typeof vkGetIssueResponseSchema>;
 
-export function safeParseVkMcpListIssuesResponse(
+export function safeParseVkListIssuesResponse(
   parsed: unknown,
-): VkMcpListIssuesResponse | null {
-  const r = vkMcpListIssuesResponseSchema.safeParse(parsed);
+): VkListIssuesResponse | null {
+  const r = vkListIssuesResponseSchema.safeParse(parsed);
   return r.success ? r.data : null;
 }
 
-export function safeParseVkMcpGetIssueResponse(
+export function safeParseVkGetIssueResponse(
   parsed: unknown,
-): VkMcpGetIssueResponse | null {
-  const r = vkMcpGetIssueResponseSchema.safeParse(parsed);
+): VkGetIssueResponse | null {
+  const r = vkGetIssueResponseSchema.safeParse(parsed);
   return r.success ? r.data : null;
 }

@@ -18,13 +18,13 @@ const ERROR_CODE_TO_REASON: Record<string, SetupReason> = {
 };
 
 export type SetupEvaluation = {
-  /** Ready for sync and full operation (MCP + routing when Vibe Kanban). */
+  /** Ready for sync and full operation (Vibe Kanban API + routing when Vibe Kanban). */
   complete: boolean;
   reason?: SetupReason;
   mappingCount: number;
   sourceType: string;
   destinationType: string;
-  destinationMcpConfigured: boolean;
+  vibeKanbanBoardActive: boolean;
   hasRouting: boolean;
 };
 
@@ -42,7 +42,7 @@ export class SetupEvaluationService {
   async evaluate(): Promise<SetupEvaluation> {
     const r = await this.destinationStatus.checkReadiness();
     const meta = r.setupMeta ?? {
-      destinationMcpConfigured: true,
+      vibeKanbanBoardActive: true,
       hasRouting: true,
       mappingCount: 0,
     };
@@ -60,7 +60,7 @@ export class SetupEvaluationService {
       mappingCount: meta.mappingCount,
       sourceType: this.appEnv.sourceType,
       destinationType: this.appEnv.destinationType,
-      destinationMcpConfigured: meta.destinationMcpConfigured,
+      vibeKanbanBoardActive: meta.vibeKanbanBoardActive,
       hasRouting: meta.hasRouting,
     };
   }

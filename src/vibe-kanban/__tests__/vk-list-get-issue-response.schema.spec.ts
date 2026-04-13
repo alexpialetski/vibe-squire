@@ -1,13 +1,13 @@
 import {
   buildVibeSquirePrDescriptionMarker,
   VIBE_SQUIRE_TITLE_MARKER,
-} from '../../vk-contract';
+} from '../vk-contract';
 import {
-  safeParseVkMcpGetIssueResponse,
-  safeParseVkMcpListIssuesResponse,
-} from '../vk-mcp-list-get-issue-response.schema';
+  safeParseVkGetIssueResponse,
+  safeParseVkListIssuesResponse,
+} from '../vk-list-get-issue-response.schema';
 
-describe('vk-mcp list_issues / get_issue response schemas', () => {
+describe('vk list_issues / get_issue response schemas', () => {
   const listFixture = {
     issues: [
       {
@@ -54,11 +54,11 @@ describe('vk-mcp list_issues / get_issue response schemas', () => {
   };
 
   it('parses list_issues-shaped payload', () => {
-    expect(safeParseVkMcpListIssuesResponse(listFixture)).toEqual(listFixture);
+    expect(safeParseVkListIssuesResponse(listFixture)).toEqual(listFixture);
   });
 
   it('parses get_issue-shaped payload', () => {
-    expect(safeParseVkMcpGetIssueResponse(getFixture)).toEqual(getFixture);
+    expect(safeParseVkGetIssueResponse(getFixture)).toEqual(getFixture);
   });
 
   it('allows extra keys on list rows (forward compatible)', () => {
@@ -66,7 +66,7 @@ describe('vk-mcp list_issues / get_issue response schemas', () => {
       ...listFixture,
       issues: [{ ...listFixture.issues[0], future_field: 1 }],
     };
-    const r = safeParseVkMcpListIssuesResponse(extended);
+    const r = safeParseVkListIssuesResponse(extended);
     expect(r).not.toBeNull();
     expect((r!.issues[0] as { future_field?: number }).future_field).toBe(1);
   });

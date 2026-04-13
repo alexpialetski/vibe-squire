@@ -21,7 +21,7 @@ graph TB
 
     subgraph Driven["Driven adapters"]
         GH["GitHub (gh CLI)"]
-        VK["Vibe Kanban (MCP stdio)"]
+        VK["Vibe Kanban (local HTTP API)"]
         DB["SQLite"]
     end
 
@@ -64,7 +64,7 @@ graph TD
     App --> UI["UiModule — Handlebars operator UI"]
 
     Integrations --> GH["GithubSourceModule — gh CLI scout"]
-    Integrations --> VK["VibeKanbanDestinationModule — MCP stdio"]
+    Integrations --> VK["VibeKanbanDestinationModule — HTTP client"]
 ```
 
 ## Configuration precedence
@@ -92,12 +92,12 @@ Migrations run automatically on every startup before the HTTP server accepts tra
 
 ## Sync pipeline
 
-1. **Guard** — check setup is complete, `gh` is authenticated, MCP is reachable.
+1. **Guard** — check setup is complete, `gh` is authenticated, the destination board probe succeeds.
 2. **Scout** — `gh pr list --search "review-requested:@me"` returns PR candidates.
 3. **Route** — resolve each PR's `owner/repo` to a Kanban project via `RepoProjectMapping`. Unmapped repos are skipped (logged).
 4. **Dedupe** — check `SyncedPullRequest` table; skip PRs already tracked.
 5. **Board cap** — enforce `max_board_pr_count` against live issue count on the board.
-6. **Create** — call `create_issue` via MCP for new PRs; record in `SyncedPullRequest`.
+6. **Create** — call `DestinationBoardPort.createIssue()` for new PRs; record in `SyncedPullRequest`.
 7. **Reconcile** — PRs that left the review queue: close their Kanban issues.
 
 ## Integration pattern (adding a new source or destination)
@@ -108,11 +108,11 @@ Migrations run automatically on every startup before the HTTP server accepts tra
 4. Register the module in `IntegrationsModule.register()`.
 5. The rest of the pipeline (sync, status, UI) works through port abstractions.
 
-## Vibe Kanban MCP connection
+## Vibe Kanban HTTP connection
 
-vibe-squire spawns Vibe Kanban's MCP server as a **stdio subprocess** (`npx -y vibe-kanban@latest --mcp`). Communication uses the Model Context Protocol SDK (`@modelcontextprotocol/sdk`) with stdio transport. The session is lazy-initialized and serialized (one MCP call at a time).
+vibe-squire calls the **local Vibe Kanban HTTP API** (same process as the desktop app). Base URL is resolved from `VIBE_SQUIRE_VK_*` env vars, legacy `MCP_HOST` / `MCP_PORT` aliases, or the desktop `vibe-kanban.port` file under the OS temp directory.
 
-Tool reference: [Vibe Kanban MCP docs](https://vibekanban.com/docs).
+Product docs: [vibekanban.com/docs](https://vibekanban.com/docs).
 
 ## Security
 
