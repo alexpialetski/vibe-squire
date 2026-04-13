@@ -4,7 +4,8 @@ import { z } from 'zod';
 export const vkApiEnvelopeSchema = z.looseObject({
   success: z.boolean(),
   data: z.unknown().optional(),
-  message: z.string().optional(),
+  /** VK may send `null` on success paths, not only omit the field. */
+  message: z.string().nullish(),
 });
 
 export type VkApiEnvelope = z.infer<typeof vkApiEnvelopeSchema>;
