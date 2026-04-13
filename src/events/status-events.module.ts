@@ -5,7 +5,7 @@ import { IntegrationSettingsEmitterService } from './integration-settings-emitte
 /**
  * Global providers for two concerns:
  * - **Status** — `StatusEventsService`: broadcast status snapshot / scheduler refresh (SSE, UI).
- * - **Integration settings** — `IntegrationSettingsEmitterService`: settings keys changed → MCP / sync listeners.
+ * - **Integration settings** — `IntegrationSettingsEmitterService`: settings keys changed → integration / sync listeners.
  *
  * Event ordering uses `@nestjs/event-emitter`; do not rely on cross-listener order without tests.
  */

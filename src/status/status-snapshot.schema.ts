@@ -33,7 +33,7 @@ export const statusSnapshotSchema = z.object({
   configuration: z.looseObject({
     source_type: z.string(),
     destination_type: z.string(),
-    vk_mcp_configured: z.boolean(),
+    vibe_kanban_board_active: z.boolean(),
   }),
   destinations: z.array(
     z.looseObject({

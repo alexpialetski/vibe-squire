@@ -13,15 +13,15 @@ export type PollPrerequisitesResult =
 
 /**
  * Runs setup evaluation, source readiness, and `destinationBoard.probe()`.
- * On successful probe, calls `onMcpHealthy` (typically updates {@link SyncRunStateService}).
- * On probe throw, calls `onMcpProbeFailed` before returning `probe_failed`.
+ * On successful probe, calls `onDestinationHealthy` (typically updates {@link SyncRunStateService}).
+ * On probe throw, calls `onDestinationProbeFailed` before returning `probe_failed`.
  */
 export async function runPollPrerequisites(
   setupEvaluation: SetupEvaluationService,
   sourceStatus: SourceStatusProvider,
   destinationBoard: DestinationBoardPort,
-  onMcpHealthy: () => void,
-  onMcpProbeFailed: (message: string) => void,
+  onDestinationHealthy: () => void,
+  onDestinationProbeFailed: (message: string) => void,
 ): Promise<PollPrerequisitesResult> {
   const setupEv = await setupEvaluation.evaluate();
   if (!setupEv.complete) {
@@ -36,10 +36,10 @@ export async function runPollPrerequisites(
 
   try {
     await destinationBoard.probe();
-    onMcpHealthy();
+    onDestinationHealthy();
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    onMcpProbeFailed(msg);
+    onDestinationProbeFailed(msg);
     return { kind: 'probe_failed', message: msg };
   }
 

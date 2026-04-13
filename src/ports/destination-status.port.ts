@@ -4,11 +4,11 @@ export type DestinationReadinessResult = {
   state: 'ok' | 'error' | 'degraded' | 'unknown';
   message?: string;
   errors?: IntegrationError[];
-  /** Merged into `GET /api/status` `configuration` (e.g. `vk_mcp_configured`). */
+  /** Merged into `GET /api/status` `configuration` (e.g. `vibe_kanban_board_active`). */
   configuration?: Record<string, unknown>;
   /** For {@link SetupEvaluationService} / UI (destination-specific). */
   setupMeta?: {
-    destinationMcpConfigured: boolean;
+    vibeKanbanBoardActive: boolean;
     hasRouting: boolean;
     mappingCount: number;
   };

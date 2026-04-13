@@ -5,7 +5,7 @@ import { App } from 'supertest/types';
 import { testingAppModule } from './testing-app-module';
 import { GhCliService } from '../src/integrations/github/gh-cli.service';
 import { GithubPrScoutService } from '../src/integrations/github/github-pr-scout.service';
-import { VibeKanbanMcpService } from '../src/vibe-kanban/vibe-kanban-mcp.service';
+import { VibeKanbanBoardService } from '../src/vibe-kanban/vibe-kanban-board.service';
 import { PrismaService } from '../src/prisma/prisma.service';
 import { SettingsService } from '../src/settings/settings.service';
 import { DEFAULT_KANBAN_DONE_STATUS } from '../src/sync/sync-constants';
@@ -60,7 +60,7 @@ describe('Sync reconciliation (integration)', () => {
           return [];
         },
       })
-      .overrideProvider(VibeKanbanMcpService)
+      .overrideProvider(VibeKanbanBoardService)
       .useValue(vkStub)
       .compile();
 

@@ -5,7 +5,7 @@ import request from 'supertest';
 import { testingAppModule } from './testing-app-module';
 import { configureExpressApp } from '../src/configure-express-app';
 import { GhCliService } from '../src/integrations/github/gh-cli.service';
-import { VibeKanbanMcpService } from '../src/vibe-kanban/vibe-kanban-mcp.service';
+import { VibeKanbanBoardService } from '../src/vibe-kanban/vibe-kanban-board.service';
 import { PollSchedulerService } from '../src/sync/poll-scheduler.service';
 import { validateStatusSnapshot } from '../src/status/status-snapshot.contract';
 
@@ -51,7 +51,7 @@ async function createSmokeApp(): Promise<NestExpressApplication> {
     .useValue({
       checkAuth: () => ({ state: 'ok' as const }),
     })
-    .overrideProvider(VibeKanbanMcpService)
+    .overrideProvider(VibeKanbanBoardService)
     .useValue(vkStub)
     .compile();
 
@@ -64,10 +64,10 @@ async function createSmokeApp(): Promise<NestExpressApplication> {
 }
 
 /**
- * HBS + Express wiring, status/reinit/sync contracts — real Prisma + migrations, stubbed gh / MCP.
+ * HBS + Express wiring, status/reinit/sync contracts — real Prisma + migrations, stubbed gh / VK board.
  */
 describe('App HTTP smoke (integration)', () => {
-  describe('default operator env (no VIBE_SQUIRE_SOURCE_TYPE / VK MCP env)', () => {
+  describe('default operator env (no VIBE_SQUIRE_SOURCE_TYPE)', () => {
     let app: NestExpressApplication;
     let prevEnv: Record<string, string | undefined>;
 
@@ -142,7 +142,7 @@ describe('App HTTP smoke (integration)', () => {
         configuration: {
           source_type: string;
           destination_type: string;
-          vk_mcp_configured: boolean;
+          vibe_kanban_board_active: boolean;
         };
         destinations: Array<{ id: string; state: string }>;
         scouts: Array<{ id: string; state: string }>;
@@ -155,7 +155,9 @@ describe('App HTTP smoke (integration)', () => {
       expect(typeof body.setup.complete).toBe('boolean');
       expect(typeof body.configuration.source_type).toBe('string');
       expect(typeof body.configuration.destination_type).toBe('string');
-      expect(typeof body.configuration.vk_mcp_configured).toBe('boolean');
+      expect(typeof body.configuration.vibe_kanban_board_active).toBe(
+        'boolean',
+      );
       expect(Array.isArray(body.destinations)).toBe(true);
       expect(body.destinations.length).toBeGreaterThanOrEqual(1);
       expect(typeof body.destinations[0].state).toBe('string');

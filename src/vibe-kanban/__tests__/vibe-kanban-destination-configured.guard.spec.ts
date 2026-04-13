@@ -1,7 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 import type { AppEnv } from '../../config/app-env.token';
-import { VK_MCP_NOT_CONFIGURED_MESSAGE } from '../transport/mcp-transport-config';
-import { VibeKanbanMcpConfiguredGuard } from '../vibe-kanban-mcp-configured.guard';
+import { VK_DESTINATION_NOT_ACTIVE_MESSAGE } from '../vibe-kanban-destination';
+import { VibeKanbanDestinationConfiguredGuard } from '../vibe-kanban-destination-configured.guard';
 
 function vkEnv(): AppEnv {
   return { destinationType: 'vibe_kanban' } as AppEnv;
@@ -11,11 +11,11 @@ function otherDestEnv(): AppEnv {
   return { destinationType: 'github_projects' } as unknown as AppEnv;
 }
 
-function guardFor(appEnv: AppEnv): VibeKanbanMcpConfiguredGuard {
-  return new VibeKanbanMcpConfiguredGuard(appEnv);
+function guardFor(appEnv: AppEnv): VibeKanbanDestinationConfiguredGuard {
+  return new VibeKanbanDestinationConfiguredGuard(appEnv);
 }
 
-describe('VibeKanbanMcpConfiguredGuard', () => {
+describe('VibeKanbanDestinationConfiguredGuard', () => {
   it('allows when VIBE_SQUIRE_DESTINATION_TYPE resolves to vibe_kanban', () => {
     expect(guardFor(vkEnv()).canActivate()).toBe(true);
   });
@@ -26,9 +26,8 @@ describe('VibeKanbanMcpConfiguredGuard', () => {
     try {
       g.canActivate();
     } catch (e) {
-      expect(e).toBeInstanceOf(BadRequestException);
-      expect((e as BadRequestException).message).toBe(
-        VK_MCP_NOT_CONFIGURED_MESSAGE,
+      expect((e as BadRequestException).getResponse()).toEqual(
+        expect.objectContaining({ message: VK_DESTINATION_NOT_ACTIVE_MESSAGE }),
       );
     }
   });

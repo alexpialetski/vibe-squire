@@ -20,7 +20,7 @@ export class StatusDatabaseDto {
 export class StatusSetupDto {
   @ApiProperty({
     description:
-      'True when MCP, default board, and mappings are ready for sync (see reason when false)',
+      'True when Vibe Kanban API, default board, and mappings are ready for sync (see reason when false)',
   })
   complete!: boolean;
 
@@ -44,9 +44,9 @@ export class StatusConfigurationDto {
 
   @ApiProperty({
     description:
-      'True when Vibe Kanban MCP is configured (valid stdio spawn command JSON)',
+      'True when Vibe Kanban is the configured destination (local HTTP API + port file / env)',
   })
-  vk_mcp_configured!: boolean;
+  vibe_kanban_board_active!: boolean;
 }
 
 export class StatusManualSyncDto {

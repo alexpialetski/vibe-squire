@@ -1,61 +1,11 @@
-import { mcpResultTextParts } from './mcp-tool-result-text';
 import type {
   VkIssueRef,
   VkOrgRef,
   VkProjectRef,
   VkRepoRef,
-} from '../vk-entities';
+} from './vk-entities';
 
-export function parseToolJson(result: unknown): unknown {
-  const r = result as {
-    structuredContent?: unknown;
-    toolResult?: unknown;
-  };
-  const sc = r.structuredContent ?? r.toolResult;
-  if (sc != null && typeof sc === 'object') {
-    return sc;
-  }
-  for (const text of mcpResultTextParts(result)) {
-    try {
-      return JSON.parse(text) as unknown;
-    } catch {
-      // try next text block
-    }
-  }
-  return null;
-}
-
-/** First array found on common MCP list payload keys, or the value if it is already an array. */
-export function extractArrayFromMcpPayload(parsed: unknown): unknown[] {
-  if (parsed == null) {
-    return [];
-  }
-  if (Array.isArray(parsed)) {
-    return parsed;
-  }
-  if (typeof parsed !== 'object') {
-    return [];
-  }
-  const o = parsed as Record<string, unknown>;
-  for (const key of [
-    'issues',
-    'organizations',
-    'projects',
-    'repos',
-    'repositories',
-    'data',
-    'items',
-    'results',
-  ] as const) {
-    const v = o[key];
-    if (Array.isArray(v)) {
-      return v;
-    }
-  }
-  return [];
-}
-
-export function unwrapListOrGetIssueRow(parsed: unknown): unknown {
+function unwrapListOrGetIssueRow(parsed: unknown): unknown {
   if (parsed != null && typeof parsed === 'object') {
     const inner = (parsed as { issue?: unknown }).issue;
     if (inner != null && typeof inner === 'object') {

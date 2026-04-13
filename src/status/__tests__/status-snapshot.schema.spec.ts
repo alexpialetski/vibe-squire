@@ -12,7 +12,7 @@ describe('validateStatusSnapshot', () => {
     configuration: {
       source_type: 'github',
       destination_type: 'vibe_kanban',
-      vk_mcp_configured: false,
+      vibe_kanban_board_active: false,
     },
     destinations: [{ id: 'vibe_kanban', state: 'unknown' as const }],
     scouts: [

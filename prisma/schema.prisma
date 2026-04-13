@@ -50,7 +50,7 @@ model PollRun {
   trigger   String
   /// completed | aborted | failed
   phase     String
-  /// When aborted: setup_incomplete, gh_*, mcp_probe, etc.
+  /// When aborted: setup_incomplete, gh_*, destination_probe, etc.
   abortReason   String?
   errorMessage  String?
   candidatesCount       Int?

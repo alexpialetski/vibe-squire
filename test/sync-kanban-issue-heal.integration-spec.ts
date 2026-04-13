@@ -3,7 +3,7 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { testingAppModule } from './testing-app-module';
 import { GhCliService } from '../src/integrations/github/gh-cli.service';
 import { GithubPrScoutService } from '../src/integrations/github/github-pr-scout.service';
-import { VibeKanbanMcpService } from '../src/vibe-kanban/vibe-kanban-mcp.service';
+import { VibeKanbanBoardService } from '../src/vibe-kanban/vibe-kanban-board.service';
 import { PrismaService } from '../src/prisma/prisma.service';
 import { SettingsService } from '../src/settings/settings.service';
 import { RunPollCycleService } from '../src/sync/run-poll-cycle.service';
@@ -59,7 +59,7 @@ describe('Sync heal deleted Kanban issue (integration)', () => {
           },
         ],
       })
-      .overrideProvider(VibeKanbanMcpService)
+      .overrideProvider(VibeKanbanBoardService)
       .useValue(vkStub)
       .compile();
 

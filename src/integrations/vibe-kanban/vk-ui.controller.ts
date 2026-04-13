@@ -10,7 +10,7 @@ import {
 import { APP_ENV, type AppEnv } from '../../config/app-env.token';
 import type { Response } from 'express';
 import { SettingsService } from '../../settings/settings.service';
-import { VibeKanbanMcpService } from '../../vibe-kanban/vibe-kanban-mcp.service';
+import { VibeKanbanBoardService } from '../../vibe-kanban/vibe-kanban-board.service';
 import { VIBE_KANBAN_UI_KEYS } from './vk-settings.schema';
 import { SetupEvaluationService } from '../../setup/setup-evaluation.service';
 import { vibeKanbanNotDestinationRedirectUrl } from '../../ui/ui-presenter';
@@ -21,7 +21,7 @@ import { UiNavService } from '../../ui/ui-nav.service';
 export class VkUiController {
   constructor(
     private readonly settings: SettingsService,
-    private readonly vk: VibeKanbanMcpService,
+    private readonly vk: VibeKanbanBoardService,
     private readonly setupEvaluation: SetupEvaluationService,
     @Inject(APP_ENV) private readonly appEnv: AppEnv,
     private readonly uiNav: UiNavService,

@@ -9,7 +9,8 @@ export class ReinitController {
 
   @Post()
   @ApiOperation({
-    summary: 'Soft reinit — DB ping, gh check, MCP probe, reset backoff',
+    summary:
+      'Soft reinit — DB ping, gh check, Vibe Kanban probe, reset backoff',
   })
   @ApiOkResponse({
     description: 'Health summary per subsystem',

@@ -4,15 +4,15 @@ Context file for AI coding agents (Cursor, Claude Code, Copilot, Codex, etc.) wo
 
 ## What is vibe-squire?
 
-A local background orchestrator that polls GitHub for pull requests requesting your review and syncs them as issues into Vibe Kanban via MCP (Model Context Protocol). Built with NestJS, Prisma + SQLite, and hexagonal architecture.
+A local background orchestrator that polls GitHub for pull requests requesting your review and syncs them as issues into Vibe Kanban via its local HTTP API. Built with NestJS, Prisma + SQLite, and hexagonal architecture.
 
 ## Architecture
 
-Hexagonal (ports & adapters). Core domain logic has no dependency on NestJS, GitHub `gh` CLI, or Vibe Kanban MCP. Adapters implement port interfaces in `src/ports/`; NestJS modules wire them via DI.
+Hexagonal (ports & adapters). Core domain logic has no dependency on NestJS, GitHub `gh` CLI, or Vibe Kanban HTTP details. Adapters implement port interfaces in `src/ports/`; NestJS modules wire them via DI.
 
 **Layers:**
 - **Ports:** `src/ports/` — interfaces (`SyncPrScoutPort`, `DestinationBoardPort`, `SourceStatusPort`, `DestinationStatusPort`) and DI tokens.
-- **Adapters:** `src/integrations/github/` (gh CLI), `src/integrations/vibe-kanban/` (MCP stdio).
+- **Adapters:** `src/integrations/github/` (gh CLI), `src/integrations/vibe-kanban/` (local HTTP API client).
 - **Core:** `src/sync/` (poll scheduler, dispatcher, reconciliation), `src/settings/`, `src/mappings/`, `src/status/`, `src/setup/`.
 - **Driving:** NestJS controllers (`src/ui/`, `src/sync/sync.controller.ts`, `src/reinit/`).
 
@@ -30,7 +30,7 @@ Published to npm; end users run `npx vibe-squire`. No clone required. SQLite mig
 | `src/database/` | SQLite path resolution, SQLite migration runner |
 | `src/ports/` | Port interfaces and DI injection tokens |
 | `src/integrations/github/` | `gh` CLI scout, PR search schema, GitHub settings |
-| `src/integrations/vibe-kanban/` | MCP stdio adapter, board adapter, VK settings |
+| `src/integrations/vibe-kanban/` | Vibe Kanban HTTP board adapter, VK settings |
 | `src/sync/` | Poll scheduler, sync service, poll-cycle pipeline |
 | `src/sync/poll-cycle/` | Core sync logic: guard → scout → route → dedupe → create → reconcile |
 | `src/settings/` | Key-value settings with env > SQLite > default precedence |
@@ -67,7 +67,7 @@ npm run typecheck          # tsc --noEmit
 ## Test conventions
 
 - **Unit tests:** `src/**/__tests__/**/*.spec.ts` — pure logic, Zod schemas, helpers. No Nest runtime, no real DB.
-- **Integration tests:** `test/*.integration-spec.ts` — real Prisma + SQLite (`:memory:`), Nest module wiring, Supertest HTTP. External boundaries (GitHub `gh`, Vibe Kanban MCP) are stubbed with fakes.
+- **Integration tests:** `test/*.integration-spec.ts` — real Prisma + SQLite (`:memory:`), Nest module wiring, Supertest HTTP. External boundaries (GitHub `gh`, Vibe Kanban HTTP) are stubbed with fakes.
 - New unit specs must sit under `__tests__/` directories or Jest won't discover them.
 - Do not colocate `*.spec.ts` next to source files under `src/`.
 

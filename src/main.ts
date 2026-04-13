@@ -37,7 +37,7 @@ async function bootstrap() {
     const swaggerConfig = new DocumentBuilder()
       .setTitle('vibe-squire')
       .setDescription(
-        'Local orchestrator: GitHub PR review queue → Vibe Kanban via MCP.',
+        'Local orchestrator: GitHub PR review queue → Vibe Kanban via local HTTP API.',
       )
       .setVersion('0.0.1')
       .build();

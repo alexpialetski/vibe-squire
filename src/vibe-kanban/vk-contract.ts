@@ -1,6 +1,6 @@
 /**
  * Cross-cutting Vibe Kanban / vibe-squire conventions (titles, issue body markers).
- * MCP response Zod schemas live in `mcp-result/vk-mcp-list-get-issue-response.schema.ts`.
+ * Issue list/get Zod helpers live in `vk-list-get-issue-response.schema.ts`.
  */
 
 /** Visible title token for filtering via `list_issues` `search` (leading segment recommended). */

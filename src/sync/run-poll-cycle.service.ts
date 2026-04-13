@@ -31,14 +31,14 @@ import {
   persistScoutSkippedAfterPoll,
 } from './poll-cycle/persist-scout-run-outcome';
 import { ensureIssueForPr } from './poll-cycle/ensure-issue-for-pr';
-import { looksLikeMcpOrNetworkError } from './poll-cycle/mcp-network-error-heuristic';
+import { looksLikeVkBoardOrNetworkError } from './poll-cycle/vk-board-network-error-heuristic';
 import type { PollRunItemDecision } from './poll-run-decisions';
 
 export type { VkCreateQuota } from './poll-cycle/poll-scout-context';
 
 /**
  * Application service: one full poll cycle (scheduled or manual).
- * Keeps MCP / gh details behind ports; orchestrates persistence and run state.
+ * Keeps destination board / gh details behind ports; orchestrates persistence and run state.
  */
 @Injectable()
 export class RunPollCycleService {
@@ -115,12 +115,12 @@ export class RunPollCycleService {
           prisma: this.prisma,
           now: new Date(),
           coreSettings: this.coreSettings,
-          message: `mcp_probe: ${pre.message}`,
+          message: `destination_probe: ${pre.message}`,
           markPollCompleted: () => this.runState.markPollCompleted(),
         });
         await this.pollRunHistory.completeFailed(
           runId,
-          `mcp_probe: ${pre.message}`,
+          `destination_probe: ${pre.message}`,
         );
         return;
       }
@@ -219,7 +219,7 @@ export class RunPollCycleService {
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       this.logger.warn(`Sync (${trigger}) failed: ${redactHttpUrls(msg)}`);
-      if (looksLikeMcpOrNetworkError(msg)) {
+      if (looksLikeVkBoardOrNetworkError(msg)) {
         this.applyDestinationFailure(msg);
       }
       await persistScoutErrorAfterPoll({

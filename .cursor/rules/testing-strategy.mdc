@@ -7,7 +7,7 @@ alwaysApply: true
 
 ## Strategy
 
-- **Integration-first:** Prefer tests that run real Prisma + migrations and Nest module wiring. Stub or fake only at boundaries (**GitHub scout**, **Vibe Kanban MCP**, **`gh` CLI**) so CI does not hit real networks.
+- **Integration-first:** Prefer tests that run real Prisma + migrations and Nest module wiring. Stub or fake only at boundaries (**GitHub scout**, **Vibe Kanban HTTP client**, **`gh` CLI**) so CI does not hit real networks.
 - **Unit tests:** Use for **pure logic**, **Zod/schemas**, and **small helpers**—not for every controller line. HTTP smoke and API contracts live in `test/*.integration-spec.ts` (e.g. `ui-smoke.integration-spec.ts`).
 
 ## Where files live

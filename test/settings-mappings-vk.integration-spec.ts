@@ -3,7 +3,7 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import { testingAppModule } from './testing-app-module';
-import { VibeKanbanMcpService } from '../src/vibe-kanban/vibe-kanban-mcp.service';
+import { VibeKanbanBoardService } from '../src/vibe-kanban/vibe-kanban-board.service';
 import { PrismaService } from '../src/prisma/prisma.service';
 
 describe('Settings, mappings, vibe-kanban (integration)', () => {
@@ -29,7 +29,7 @@ describe('Settings, mappings, vibe-kanban (integration)', () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [testingAppModule()],
     })
-      .overrideProvider(VibeKanbanMcpService)
+      .overrideProvider(VibeKanbanBoardService)
       .useValue(vkStub)
       .compile();
 
@@ -137,7 +137,7 @@ describe('Settings, mappings, vibe-kanban (integration)', () => {
     await prisma.repoProjectMapping.deleteMany();
   });
 
-  it('GET /api/vibe-kanban/repos uses MCP stub', async () => {
+  it('GET /api/vibe-kanban/repos uses VK board stub', async () => {
     const res = await request(app.getHttpServer())
       .get('/api/vibe-kanban/repos')
       .expect(200);
@@ -146,7 +146,7 @@ describe('Settings, mappings, vibe-kanban (integration)', () => {
     expect(vkStub.listRepos).toHaveBeenCalled();
   });
 
-  it('GET /api/vibe-kanban/organizations uses MCP stub', async () => {
+  it('GET /api/vibe-kanban/organizations uses VK board stub', async () => {
     const res = await request(app.getHttpServer())
       .get('/api/vibe-kanban/organizations')
       .expect(200);

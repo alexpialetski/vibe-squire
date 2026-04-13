@@ -1,4 +1,4 @@
-/** Values for `start_workspace` executor (Vibe Kanban MCP; case-insensitive on server). */
+/** Values for `start_workspace` executor (Vibe Kanban API; case-insensitive on server). */
 export const VK_WORKSPACE_EXECUTOR_OPTIONS: ReadonlyArray<{
   value: string;
   label: string;
