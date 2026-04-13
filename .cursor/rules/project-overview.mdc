@@ -12,17 +12,20 @@ alwaysApply: true
 - **Runtime:** Node.js >= 20 (LTS)
 - **Framework:** NestJS 11 (modules, DI, lifecycle hooks, schedulers, HTTP/SSE)
 - **Database:** SQLite via Prisma (with `@prisma/adapter-better-sqlite3`)
-- **Vibe Kanban:** `fetch` to the desktop app's local HTTP API (`src/vibe-kanban/rest/`)
+- **Vibe Kanban:** `fetch` to the desktop app's local HTTP API (`apps/server/src/vibe-kanban/rest/`)
 - **GitHub:** `gh` CLI via `child_process`
-- **Validation:** Zod (env/schemas), class-validator (DTOs)
-- **UI:** Server-rendered Handlebars templates (no SPA framework)
+- **Validation:** Zod (`@vibe-squire/shared`, env/schemas), class-validator (legacy DTOs), `nestjs-zod` on selected REST responses
+- **UI:** React + Vite SPA in `apps/web/` (Nest serves `dist/client`); operator BFF under `/api/ui/*`
 - **Logging:** Pino via `nestjs-pino`
 - **Testing:** Jest, `@nestjs/testing`, Supertest
 
 ## Directory layout
 
 ```
-src/
+apps/server/           — Nest app (`vibe-squire` npm package)
+apps/web/              — Vite + React operator UI
+packages/shared/       — Zod contracts (`@vibe-squire/shared`)
+apps/server/src/
 ├── config/            — Zod env schema, AppEnv token, EnvModule
 ├── database/          — SQLite path resolution, SQLite migration runner
 ├── prisma/            — PrismaModule (client provider)
@@ -38,23 +41,23 @@ src/
 ├── events/            — Domain event bus (StatusEventsModule)
 ├── setup/             — Setup-complete gate
 ├── reinit/            — Soft reinit endpoint
-├── ui/                — Handlebars views, static assets, UI controllers
+├── ui/                — Operator BFF (`/api/ui/*`), activity API, nav aggregation
 ├── logging/           — Pino logger configuration
 ├── app.module.ts      — Root module (AppModule.forRoot)
 ├── main.ts            — Bootstrap: env parse → migrate → create app → listen
-test/                  — Integration specs (*.integration-spec.ts)
-prisma/                — schema.prisma + migrations
+apps/server/test/      — Integration specs (*.integration-spec.ts)
+apps/server/prisma/    — schema.prisma + migrations
 docs/                  — Architecture documentation
-bin/                   — CLI entry point (vibe-squire.js)
+apps/server/bin/       — CLI entry point (vibe-squire.js)
 ```
 
 ## Naming conventions
 
 - **Files:** kebab-case (`poll-scheduler.service.ts`, `github-pr-scout.service.ts`)
 - **Classes:** PascalCase with NestJS suffixes (`PollSchedulerService`, `SyncController`)
-- **Port interfaces:** Defined in `src/ports/`, named `*Port` (e.g. `SyncPrScoutPort`, `DestinationBoardPort`)
-- **DI tokens:** UPPER_SNAKE Symbols in `src/ports/injection-tokens.ts`
-- **Tests:** `src/**/__tests__/**/*.spec.ts` (unit), `test/*.integration-spec.ts` (integration)
+- **Port interfaces:** Defined in `apps/server/src/ports/`, named `*Port` (e.g. `SyncPrScoutPort`, `DestinationBoardPort`)
+- **DI tokens:** UPPER_SNAKE Symbols in `apps/server/src/ports/injection-tokens.ts`
+- **Tests:** `apps/server/src/**/__tests__/**/*.spec.ts` (unit), `apps/server/test/*.integration-spec.ts` (integration)
 - **Settings keys:** snake_case strings matching Prisma `Setting.key`
 
 ## Key patterns
