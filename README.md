@@ -29,7 +29,7 @@ graph LR
 npx vibe-squire
 ```
 
-That's it. On first run the app resolves a SQLite database path automatically (see [Database location](#database-location)), applies migrations, and opens the operator UI at **http://127.0.0.1:3000/ui/dashboard**.
+That's it. On first run the app resolves a SQLite database path automatically (see [Database location](#database-location)), applies migrations, and serves the operator UI at **http://127.0.0.1:3000/dashboard** (React SPA).
 
 Override defaults with environment variables:
 
@@ -83,14 +83,16 @@ SQLite migrations are applied automatically on every startup via a lightweight `
 
 ## Operator UI
 
-Server-rendered Handlebars templates served by the same Nest process — no separate frontend build.
+React + Vite SPA (`apps/web/`) built into `apps/server/dist/client` and served by the same Nest process.
 
 | URL | Page |
 |-----|------|
-| `/ui/dashboard` | Health status, sync schedule, "Sync now" button |
-| `/ui/settings` | Poll interval, board limits, PR filters |
-| `/ui/mappings` | GitHub `owner/repo` → Vibe Kanban project mappings |
-| `/ui/vibe-kanban` | Organisation/project picker, workspace executor |
+| `/dashboard` | Health status, raw status JSON |
+| `/settings` | Poll interval, board limits, toggles |
+| `/activity` | Poll run history |
+| `/mappings` | GitHub `owner/repo` → Vibe Kanban project mappings |
+| `/github` | GitHub source integration fields |
+| `/vibe-kanban` | Organisation/project picker, workspace executor |
 
 ## HTTP API
 
@@ -104,6 +106,11 @@ Server-rendered Handlebars templates served by the same Nest process — no sepa
 | `CRUD` | `/api/mappings` | Repo → project mappings |
 | `GET` | `/api/vibe-kanban/organizations` | Proxies VK `GET /api/organizations` |
 | `GET` | `/api/vibe-kanban/projects?organization_id=` | Proxies VK `GET /api/remote/projects` |
+| `GET` | `/api/ui/nav` | Sidebar integration nav entries |
+| `GET` | `/api/ui/setup` | Setup evaluation + checklist (dashboard) |
+| `GET` | `/api/ui/settings-meta` | General settings form metadata |
+| `GET` | `/api/ui/github-fields` | GitHub integration field rows |
+| `GET` | `/api/vibe-kanban/ui-state` | Vibe Kanban settings bootstrap (saved ids, labels, executor enum); org/project lists use `/organizations` and `/projects` |
 
 OpenAPI docs (when enabled): **http://127.0.0.1:3000/api/docs**
 
@@ -133,32 +140,34 @@ WantedBy=default.target
 ```bash
 git clone https://github.com/alexpialetski/vibe-squire.git
 cd vibe-squire
-npm install
-npx prisma generate           # generate Prisma client
-cp .env.example .env           # review and adjust settings
-npm run start:dev              # dev mode with watch (loads .env automatically)
+pnpm install
+pnpm --filter vibe-squire exec prisma generate
+cp .env.example .env
+pnpm run start:dev
 ```
+
+For UI hot reload against a running API on port 4000: `pnpm --filter @vibe-squire/web dev`.
 
 ### Scripts
 
 | Script | Purpose |
 |--------|---------|
-| `npm run build` | Compile with `nest build` |
-| `npm run start:dev` | Dev mode with file watching (preloads `.env` via `-r dotenv/config`) |
-| `npm run start:prod` | Production: `node dist/main` |
-| `npm test` | Unit tests |
-| `npm run test:cov` | Unit tests with coverage |
-| `npm run test:integration` | Integration tests (Prisma + migrations + Supertest) |
-| `npm run lint` | Lint and auto-fix |
-| `npm run typecheck` | TypeScript type checking |
+| `pnpm run build` | `packages/shared` → `apps/web` → `apps/server` (Nest + SPA assets) |
+| `pnpm run start:dev` | Nest dev watch (`apps/server`) |
+| `pnpm --filter vibe-squire run start:prod` | Production: `node apps/server/dist/main` |
+| `pnpm test` | Unit tests |
+| `pnpm run test:cov` | Unit tests with coverage |
+| `pnpm run test:integration` | Integration tests |
+| `pnpm run lint` | Lint and auto-fix |
+| `pnpm run typecheck` | TypeScript type checking |
 
 ### Testing
 
-- **Unit tests** — `src/**/__tests__/**/*.spec.ts`. Pure logic, Zod schemas, helpers.
-- **Integration tests** — `test/*.integration-spec.ts`. Real Prisma + SQLite, Nest module wiring, Supertest HTTP. External boundaries (GitHub `gh`, Vibe Kanban HTTP client) are stubbed.
+- **Unit tests** — `apps/server/src/**/__tests__/**/*.spec.ts`. Pure logic, Zod schemas, helpers.
+- **Integration tests** — `apps/server/test/*.integration-spec.ts`. Real Prisma + SQLite, Nest module wiring, Supertest HTTP. External boundaries (GitHub `gh`, Vibe Kanban HTTP client) are stubbed.
 
 ```bash
-npm test && npm run test:integration
+pnpm test && pnpm run test:integration
 ```
 
 ### Commits and releases

@@ -8,33 +8,33 @@ alwaysApply: true
 ## Strategy
 
 - **Integration-first:** Prefer tests that run real Prisma + migrations and Nest module wiring. Stub or fake only at boundaries (**GitHub scout**, **Vibe Kanban HTTP client**, **`gh` CLI**) so CI does not hit real networks.
-- **Unit tests:** Use for **pure logic**, **Zod/schemas**, and **small helpers**—not for every controller line. HTTP smoke and API contracts live in `test/*.integration-spec.ts` (e.g. `ui-smoke.integration-spec.ts`).
+- **Unit tests:** Use for **pure logic**, **Zod/schemas**, and **small helpers**—not for every controller line. HTTP smoke and API contracts live in `apps/server/test/*.integration-spec.ts` (e.g. `ui-smoke.integration-spec.ts`).
 
 ## Where files live
 
 | Kind | Location | Jest |
 |------|-----------|------|
-| Unit | `src/**/__tests__/**/*.spec.ts` (mirror the feature folder; root app spec in `src/__tests__/`) | Default `npm test` — see `package.json` `jest.testMatch` |
-| Integration | `test/*.integration-spec.ts` | `npm run test:integration` — `test/jest-integration.json` |
+| Unit | `apps/server/src/**/__tests__/**/*.spec.ts` (mirror the feature folder; root app spec in `apps/server/src/__tests__/`) | `pnpm test` — see `apps/server/package.json` `jest.testMatch` |
+| Integration | `apps/server/test/*.integration-spec.ts` | `pnpm run test:integration` — `apps/server/test/jest-integration.json` |
 
 New unit specs **must** sit under `__tests__` or Jest will not discover them. Imports from `__tests__` typically use `../` to the implementation module (adjust depth for nested folders). Keep the `*.spec.ts` suffix.
 
 ## Config (source of truth)
 
-- **`package.json` → `jest`:** `rootDir` `src`, `testMatch` for `__tests__` only, `collectCoverageFrom` excludes `*.spec.ts` and `generated/`.
-- Do not colocate `*.spec.ts` next to `*.ts` sources under `src/`.
+- **`apps/server/package.json` → `jest`:** `rootDir` `src`, `testMatch` for `__tests__` only, `collectCoverageFrom` excludes `*.spec.ts` and `generated/`.
+- Do not colocate `*.spec.ts` next to `*.ts` sources under `apps/server/src/`.
 
 ## Coverage (optional)
 
-Repo-wide line % is misleading; if you add thresholds, scope them to **directories that matter** (e.g. `sync/poll-cycle`). `src/generated/**` is already excluded from coverage collection.
+Repo-wide line % is misleading; if you add thresholds, scope them to **directories that matter** (e.g. `sync/poll-cycle`). `apps/server/src/generated/**` is already excluded from coverage collection.
 
 ## When extending tests
 
 - Add **integration** coverage for new **high-value flows** (persistence, sync outcomes, settings/mappings) before piling on isolated unit mocks.
-- For new **HTTP routes**, consider **Supertest** + `INestApplication` + temp DB as the next investment (see existing `test/` patterns).
+- For new **HTTP routes**, consider **Supertest** + `INestApplication` + temp DB as the next investment (see existing `apps/server/test/` patterns).
 
 ## Verify
 
 ```bash
-npm test && npm run test:cov && npm run test:integration
+pnpm test && pnpm run test:cov && pnpm run test:integration
 ```
