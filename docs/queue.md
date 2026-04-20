@@ -18,11 +18,10 @@ Stories use YAML frontmatter per the `doccraft-story` skill: `impact` (H/M/L),
 
 | # | Item | Story |
 |---|------|-------|
-| 1 | [P2.1] GraphQL server foundation | [stories/p2-graphql-server-foundation.md](stories/p2-graphql-server-foundation.md) |
-| 2 | [P2.2] GraphQL status query + subscription | [stories/p2-graphql-status-migration.md](stories/p2-graphql-status-migration.md) |
-| 3 | [P2.3] Apollo Client + status screen | [stories/p2-graphql-client-apollo.md](stories/p2-graphql-client-apollo.md) |
-| 4 | [P2.4] GraphQL operator BFF expansion | [stories/p2-graphql-bff-expansion.md](stories/p2-graphql-bff-expansion.md) |
-| 5 | [P2.5] REST/SSE sunset | [stories/p2-graphql-rest-sse-sunset.md](stories/p2-graphql-rest-sse-sunset.md) |
+| 1 | [P2.2] GraphQL status query + subscription | [stories/p2-graphql-status-migration.md](stories/p2-graphql-status-migration.md) |
+| 2 | [P2.3] Apollo Client + status screen | [stories/p2-graphql-client-apollo.md](stories/p2-graphql-client-apollo.md) |
+| 3 | [P2.4] GraphQL operator BFF expansion | [stories/p2-graphql-bff-expansion.md](stories/p2-graphql-bff-expansion.md) |
+| 4 | [P2.5] REST/SSE sunset | [stories/p2-graphql-rest-sse-sunset.md](stories/p2-graphql-rest-sse-sunset.md) |
 
 ## Platform spikes (can run in parallel)
 
