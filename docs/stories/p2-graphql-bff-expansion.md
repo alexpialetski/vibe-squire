@@ -1,7 +1,7 @@
 ---
 id: P2.4
 title: Migrate operator BFF (settings, mappings, activity) to GraphQL
-status: todo
+status: done
 impact: M
 urgency: later
 tags:
@@ -31,17 +31,18 @@ Covered surfaces (map to existing modules):
 - Activity — `apps/server/src/ui/activity-api.controller.ts` (recent poll runs, per-PR items).
 - Sync control — `apps/server/src/sync/` (manual `run`, reinit).
 - Integration UI nav — `apps/server/src/ui/ui-nav.service.ts` (aggregated per-integration nav).
+- Dashboard setup checklist — `GET /api/ui/setup` (evaluation, checklist, reason messages); GraphQL `dashboardSetup` mirrors the REST payload for `apps/web` dashboard.
 
 ## Acceptance criteria
 
-- [ ] **Queries:** `effectiveSettings`, `mappings`, `activityFeed(limit: Int, cursor: ID)`, `integrationNav`, plus anything the remaining web screens need (walk each screen and list the query).
-- [ ] **Mutations:** `updateSettings(input: …)`, `upsertMapping(input: …)`, `deleteMapping(id: …)`, `triggerSync`, `reinitIntegration(type: …)`. Return shapes match current REST responses closely enough for the web client to drop in.
-- [ ] **Subscriptions (opportunistic):** `activityEvents` if the activity feed benefits from live updates; otherwise defer. Decision documented in the PR.
-- [ ] Web screens — settings, mappings, activity, sync-trigger button — switched over from TanStack Query/REST to Apollo hooks.
-- [ ] TanStack Query is removed from `apps/web/package.json` if no remaining consumer uses it after this story. If any screen is intentionally kept on REST (e.g. because the endpoint is a pure command-and-forget), note it in the PR and leave the dep.
-- [ ] Integration tests under `apps/server/test/` added or extended to cover each new resolver; existing REST integration tests stay passing.
-- [ ] Zod↔GraphQL bridging follows the pattern chosen in `P2.2`.
-- [ ] Apollo cache keys verified: list queries + single-item reads cache-share where appropriate (e.g. a `mappings` query followed by an `upsertMapping` mutation updates the list without a manual refetch).
+- [x] **Queries:** `effectiveSettings`, `mappings`, `activityFeed` (Relay-style `first` / `after`), `integrationNav`, `dashboardSetup` (parity with `GET /api/ui/setup`), plus anything the remaining web screens need (walk each screen and list the query).
+- [x] **Mutations:** `updateSettings(input: …)`, `upsertMapping` / `updateMapping` / `deleteMapping`, triage mutations, `triggerSync`, `reinitIntegration`. Return shapes match current REST responses closely enough for the web client to drop in.
+- [x] **Subscriptions:** `activityEvents` with `{ invalidate }`; decision documented in `openspec/changes/p2-graphql-bff-expansion/design.md` (PR notes).
+- [x] Web screens — settings, mappings, activity, dashboard setup checklist, sync-trigger button — switched over from TanStack Query/REST to Apollo hooks (GitHub / Vibe Kanban pages remain on REST via `apiJson` without TanStack).
+- [x] TanStack Query removed from `apps/web/package.json`; GitHub and Vibe Kanban use local fetch state instead of a global query client.
+- [x] Integration tests under `apps/server/test/` added or extended to cover new resolvers and triage GraphQL; existing REST integration tests stay passing.
+- [x] Zod↔GraphQL bridging follows the pattern chosen in `P2.2`.
+- [x] Apollo cache keys verified: list queries + single-item reads cache-share where appropriate (e.g. a `mappings` query followed by an `upsertMapping` mutation updates the list without a manual refetch).
 
 ## Notes
 

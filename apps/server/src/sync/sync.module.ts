@@ -28,6 +28,8 @@ import { PrTriageService } from './pr-triage.service';
     SyncRunStateModule,
     PollSchedulerService,
     PollRunHistoryService,
+    PrTriageService,
+    SyncDependenciesGuard,
   ],
 })
 export class SyncModule {}

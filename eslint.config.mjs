@@ -9,6 +9,7 @@ export default tseslint.config(
     ignores: [
       'eslint.config.mjs',
       'apps/server/src/generated/prisma/**',
+      'apps/web/src/__generated__/**',
       '**/dist/**',
       '**/node_modules/**',
       'coverage/**',

@@ -16,6 +16,7 @@ import { ReinitModule } from './reinit/reinit.module';
 import { UiModule } from './ui/ui.module';
 import { SetupModule } from './setup/setup.module';
 import { GraphqlModule } from './graphql/graphql.module';
+import { OperatorGraphqlModule } from './graphql/operator-graphql.module';
 
 /**
  * Root Nest module. The class decorator is intentionally empty: **all** wiring lives in
@@ -48,6 +49,7 @@ export class AppModule {
         SetupModule,
         UiModule,
         GraphqlModule,
+        OperatorGraphqlModule,
       ],
       controllers: [],
     };

@@ -1,6 +1,7 @@
 import { ApolloClient, HttpLink, InMemoryCache, split } from '@apollo/client';
 import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
 import { getMainDefinition } from '@apollo/client/utilities';
+import { relayStylePagination } from '@apollo/client/utilities';
 import { Kind, OperationTypeNode } from 'graphql';
 import { createClient } from 'graphql-ws';
 
@@ -35,7 +36,26 @@ const splitLink = split(
 
 export const apolloClient = new ApolloClient({
   name: '@vibe-squire/web',
-  version: 'p2-3',
+  version: 'p2-4',
   link: splitLink,
-  cache: new InMemoryCache(),
+  cache: new InMemoryCache({
+    typePolicies: {
+      Query: {
+        fields: {
+          mappings: {
+            merge(_existing, incoming: unknown[]) {
+              return incoming;
+            },
+          },
+          activityFeed: relayStylePagination(['first', 'after']),
+          effectiveSettings: {
+            merge: true,
+          },
+        },
+      },
+      ActivityRunGql: { keyFields: ['id'] },
+      ActivityItemGql: { keyFields: ['id'] },
+      MappingGql: { keyFields: ['id'] },
+    },
+  }),
 });

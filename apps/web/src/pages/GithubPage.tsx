@@ -1,48 +1,81 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { githubFieldsResponseSchema } from '@vibe-squire/shared';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { apiJson } from '../api';
 import { getErrorMessage } from '../toast';
 
 export function GithubPage() {
-  const qc = useQueryClient();
-  const fieldsQ = useQuery({
-    queryKey: ['ui', 'github-fields'],
-    queryFn: async () => {
-      const data = await apiJson<unknown>('/api/ui/github-fields');
-      return githubFieldsResponseSchema.parse(data);
-    },
-  });
+  const [fieldsData, setFieldsData] = useState<ReturnType<
+    typeof githubFieldsResponseSchema.parse
+  > | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  const reload = useCallback(async () => {
+    setLoading(true);
+    setLoadError(null);
+    try {
+      const raw = await apiJson<unknown>('/api/ui/github-fields');
+      setFieldsData(githubFieldsResponseSchema.parse(raw));
+    } catch (e: unknown) {
+      setLoadError(getErrorMessage(e));
+      setFieldsData(null);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void reload();
+  }, [reload]);
 
   const [values, setValues] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    if (!fieldsQ.data || fieldsQ.data.disabled) return;
+    if (!fieldsData || fieldsData.disabled) return;
     const v: Record<string, string> = {};
-    for (const f of fieldsQ.data.fields) {
+    for (const f of fieldsData.fields) {
       v[f.key] = f.value;
     }
     setValues(v);
-  }, [fieldsQ.data]);
+  }, [fieldsData]);
 
-  const patch = useMutation({
-    mutationFn: async (body: Record<string, string>) => {
+  const handleSave = async (body: Record<string, string>) => {
+    setSaving(true);
+    try {
       await apiJson('/api/settings/source', {
         method: 'PATCH',
         body: JSON.stringify(body),
       });
-    },
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ['ui', 'github-fields'] });
+      await reload();
       toast.success('GitHub settings saved.');
-    },
-    onError: (error) => {
+    } catch (error: unknown) {
       toast.error(`Save failed: ${getErrorMessage(error)}`);
-    },
-  });
+    } finally {
+      setSaving(false);
+    }
+  };
 
-  if (fieldsQ.data?.disabled) {
+  if (loading && !fieldsData && !loadError) {
+    return (
+      <div className="stack">
+        <h1>GitHub</h1>
+        <p className="muted">Loading…</p>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="stack">
+        <h1>GitHub</h1>
+        <p className="text-danger">{loadError}</p>
+      </div>
+    );
+  }
+
+  if (fieldsData?.disabled) {
     return (
       <div className="stack">
         <h1>GitHub</h1>
@@ -59,10 +92,10 @@ export function GithubPage() {
           className="form-stack"
           onSubmit={(e) => {
             e.preventDefault();
-            patch.mutate(values);
+            void handleSave(values);
           }}
         >
-          {(fieldsQ.data?.fields ?? []).map((f) => (
+          {(fieldsData?.fields ?? []).map((f) => (
             <label key={f.key} className="field">
               <span className="field-label">{f.label}</span>
               <textarea
@@ -75,12 +108,8 @@ export function GithubPage() {
               />
             </label>
           ))}
-          <button
-            type="submit"
-            className="btn primary"
-            disabled={patch.isPending}
-          >
-            {patch.isPending ? 'Saving…' : 'Save'}
+          <button type="submit" className="btn primary" disabled={saving}>
+            {saving ? 'Saving…' : 'Save'}
           </button>
         </form>
       </section>

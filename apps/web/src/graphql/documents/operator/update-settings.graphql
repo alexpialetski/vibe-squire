@@ -1,0 +1,5 @@
+mutation UpdateSettingsMutation($input: UpdateSettingsInput!) {
+  updateSettings(input: $input) {
+    ok
+  }
+}

@@ -1,0 +1,17 @@
+mutation ReinitIntegrationMutation {
+  reinitIntegration {
+    ok
+    database {
+      state
+      message
+    }
+    source {
+      state
+      message
+    }
+    destination {
+      state
+      message
+    }
+  }
+}

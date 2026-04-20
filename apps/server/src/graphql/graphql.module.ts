@@ -1,9 +1,10 @@
 import { join } from 'node:path';
-import { Module } from '@nestjs/common';
+import { HttpException, Module } from '@nestjs/common';
 import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default';
 import { ApolloServerPluginLandingPageDisabled } from '@apollo/server/plugin/disabled';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { GraphQLModule } from '@nestjs/graphql';
+import type { GraphQLFormattedError } from 'graphql';
 import { APP_ENV, type AppEnv } from '../config/app-env.token';
 import { HealthResolver } from './health.resolver';
 
@@ -32,6 +33,23 @@ function isProduction(nodeEnv: string | undefined): boolean {
           plugins: prod
             ? [ApolloServerPluginLandingPageDisabled()]
             : [ApolloServerPluginLandingPageLocalDefault()],
+          formatError(
+            formattedError: GraphQLFormattedError,
+            error: unknown,
+          ): GraphQLFormattedError {
+            const orig = (error as { originalError?: unknown } | undefined)
+              ?.originalError;
+            if (orig instanceof HttpException) {
+              return {
+                ...formattedError,
+                extensions: {
+                  ...formattedError.extensions,
+                  statusCode: orig.getStatus(),
+                },
+              };
+            }
+            return formattedError;
+          },
         };
       },
     }),

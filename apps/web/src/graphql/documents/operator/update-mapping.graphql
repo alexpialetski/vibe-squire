@@ -1,0 +1,8 @@
+mutation UpdateMappingMutation($id: ID!, $input: UpdateMappingInput!) {
+  updateMapping(id: $id, input: $input) {
+    id
+    githubRepo
+    vibeKanbanRepoId
+    label
+  }
+}

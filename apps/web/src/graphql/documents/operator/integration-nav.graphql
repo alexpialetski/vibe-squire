@@ -1,0 +1,9 @@
+query IntegrationNavQuery {
+  integrationNav {
+    entries {
+      id
+      label
+      href
+    }
+  }
+}
