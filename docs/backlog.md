@@ -25,7 +25,11 @@ rules and the Story-files coverage invariant.
 
 | ID | Item | Status |
 |----|------|--------|
-|    |      |        |
+| P2.1 | GraphQL server foundation (code-first Nest + Apollo driver) | planned |
+| P2.2 | Port `/api/status` to a GraphQL query plus live subscription | planned |
+| P2.3 | Apollo Client in `apps/web` with status screen migrated | planned |
+| P2.4 | Migrate operator BFF (settings, mappings, activity) to GraphQL | planned |
+| P2.5 | Sunset duplicate REST/SSE surfaces superseded by GraphQL | planned |
 
 ### P3 — speculative (ideas, may be cut)
 
@@ -48,7 +52,11 @@ queue. Queue rows must link to files listed here.
 
 | ID | Story |
 |----|-------|
-|    |       |
+| P2.1 | [GraphQL server foundation](stories/p2-graphql-server-foundation.md) |
+| P2.2 | [GraphQL status query + subscription](stories/p2-graphql-status-migration.md) |
+| P2.3 | [Apollo Client + status screen migration](stories/p2-graphql-client-apollo.md) |
+| P2.4 | [GraphQL operator BFF expansion](stories/p2-graphql-bff-expansion.md) |
+| P2.5 | [REST/SSE sunset](stories/p2-graphql-rest-sse-sunset.md) |
 
 ## NFRs and cross-cutting
 

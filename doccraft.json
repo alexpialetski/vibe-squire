@@ -4,9 +4,31 @@
   "_hint": "Edit with the doccraft-config skill (npx doccraft@latest llm exposes the schema).",
   "docsDir": "docs",
   "story": {
-    "areas": ["sync", "github", "vibe-kanban", "settings", "mappings", "status", "ui", "config", "database", "ports", "ci"],
+    "areas": [
+      "sync",
+      "github",
+      "vibe-kanban",
+      "settings",
+      "mappings",
+      "status",
+      "ui",
+      "web",
+      "graphql",
+      "config",
+      "database",
+      "ports",
+      "ci"
+    ],
     "slices": ["dashboard", "settings", "activity", "mappings", "integrations"],
-    "themes": ["observability", "reliability", "testing", "docs", "dx", "release", "security"],
+    "themes": [
+      "observability",
+      "reliability",
+      "testing",
+      "docs",
+      "dx",
+      "release",
+      "security"
+    ],
     "id": {
       "tiers": ["p0", "p1", "p2", "p3"],
       "pattern": "^(P\\d+(\\.\\d+)?|[a-z][a-z0-9-]+)$"
@@ -21,7 +43,7 @@
   "queueAudit": {
     "laneFrom": ["area", "slice"],
     "scale": {
-      "maxStoryFiles": 5,
+      "maxStoryFiles": 20,
       "maxQueueReorderPct": 50
     }
   },
