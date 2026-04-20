@@ -1,7 +1,7 @@
 ---
 id: P2.1
 title: GraphQL server foundation (code-first Nest + Apollo driver)
-status: todo
+status: done
 impact: M
 urgency: later
 tags:
@@ -22,14 +22,14 @@ Establish the minimum viable GraphQL endpoint on the Nest server so subsequent s
 
 ## Acceptance criteria
 
-- [ ] Add dependencies to `apps/server/package.json`: `@nestjs/graphql`, `@nestjs/apollo`, `@apollo/server`, `graphql`, `graphql-ws`, `graphql-subscriptions`.
-- [ ] New module `apps/server/src/graphql/graphql.module.ts` wires `GraphQLModule.forRoot<ApolloDriverConfig>({ driver: ApolloDriver, autoSchemaFile: …, subscriptions: { 'graphql-ws': true }, sortSchema: true })` in code-first mode.
-- [ ] Emitted SDL lives at `apps/server/src/generated/schema.graphql` (gitignored — same treatment as `apps/server/src/generated/prisma/`).
-- [ ] `HealthResolver` returns `{ ok: Boolean!, version: String!, timestamp: DateTime! }` via a `health: HealthStatus!` query. No Prisma, no `gh`, no integration imports — only `SettingsService` if needed for `version`.
-- [ ] `GraphqlModule` is imported from `AppModule.forRoot` so it participates in the normal boot flow.
-- [ ] Apollo Sandbox is available at `/graphql` in dev with `introspection: true` gated on `NODE_ENV !== 'production'`; both are disabled in prod builds.
-- [ ] Integration test under `apps/server/test/` hits `POST /graphql` with `query { health { ok version } }` and asserts the response — follows existing `*.integration-spec.ts` conventions.
-- [ ] `/graphql` survives the static-client middleware (Nest serves `dist/client`) — route registration order verified.
+- [x] Add dependencies to `apps/server/package.json`: `@nestjs/graphql`, `@nestjs/apollo`, `@apollo/server`, `graphql`, `graphql-ws`, `graphql-subscriptions`.
+- [x] New module `apps/server/src/graphql/graphql.module.ts` wires `GraphQLModule.forRootAsync<ApolloDriverConfig>({ driver: ApolloDriver, autoSchemaFile: …, subscriptions: { 'graphql-ws': true }, sortSchema: true })` in code-first mode (`forRootAsync` because the prod gate reads `APP_ENV`).
+- [x] Emitted SDL lives at `apps/server/src/generated/schema.graphql` (gitignored — same treatment as `apps/server/src/generated/prisma/`).
+- [x] `HealthResolver` returns `{ ok: Boolean!, version: String!, timestamp: DateTime! }` via a `health: HealthStatus!` query. No Prisma, no `gh`, no integration imports — `version` is resolved from `apps/server/package.json` via a small helper to avoid coupling the resolver to `SettingsService`.
+- [x] `GraphqlModule` is imported from `AppModule.forRoot` so it participates in the normal boot flow.
+- [x] Apollo Sandbox is available at `/graphql` in dev with `introspection: true` gated on `NODE_ENV !== 'production'`; both are disabled in prod builds (`ApolloServerPluginLandingPageDisabled` in prod).
+- [x] Integration test under `apps/server/test/` hits `POST /graphql` with `query { health { ok version } }` and asserts the response — follows existing `*.integration-spec.ts` conventions.
+- [x] `/graphql` survives the static-client middleware (Nest serves `dist/client`) — route registration order verified and asserted by a second test case in the integration spec.
 
 ## Notes
 

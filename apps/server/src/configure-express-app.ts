@@ -50,7 +50,7 @@ export function configureExpressApp(app: NestExpressApplication): void {
       return;
     }
     const p = req.path;
-    if (p.startsWith('/api')) {
+    if (p.startsWith('/api') || p.startsWith('/graphql')) {
       next();
       return;
     }
