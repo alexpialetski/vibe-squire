@@ -1,7 +1,7 @@
 ---
 id: P2.2
 title: Port /api/status to a GraphQL query plus live subscription
-status: todo
+status: done
 impact: M
 urgency: later
 tags:
