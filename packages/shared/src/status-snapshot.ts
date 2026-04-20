@@ -1,12 +1,23 @@
 import { z } from 'zod';
 
-const ghState = z.enum(['ok', 'error', 'unknown']);
+/** Shared literals for Zod and GraphQL enums (single source of truth). */
+export const ghStateValues = ['ok', 'error', 'unknown'] as const;
+export const dbStateValues = ['ok', 'error'] as const;
+export const destStateValues = ['ok', 'degraded', 'error', 'unknown'] as const;
+export const scoutUiStateValues = [
+  'idle',
+  'running',
+  'skipped',
+  'error',
+] as const;
 
-const dbState = z.enum(['ok', 'error']);
+const ghState = z.enum(ghStateValues);
 
-const destState = z.enum(['ok', 'degraded', 'error', 'unknown']);
+const dbState = z.enum(dbStateValues);
 
-const scoutUiState = z.enum(['idle', 'running', 'skipped', 'error']);
+const destState = z.enum(destStateValues);
+
+const scoutUiState = z.enum(scoutUiStateValues);
 
 const lastPollSchema = z.looseObject({
   candidates_count: z.number().nullable().optional(),
@@ -16,19 +27,19 @@ const lastPollSchema = z.looseObject({
 
 export const statusSnapshotSchema = z.object({
   timestamp: z.string(),
-  pending_triage_count: z.number().int().nonnegative().optional(),
+  pending_triage_count: z.number().int().nonnegative().nullish(),
   gh: z.looseObject({
     state: ghState,
-    message: z.string().optional(),
+    message: z.string().nullish(),
   }),
   database: z.looseObject({
     state: dbState,
-    message: z.string().optional(),
+    message: z.string().nullish(),
   }),
   setup: z.looseObject({
     complete: z.boolean(),
     mappingCount: z.number(),
-    reason: z.string().optional(),
+    reason: z.string().nullish(),
   }),
   configuration: z.looseObject({
     source_type: z.string(),
@@ -50,8 +61,8 @@ export const statusSnapshotSchema = z.object({
   ),
   manual_sync: z.looseObject({
     canRun: z.boolean(),
-    reason: z.string().optional(),
-    cooldownUntil: z.string().optional(),
+    reason: z.string().nullish(),
+    cooldownUntil: z.string().nullish(),
   }),
   scheduled_sync: z.looseObject({
     enabled: z.boolean(),
