@@ -1,6 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
+import { toast } from 'react-hot-toast';
 import { apiJson } from '../api';
+import { getErrorMessage } from '../toast';
 
 type MappingRow = {
   id: string;
@@ -44,6 +46,10 @@ export function MappingsPage() {
       setGithubRepo('');
       setVkRepoId('');
       setLabel('');
+      toast.success('Mapping added.');
+    },
+    onError: (error) => {
+      toast.error(`Add failed: ${getErrorMessage(error)}`);
     },
   });
 
@@ -52,7 +58,13 @@ export function MappingsPage() {
       apiJson<{ ok: boolean }>(`/api/mappings/${encodeURIComponent(id)}`, {
         method: 'DELETE',
       }),
-    onSuccess: () => void qc.invalidateQueries({ queryKey: ['mappings'] }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['mappings'] });
+      toast.success('Mapping deleted.');
+    },
+    onError: (error) => {
+      toast.error(`Delete failed: ${getErrorMessage(error)}`);
+    },
   });
 
   return (
@@ -109,31 +121,52 @@ export function MappingsPage() {
             className="btn primary"
             disabled={create.isPending}
           >
-            Add mapping
+            {create.isPending ? 'Adding…' : 'Add mapping'}
           </button>
-          {create.isError && (
-            <p className="text-danger">{create.error.message}</p>
-          )}
         </form>
       </section>
-      <section className="card">
+      <section className="card mappings-existing-card">
         <h2>Existing</h2>
-        {listQ.data?.map((row) => (
-          <div key={row.id} className="row spread">
-            <span>
-              <code>{row.githubRepo}</code> → {row.vibeKanbanRepoId}
-            </span>
-            <button
-              type="button"
-              className="btn danger ghost"
-              onClick={() => {
-                if (confirm('Delete this mapping?')) remove.mutate(row.id);
-              }}
-            >
-              Delete
-            </button>
-          </div>
-        ))}
+        {listQ.isLoading ? <p className="muted">Loading mappings…</p> : null}
+        {listQ.isError ? (
+          <p className="text-danger">
+            Failed to load mappings: {listQ.error.message}
+          </p>
+        ) : null}
+        {listQ.data && listQ.data.length === 0 ? (
+          <p className="muted">
+            No mappings yet. Add one above to route GitHub PRs to a Kanban
+            repository.
+          </p>
+        ) : null}
+        {listQ.data && listQ.data.length > 0 ? (
+          <ul className="mappings-existing-list">
+            {listQ.data.map((row) => {
+              const isDeleting =
+                remove.isPending && remove.variables === row.id;
+              return (
+                <li key={row.id} className="mappings-existing-item">
+                  <div className="mappings-existing-main">
+                    <code>{row.githubRepo}</code>
+                    <span className="mappings-arrow">→</span>
+                    <code>{row.vibeKanbanRepoId}</code>
+                  </div>
+                  <button
+                    type="button"
+                    className="btn danger ghost"
+                    disabled={isDeleting}
+                    onClick={() => {
+                      if (confirm('Delete this mapping?'))
+                        remove.mutate(row.id);
+                    }}
+                  >
+                    {isDeleting ? 'Deleting…' : 'Delete'}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        ) : null}
       </section>
     </div>
   );

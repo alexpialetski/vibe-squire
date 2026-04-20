@@ -163,6 +163,9 @@ describe('App HTTP smoke (integration)', () => {
       expect(body.scouts.length).toBe(1);
       expect(typeof body.scouts[0].state).toBe('string');
       expect(typeof body.manual_sync.canRun).toBe('boolean');
+      if (!body.setup.complete) {
+        expect(body.manual_sync.canRun).toBe(false);
+      }
       expect(typeof body.scheduled_sync.enabled).toBe('boolean');
 
       expect(validateStatusSnapshot(body)).toBeNull();

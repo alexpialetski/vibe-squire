@@ -1,7 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { settingsMetaResponseSchema } from '@vibe-squire/shared';
 import { useEffect, useState } from 'react';
+import { toast } from 'react-hot-toast';
 import { apiJson } from '../api';
+import { getErrorMessage } from '../toast';
+import { Switcher } from '../ui/atoms/Switcher';
 
 export function SettingsPage() {
   const qc = useQueryClient();
@@ -37,20 +40,16 @@ export function SettingsPage() {
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['ui', 'settings-meta'] });
+      toast.success('General settings saved.');
+    },
+    onError: (error) => {
+      toast.error(`Save failed: ${getErrorMessage(error)}`);
     },
   });
 
   return (
     <div className="stack">
       <h1>General</h1>
-      <p className="muted">Sync adapters</p>
-      {metaQ.data && (
-        <p className="muted">
-          Resolved for this process: source{' '}
-          <strong>{metaQ.data.resolvedSourceLabel}</strong>, destination{' '}
-          <strong>{metaQ.data.resolvedDestinationLabel}</strong>
-        </p>
-      )}
       <section className="card">
         <h2>Kanban issue creation</h2>
         <form
@@ -67,22 +66,18 @@ export function SettingsPage() {
             });
           }}
         >
-          <label className="field row">
-            <input
-              type="checkbox"
-              checked={scheduledOn}
-              onChange={() => setScheduledOn((v) => !v)}
-            />
-            <span>scheduled_sync_enabled</span>
-          </label>
-          <label className="field row">
-            <input
-              type="checkbox"
-              checked={autoCreate}
-              onChange={() => setAutoCreate((v) => !v)}
-            />
-            <span>auto_create_issues</span>
-          </label>
+          <Switcher
+            checked={scheduledOn}
+            onChange={setScheduledOn}
+            label="Enable scheduled sync"
+            settingKey="scheduled_sync_enabled"
+          />
+          <Switcher
+            checked={autoCreate}
+            onChange={setAutoCreate}
+            label="Auto-create issues from sync"
+            settingKey="auto_create_issues"
+          />
           {(metaQ.data?.coreFields ?? []).map((f) => (
             <label key={f.key} className="field">
               <span className="field-label">{f.label}</span>
@@ -101,7 +96,7 @@ export function SettingsPage() {
             className="btn primary"
             disabled={patch.isPending}
           >
-            Save
+            {patch.isPending ? 'Saving…' : 'Save'}
           </button>
         </form>
       </section>
