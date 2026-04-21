@@ -16,3 +16,4 @@ explicit Status and supersession).
 | # | Title | Status |
 |---|-------|--------|
 | 001 | [Introduce GraphQL alongside REST for the operator console](001-graphql-pilot.md) | Accepted |
+| 002 | [Atomic-design layout for the operator web UI](002-atomic-design-web-ui.md) | Accepted |
