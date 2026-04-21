@@ -37,6 +37,10 @@ code {
   font-size: 0.9em;
 }
 
+.mono {
+  font-family: var(--mono);
+}
+
 .shell {
   display: grid;
   grid-template-columns: 220px 1fr;
@@ -786,6 +790,14 @@ textarea.input {
   margin-bottom: 0.35rem;
 }
 
+.activity-run-counts {
+  margin: 0.35rem 0 0;
+}
+
+.activity-run-msg {
+  margin: 0.5rem 0 0;
+}
+
 .activity-run-meta {
   display: flex;
   flex-wrap: wrap;
@@ -858,7 +870,8 @@ textarea.input {
 .activity-pr-title {
   font-size: 0.82rem;
   margin-top: 0.2rem;
-  max-width: 28rem;
+  max-width: 24rem;
+  overflow-wrap: anywhere;
 }
 
 /* Triage rows */
