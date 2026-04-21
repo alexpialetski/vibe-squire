@@ -64,12 +64,24 @@ Published to npm from `apps/server`; end users run `npx vibe-squire`. No clone r
 pnpm install
 pnpm --filter vibe-squire exec prisma generate
 cp .env.example .env
-pnpm run start:dev
+# Keep API on 4000 for apps/web Vite proxy defaults (or edit apps/web/vite.config.ts)
+VIBE_SQUIRE_PORT=4000 pnpm run start:dev
+```
+
+In a second terminal for UI iteration: `pnpm --filter @vibe-squire/web dev` (Vite proxies `/api` and `/graphql` to port 4000).
+
+When GraphQL schema/resolvers or `apps/web/src/graphql/documents/**` change:
+
+```bash
+pnpm --filter @vibe-squire/web codegen
+```
+
+Full production build/run path:
+
+```bash
 pnpm run build
 pnpm --filter vibe-squire run start:prod
 ```
-
-For UI-only iteration with API on port 4000: `pnpm --filter @vibe-squire/web dev` (Vite proxies `/api`).
 
 ## Test
 
