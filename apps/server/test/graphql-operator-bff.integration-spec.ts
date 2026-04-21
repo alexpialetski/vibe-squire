@@ -1,6 +1,7 @@
 import { ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import { createServer, type Server } from 'node:http';
 import { createClient } from 'graphql-ws';
 import WebSocket from 'ws';
 import request from 'supertest';
@@ -172,9 +173,11 @@ const ACTIVITY_EVENTS_SUB = /* GraphQL */ `
   }
 `;
 
-async function createApp(): Promise<NestExpressApplication> {
+async function createApp(
+  env: NodeJS.ProcessEnv = process.env,
+): Promise<NestExpressApplication> {
   const moduleFixture: TestingModule = await Test.createTestingModule({
-    imports: [testingAppModule()],
+    imports: [testingAppModule(env)],
   }).compile();
   const app = moduleFixture.createNestApplication<NestExpressApplication>();
   configureExpressApp(app);
@@ -182,6 +185,72 @@ async function createApp(): Promise<NestExpressApplication> {
   await app.init();
   app.get(PollSchedulerService).onModuleDestroy();
   return app;
+}
+
+async function startVkMockServer(): Promise<{
+  server: Server;
+  baseUrl: string;
+}> {
+  const server = createServer((req, res) => {
+    const url = new URL(req.url ?? '/', 'http://127.0.0.1');
+    const path = url.pathname;
+    res.statusCode = 200;
+    res.setHeader('content-type', 'application/json');
+
+    if (path === '/api/organizations') {
+      res.end(
+        JSON.stringify({
+          success: true,
+          data: {
+            organizations: [{ id: 'org-1', name: 'Acme', slug: 'acme' }],
+          },
+        }),
+      );
+      return;
+    }
+
+    if (path === '/api/repos') {
+      res.end(
+        JSON.stringify({
+          success: true,
+          data: [{ id: 'repo-1', name: 'acme/repo-1' }],
+        }),
+      );
+      return;
+    }
+
+    if (path === '/api/remote/projects') {
+      const organizationId = url.searchParams.get('organization_id') ?? 'org-1';
+      res.end(
+        JSON.stringify({
+          success: true,
+          data: {
+            projects: [
+              { id: 'proj-1', organization_id: organizationId, name: 'Main' },
+            ],
+          },
+        }),
+      );
+      return;
+    }
+
+    res.statusCode = 404;
+    res.end(JSON.stringify({ success: false, message: 'not found' }));
+  });
+
+  await new Promise<void>((resolve) => {
+    server.listen(0, '127.0.0.1', () => resolve());
+  });
+
+  const address = server.address();
+  if (typeof address !== 'object' || address == null) {
+    throw new Error('expected VK mock server address');
+  }
+
+  return {
+    server,
+    baseUrl: `http://127.0.0.1:${address.port}`,
+  };
 }
 
 function listenPort(
@@ -212,14 +281,29 @@ describe('GraphQL operator BFF (integration)', () => {
   jest.setTimeout(35_000);
 
   let app: NestExpressApplication;
+  let vkMockServer: Server;
 
   beforeAll(async () => {
-    app = await createApp();
+    const vkMock = await startVkMockServer();
+    vkMockServer = vkMock.server;
+    app = await createApp({
+      ...process.env,
+      VIBE_SQUIRE_VK_BACKEND_URL: vkMock.baseUrl,
+    });
     await app.listen(0);
   });
 
   afterAll(async () => {
     await app.close();
+    await new Promise<void>((resolve, reject) => {
+      vkMockServer.close((err) => {
+        if (err) {
+          reject(err);
+          return;
+        }
+        resolve();
+      });
+    });
   });
 
   function wsUrl(): string {
