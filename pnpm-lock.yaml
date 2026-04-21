@@ -86,9 +86,6 @@ importers:
       '@prisma/client':
         specifier: ^7.5.0
         version: 7.7.0(prisma@7.7.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(better-sqlite3@12.9.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(typescript@5.9.3))(typescript@5.9.3)
-      '@vibe-squire/shared':
-        specifier: workspace:*
-        version: link:../../packages/shared
       better-sqlite3:
         specifier: ^12.8.0
         version: 12.9.0

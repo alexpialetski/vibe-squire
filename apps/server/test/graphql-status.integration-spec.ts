@@ -4,10 +4,10 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { createClient } from 'graphql-ws';
 import WebSocket from 'ws';
 import request from 'supertest';
-import { statusSnapshotSchema } from '@vibe-squire/shared';
 import { configureExpressApp } from '../src/configure-express-app';
 import { StatusEventsService } from '../src/events/status-events.service';
 import { SettingsService } from '../src/settings/settings.service';
+import { statusSnapshotSchema } from '../src/status/status-snapshot.contract';
 import { PollSchedulerService } from '../src/sync/poll-scheduler.service';
 import { testingAppModule } from './testing-app-module';
 

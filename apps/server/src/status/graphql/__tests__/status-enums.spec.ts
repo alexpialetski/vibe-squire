@@ -5,7 +5,7 @@ import {
   ghStateValues,
   scoutUiStateValues,
   statusSnapshotSchema,
-} from '@vibe-squire/shared';
+} from '../../status-snapshot.contract';
 import {
   DatabaseState,
   DestinationState,

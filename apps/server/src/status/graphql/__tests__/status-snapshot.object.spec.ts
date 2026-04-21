@@ -1,7 +1,7 @@
 import { LazyMetadataStorage } from '@nestjs/graphql/dist/schema-builder/storages/lazy-metadata.storage';
 import { TypeMetadataStorage } from '@nestjs/graphql/dist/schema-builder/storages/type-metadata.storage';
 import { z } from 'zod';
-import { statusSnapshotSchema } from '@vibe-squire/shared';
+import { statusSnapshotSchema } from '../../status-snapshot.contract';
 import {
   StatusConfiguration,
   StatusDatabase,

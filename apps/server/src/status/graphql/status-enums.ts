@@ -4,7 +4,7 @@ import {
   destStateValues,
   ghStateValues,
   scoutUiStateValues,
-} from '@vibe-squire/shared';
+} from '../status-snapshot.contract';
 
 function enumFromValues<T extends string>(
   name: string,

@@ -1,8 +1,4 @@
-import {
-  useMutation,
-  useQuery as useApolloQuery,
-  useSubscription,
-} from '@apollo/client';
+import { useMutation, useQuery as useApolloQuery } from '@apollo/client';
 import { type StatusSnapshot } from '@vibe-squire/shared';
 import { toast } from 'react-hot-toast';
 import { parseGraphqlOperatorActionError } from '../graphql/operator-action-errors';
@@ -10,10 +6,8 @@ import {
   DASHBOARD_SETUP_QUERY,
   REINIT_INTEGRATION_MUTATION,
   STATUS_QUERY,
-  STATUS_UPDATED_SUBSCRIPTION,
   TRIGGER_SYNC_MUTATION,
   type StatusQueryData,
-  type StatusUpdatedSubscriptionData,
 } from '../graphql';
 import { dashboardNeedsReinit } from '../operator/sync-health';
 import { LoadingLine } from '../ui/atoms/LoadingLine';
@@ -31,19 +25,6 @@ import { DashboardTemplate } from '../ui/templates/DashboardTemplate';
 export function DashboardPage() {
   const statusQ = useApolloQuery<StatusQueryData>(STATUS_QUERY);
   const setupQ = useApolloQuery(DASHBOARD_SETUP_QUERY);
-
-  useSubscription<StatusUpdatedSubscriptionData>(STATUS_UPDATED_SUBSCRIPTION, {
-    onData: ({ data, client }) => {
-      const snapshot = data.data?.statusUpdated;
-      if (!snapshot) {
-        return;
-      }
-      client.writeQuery({
-        query: STATUS_QUERY,
-        data: { status: snapshot },
-      });
-    },
-  });
 
   const [triggerSync, { loading: syncNowPending }] = useMutation(
     TRIGGER_SYNC_MUTATION,
