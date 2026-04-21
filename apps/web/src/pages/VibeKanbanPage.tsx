@@ -1,7 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { vibeKanbanUiStateSchema } from '@vibe-squire/shared';
 import { useEffect, useState } from 'react';
+import { toast } from 'react-hot-toast';
 import { apiJson } from '../api';
+import { getErrorMessage } from '../toast';
 
 export function VibeKanbanPage() {
   const qc = useQueryClient();
@@ -38,6 +40,10 @@ export function VibeKanbanPage() {
       void qc.invalidateQueries({ queryKey: ['vk', 'ui-state'] });
       void qc.invalidateQueries({ queryKey: ['vk', 'organizations'] });
       void qc.invalidateQueries({ queryKey: ['vk', 'projects'] });
+      toast.success('Vibe Kanban settings saved.');
+    },
+    onError: (error) => {
+      toast.error(`Save failed: ${getErrorMessage(error)}`);
     },
   });
 
@@ -194,7 +200,7 @@ export function VibeKanbanPage() {
             className="btn primary"
             disabled={patch.isPending}
           >
-            Save
+            {patch.isPending ? 'Saving…' : 'Save'}
           </button>
         </form>
       </section>

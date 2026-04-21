@@ -1,7 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { githubFieldsResponseSchema } from '@vibe-squire/shared';
 import { useEffect, useState } from 'react';
+import { toast } from 'react-hot-toast';
 import { apiJson } from '../api';
+import { getErrorMessage } from '../toast';
 
 export function GithubPage() {
   const qc = useQueryClient();
@@ -31,8 +33,13 @@ export function GithubPage() {
         body: JSON.stringify(body),
       });
     },
-    onSuccess: () =>
-      void qc.invalidateQueries({ queryKey: ['ui', 'github-fields'] }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['ui', 'github-fields'] });
+      toast.success('GitHub settings saved.');
+    },
+    onError: (error) => {
+      toast.error(`Save failed: ${getErrorMessage(error)}`);
+    },
   });
 
   if (fieldsQ.data?.disabled) {
@@ -73,7 +80,7 @@ export function GithubPage() {
             className="btn primary"
             disabled={patch.isPending}
           >
-            Save
+            {patch.isPending ? 'Saving…' : 'Save'}
           </button>
         </form>
       </section>

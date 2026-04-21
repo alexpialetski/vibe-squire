@@ -27,7 +27,7 @@ rules and the Story-files coverage invariant.
 |----|------|--------|
 | P2.1 | GraphQL server foundation (code-first Nest + Apollo driver) | done |
 | P2.2 | Port `/api/status` to a GraphQL query plus live subscription | done |
-| P2.3 | Apollo Client in `apps/web` with status screen migrated | planned |
+| P2.3 | Apollo Client in `apps/web` with status screen migrated | done |
 | P2.4 | Migrate operator BFF (settings, mappings, activity) to GraphQL | planned |
 | P2.5 | Sunset duplicate REST/SSE surfaces superseded by GraphQL | planned |
 

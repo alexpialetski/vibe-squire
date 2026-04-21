@@ -1,7 +1,7 @@
 ---
 id: P2.3
 title: Apollo Client in apps/web with status screen migrated
-status: todo
+status: done
 impact: M
 urgency: later
 tags:

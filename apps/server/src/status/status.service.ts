@@ -68,7 +68,13 @@ export class StatusService {
       },
     ];
 
-    const manualSync = this.sync.getManualSyncSnapshot();
+    const manualSyncSnapshot = this.sync.getManualSyncSnapshot();
+    const manualSync = setupEval.complete
+      ? manualSyncSnapshot
+      : {
+          canRun: false,
+          reason: setupEval.reason ?? 'setup_incomplete',
+        };
     const scheduledSyncEnabled = this.coreSettings.scheduledSyncEnabled;
 
     const destConfigExtras = destReady.configuration ?? {};
