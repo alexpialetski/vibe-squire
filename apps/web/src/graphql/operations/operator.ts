@@ -14,7 +14,6 @@ export {
   ReinitIntegrationMutationDocument as REINIT_INTEGRATION_MUTATION,
   TriggerSyncMutationDocument as TRIGGER_SYNC_MUTATION,
   UpdateDestinationSettingsDocument as UPDATE_DESTINATION_SETTINGS_MUTATION,
-  UpdateMappingMutationDocument as UPDATE_MAPPING_MUTATION,
   UpdateSourceSettingsDocument as UPDATE_SOURCE_SETTINGS_MUTATION,
   UpdateSettingsMutationDocument as UPDATE_SETTINGS_MUTATION,
   UpsertMappingMutationDocument as UPSERT_MAPPING_MUTATION,

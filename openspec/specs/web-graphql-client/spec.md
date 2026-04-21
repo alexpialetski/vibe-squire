@@ -110,7 +110,7 @@ TypeScript types for operation results SHOULD come from codegen when codegen is 
 
 ### Requirement: Operator settings, mapping, and triage mutations use optimistic Apollo responses
 
-The web client SHALL configure `updateSettings`, `upsertMapping`, `updateMapping`, `deleteMapping`, `acceptTriage`, `declineTriage`, and `reconsiderTriage` mutations with optimistic responses (or equivalent cache writes) so the UI updates immediately on user action and rolls back automatically when the server returns a GraphQL error. Apollo optimistic responses SHALL be the mechanism for triage UX; the pre-split `localStorage` key `vs_triage_optimistic` SHALL NOT be reintroduced.
+The web client SHALL configure `updateSettings`, `upsertMapping`, `deleteMapping`, `acceptTriage`, `declineTriage`, and `reconsiderTriage` mutations with optimistic responses (or equivalent cache writes) so the UI updates immediately on user action and rolls back automatically when the server returns a GraphQL error. Apollo optimistic responses SHALL be the mechanism for triage UX; the pre-split `localStorage` key `vs_triage_optimistic` SHALL NOT be reintroduced.
 
 #### Scenario: Optimistic mapping delete disappears from the list
 

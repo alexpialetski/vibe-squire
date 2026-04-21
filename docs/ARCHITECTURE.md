@@ -136,7 +136,7 @@ Only two REST endpoints remain as operator tools (`curl` / shell ergonomics): `P
 | GET | `/api/activity/runs` | `removed` | Superseded by GraphQL `activityFeed`. |
 | GET | `/api/mappings` | `removed` | Superseded by GraphQL `mappings`. |
 | POST | `/api/mappings` | `removed` | Superseded by GraphQL `upsertMapping`. |
-| PATCH | `/api/mappings/:id` | `removed` | Superseded by GraphQL `updateMapping`. |
+| PATCH | `/api/mappings/:id` | `removed` | Mapping edits are retired; operators delete and recreate mappings instead. |
 | DELETE | `/api/mappings/:id` | `removed` | Superseded by GraphQL `deleteMapping`. |
 | POST | `/api/pr/accept` | `removed` | Superseded by GraphQL `acceptTriage`. |
 | POST | `/api/pr/decline` | `removed` | Superseded by GraphQL `declineTriage`. |

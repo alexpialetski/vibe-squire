@@ -1,6 +1,5 @@
 import type {
   MappingsQueryQuery,
-  UpdateMappingMutationMutation,
   UpsertMappingMutationMutation,
 } from '../__generated__/graphql';
 
@@ -15,9 +14,7 @@ export function randomOptimisticMappingId(): string {
 
 export function mergeMappingListAfterWrite(
   existing: MappingsQueryQuery['mappings'],
-  m:
-    | UpsertMappingMutationMutation['upsertMapping']
-    | UpdateMappingMutationMutation['updateMapping'],
+  m: UpsertMappingMutationMutation['upsertMapping'],
 ): MappingsQueryQuery['mappings'] {
   const prev =
     existing.find((row) => row.id === m.id) ??

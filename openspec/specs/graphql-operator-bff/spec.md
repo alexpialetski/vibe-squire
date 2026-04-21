@@ -73,19 +73,17 @@ The GraphQL server SHALL expose a `dashboardSetup` query on the root `Query` typ
 
 ### Requirement: GraphQL exposes settings and mapping mutations with REST-parity results
 
-The GraphQL server SHALL expose mutations `updateSettings`, `upsertMapping`, `updateMapping`, and `deleteMapping` whose inputs validate with the same Zod contracts as the REST handlers and whose success payloads echo the REST shapes closely enough for the web client to swap transports without bespoke mapping layers. `updateMapping(id: ID!, input: UpdateMappingInput!)` SHALL correspond to `PATCH /api/mappings/:id` semantics used by the restored inline row-edit UX; `upsertMapping(input: UpsertMappingInput!)` SHALL correspond to `POST /api/mappings` (create, or update when a matching identity exists per current REST semantics).
+The GraphQL server SHALL expose mutations `updateSettings`, `upsertMapping`, and `deleteMapping` whose inputs validate with the same Zod contracts as the REST handlers and whose success payloads echo the REST shapes closely enough for the web client to swap transports without bespoke mapping layers. `upsertMapping(input: UpsertMappingInput!)` SHALL correspond to `POST /api/mappings` semantics.
 
 #### Scenario: Settings mutation persists and returns updated effective settings
 
 - **WHEN** a client calls `updateSettings` with a valid patch matching the Zod contract
 - **THEN** persisted settings SHALL match the behaviour of the REST PATCH handler and the response SHALL expose the fields the settings screen needs to refresh local state
 
-#### Scenario: Mapping upsert, update, and delete mutate backing store like REST
+#### Scenario: Mapping create and delete mutate backing store like REST
 
 - **WHEN** a client calls `upsertMapping` followed by `mappings`
 - **THEN** the created row SHALL appear in `mappings`
-- **AND WHEN** `updateMapping` is called against an existing id with modified routing fields
-- **THEN** the returned row SHALL reflect those updates and a subsequent `mappings` query SHALL show the same update
 - **AND WHEN** `deleteMapping` is called with that id
 - **THEN** subsequent `mappings` queries SHALL not return the deleted mapping
 

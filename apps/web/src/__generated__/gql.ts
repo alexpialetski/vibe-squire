@@ -28,7 +28,6 @@ type Documents = {
   'mutation ReinitIntegrationMutation {\n  reinitIntegration {\n    ok\n    database {\n      state\n      message\n    }\n    source {\n      state\n      message\n    }\n    destination {\n      state\n      message\n    }\n  }\n}': typeof types.ReinitIntegrationMutationDocument;
   'mutation TriggerSyncMutation {\n  triggerSync {\n    ok\n  }\n}': typeof types.TriggerSyncMutationDocument;
   'mutation UpdateDestinationSettings($input: UpdateDestinationSettingsInput!) {\n  updateDestinationSettings(input: $input) {\n    coreFields {\n      key\n      value\n    }\n    resolvedSourceLabel\n    resolvedDestinationLabel\n    scheduledSyncEnabled\n    autoCreateIssues\n  }\n}': typeof types.UpdateDestinationSettingsDocument;
-  'mutation UpdateMappingMutation($id: ID!, $input: UpdateMappingInput!) {\n  updateMapping(id: $id, input: $input) {\n    id\n    githubRepo\n    vibeKanbanRepoId\n  }\n}': typeof types.UpdateMappingMutationDocument;
   'mutation UpdateSettingsMutation($input: UpdateSettingsInput!) {\n  updateSettings(input: $input) {\n    ok\n  }\n}': typeof types.UpdateSettingsMutationDocument;
   'mutation UpdateSourceSettings($input: UpdateSourceSettingsInput!) {\n  updateSourceSettings(input: $input) {\n    coreFields {\n      key\n      value\n    }\n    resolvedSourceLabel\n    resolvedDestinationLabel\n    scheduledSyncEnabled\n    autoCreateIssues\n  }\n}': typeof types.UpdateSourceSettingsDocument;
   'mutation UpsertMappingMutation($input: UpsertMappingInput!) {\n  upsertMapping(input: $input) {\n    id\n    githubRepo\n    vibeKanbanRepoId\n  }\n}': typeof types.UpsertMappingMutationDocument;
@@ -67,8 +66,6 @@ const documents: Documents = {
     types.TriggerSyncMutationDocument,
   'mutation UpdateDestinationSettings($input: UpdateDestinationSettingsInput!) {\n  updateDestinationSettings(input: $input) {\n    coreFields {\n      key\n      value\n    }\n    resolvedSourceLabel\n    resolvedDestinationLabel\n    scheduledSyncEnabled\n    autoCreateIssues\n  }\n}':
     types.UpdateDestinationSettingsDocument,
-  'mutation UpdateMappingMutation($id: ID!, $input: UpdateMappingInput!) {\n  updateMapping(id: $id, input: $input) {\n    id\n    githubRepo\n    vibeKanbanRepoId\n  }\n}':
-    types.UpdateMappingMutationDocument,
   'mutation UpdateSettingsMutation($input: UpdateSettingsInput!) {\n  updateSettings(input: $input) {\n    ok\n  }\n}':
     types.UpdateSettingsMutationDocument,
   'mutation UpdateSourceSettings($input: UpdateSourceSettingsInput!) {\n  updateSourceSettings(input: $input) {\n    coreFields {\n      key\n      value\n    }\n    resolvedSourceLabel\n    resolvedDestinationLabel\n    scheduledSyncEnabled\n    autoCreateIssues\n  }\n}':
@@ -185,12 +182,6 @@ export function graphql(
 export function graphql(
   source: 'mutation UpdateDestinationSettings($input: UpdateDestinationSettingsInput!) {\n  updateDestinationSettings(input: $input) {\n    coreFields {\n      key\n      value\n    }\n    resolvedSourceLabel\n    resolvedDestinationLabel\n    scheduledSyncEnabled\n    autoCreateIssues\n  }\n}',
 ): (typeof documents)['mutation UpdateDestinationSettings($input: UpdateDestinationSettingsInput!) {\n  updateDestinationSettings(input: $input) {\n    coreFields {\n      key\n      value\n    }\n    resolvedSourceLabel\n    resolvedDestinationLabel\n    scheduledSyncEnabled\n    autoCreateIssues\n  }\n}'];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(
-  source: 'mutation UpdateMappingMutation($id: ID!, $input: UpdateMappingInput!) {\n  updateMapping(id: $id, input: $input) {\n    id\n    githubRepo\n    vibeKanbanRepoId\n  }\n}',
-): (typeof documents)['mutation UpdateMappingMutation($id: ID!, $input: UpdateMappingInput!) {\n  updateMapping(id: $id, input: $input) {\n    id\n    githubRepo\n    vibeKanbanRepoId\n  }\n}'];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

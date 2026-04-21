@@ -11,8 +11,6 @@ type CreateMappingInput = {
   vibeKanbanRepoId: string;
 };
 
-type UpdateMappingInput = Partial<CreateMappingInput>;
-
 @Injectable()
 export class MappingsService {
   constructor(private readonly prisma: PrismaService) {}
@@ -38,42 +36,6 @@ export class MappingsService {
         e.code === 'P2002'
       ) {
         throw new ConflictException(`Mapping already exists for ${githubRepo}`);
-      }
-      throw e;
-    }
-  }
-
-  async update(id: string, dto: UpdateMappingInput) {
-    const existing = await this.prisma.repoProjectMapping.findUnique({
-      where: { id },
-    });
-    if (!existing) {
-      throw new NotFoundException(`Mapping ${id} not found`);
-    }
-
-    const githubRepo =
-      dto.githubRepo !== undefined
-        ? dto.githubRepo.trim().toLowerCase()
-        : undefined;
-
-    try {
-      return await this.prisma.repoProjectMapping.update({
-        where: { id },
-        data: {
-          ...(githubRepo !== undefined && { githubRepo }),
-          ...(dto.vibeKanbanRepoId !== undefined && {
-            vibeKanbanRepoId: dto.vibeKanbanRepoId.trim(),
-          }),
-        },
-      });
-    } catch (e: unknown) {
-      if (
-        e instanceof Prisma.PrismaClientKnownRequestError &&
-        e.code === 'P2002'
-      ) {
-        throw new ConflictException(
-          `Mapping already exists for ${githubRepo ?? existing.githubRepo}`,
-        );
       }
       throw e;
     }

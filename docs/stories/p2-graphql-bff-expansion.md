@@ -36,7 +36,7 @@ Covered surfaces (map to existing modules):
 ## Acceptance criteria
 
 - [x] **Queries:** `effectiveSettings`, `mappings`, `activityFeed` (Relay-style `first` / `after`), `integrationNav`, `dashboardSetup` (parity with `GET /api/ui/setup`), plus anything the remaining web screens need (walk each screen and list the query).
-- [x] **Mutations:** `updateSettings(input: …)`, `upsertMapping` / `updateMapping` / `deleteMapping`, triage mutations, `triggerSync`, `reinitIntegration`. Return shapes match current REST responses closely enough for the web client to drop in.
+- [x] **Mutations:** `updateSettings(input: …)`, `upsertMapping` / `deleteMapping`, triage mutations, `triggerSync`, `reinitIntegration`. Return shapes match current REST responses closely enough for the web client to drop in.
 - [x] **Subscriptions:** `activityEvents` with `{ invalidate }`; decision documented in `openspec/changes/p2-graphql-bff-expansion/design.md` (PR notes).
 - [x] Web screens — settings, mappings, activity, dashboard setup checklist, sync-trigger button — switched over from TanStack Query/REST to Apollo hooks (GitHub / Vibe Kanban pages remain on REST via `apiJson` without TanStack).
 - [x] TanStack Query removed from `apps/web/package.json`; GitHub and Vibe Kanban use local fetch state instead of a global query client.

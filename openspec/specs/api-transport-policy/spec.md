@@ -64,7 +64,7 @@ The server SHALL NOT expose a REST or SSE endpoint that duplicates a live GraphQ
 
 - **WHEN** `apps/server/src/` is searched for `@Get(`, `@Post(`, `@Patch(`, or `@Delete(` handlers after this change lands
 - **THEN** the only surviving handlers SHALL be `POST /api/sync/run` and `POST /api/reinit`
-- **AND** no handler SHALL duplicate a live GraphQL query (`status`, `effectiveSettings`, `mappings`, `activityFeed`, `integrationNav`, `dashboardSetup`, `githubFields`, `vibeKanbanUiState`, `vibeKanbanOrganizations`, `vibeKanbanProjects`, `vibeKanbanRepos`) or mutation (`updateSettings`, `upsertMapping`, `updateMapping`, `deleteMapping`, `acceptTriage`, `declineTriage`, `reconsiderTriage`, `updateSourceSettings`, `updateDestinationSettings`)
+- **AND** no handler SHALL duplicate a live GraphQL query (`status`, `effectiveSettings`, `mappings`, `activityFeed`, `integrationNav`, `dashboardSetup`, `githubFields`, `vibeKanbanUiState`, `vibeKanbanOrganizations`, `vibeKanbanProjects`, `vibeKanbanRepos`) or mutation (`updateSettings`, `upsertMapping`, `deleteMapping`, `acceptTriage`, `declineTriage`, `reconsiderTriage`, `updateSourceSettings`, `updateDestinationSettings`)
 
 ### Requirement: Web client contains no REST data-loading helper
 

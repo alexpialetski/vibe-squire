@@ -196,7 +196,6 @@ export type Mutation = {
   reinitIntegration: ReinitIntegrationPayload;
   triggerSync: TriggerSyncPayload;
   updateDestinationSettings: EffectiveSettings;
-  updateMapping: MappingGql;
   updateSettings: UpdateSettingsPayload;
   updateSourceSettings: EffectiveSettings;
   upsertMapping: MappingGql;
@@ -220,11 +219,6 @@ export type MutationReconsiderTriageArgs = {
 
 export type MutationUpdateDestinationSettingsArgs = {
   input: UpdateDestinationSettingsInput;
-};
-
-export type MutationUpdateMappingArgs = {
-  id: Scalars['ID']['input'];
-  input: UpdateMappingInput;
 };
 
 export type MutationUpdateSettingsArgs = {
@@ -415,11 +409,6 @@ export type UpdateDestinationSettingsInput = {
   default_project_id?: InputMaybe<Scalars['String']['input']>;
   kanban_done_status?: InputMaybe<Scalars['String']['input']>;
   vk_workspace_executor?: InputMaybe<Scalars['String']['input']>;
-};
-
-export type UpdateMappingInput = {
-  githubRepo?: InputMaybe<Scalars['String']['input']>;
-  vibeKanbanRepoId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateSettingsInput = {
@@ -744,21 +733,6 @@ export type UpdateDestinationSettingsMutation = {
       key: string;
       value: string;
     }>;
-  };
-};
-
-export type UpdateMappingMutationMutationVariables = Exact<{
-  id: Scalars['ID']['input'];
-  input: UpdateMappingInput;
-}>;
-
-export type UpdateMappingMutationMutation = {
-  __typename?: 'Mutation';
-  updateMapping: {
-    __typename?: 'MappingGql';
-    id: string;
-    githubRepo: string;
-    vibeKanbanRepoId: string;
   };
 };
 
@@ -2130,81 +2104,6 @@ export const UpdateDestinationSettingsDocument = {
 } as unknown as DocumentNode<
   UpdateDestinationSettingsMutation,
   UpdateDestinationSettingsMutationVariables
->;
-export const UpdateMappingMutationDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'mutation',
-      name: { kind: 'Name', value: 'UpdateMappingMutation' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
-          },
-        },
-        {
-          kind: 'VariableDefinition',
-          variable: {
-            kind: 'Variable',
-            name: { kind: 'Name', value: 'input' },
-          },
-          type: {
-            kind: 'NonNullType',
-            type: {
-              kind: 'NamedType',
-              name: { kind: 'Name', value: 'UpdateMappingInput' },
-            },
-          },
-        },
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'updateMapping' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'id' },
-                value: {
-                  kind: 'Variable',
-                  name: { kind: 'Name', value: 'id' },
-                },
-              },
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'input' },
-                value: {
-                  kind: 'Variable',
-                  name: { kind: 'Name', value: 'input' },
-                },
-              },
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'githubRepo' } },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'vibeKanbanRepoId' },
-                },
-              ],
-            },
-          },
-        ],
-      },
-    },
-  ],
-} as unknown as DocumentNode<
-  UpdateMappingMutationMutation,
-  UpdateMappingMutationMutationVariables
 >;
 export const UpdateSettingsMutationDocument = {
   kind: 'Document',

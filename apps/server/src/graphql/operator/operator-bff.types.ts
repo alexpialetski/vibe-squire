@@ -424,15 +424,6 @@ export class UpsertMappingInput {
   vibeKanbanRepoId!: string;
 }
 
-@InputType()
-export class UpdateMappingInput {
-  @Field(() => String, { nullable: true })
-  githubRepo?: string;
-
-  @Field(() => String, { nullable: true })
-  vibeKanbanRepoId?: string;
-}
-
 @ObjectType()
 export class DeleteMappingPayload {
   @Field(() => Boolean)

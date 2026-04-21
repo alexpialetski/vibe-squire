@@ -1,37 +1,21 @@
 import type { MappingGqlRow } from '../../graphql/operator-query-types';
 import { MappingEditableRow } from '../molecules/MappingEditableRow';
 
-type VkRepoOption = { id: string; name?: string };
-
 type MappingsTableProps = {
   rows: MappingGqlRow[];
-  vkRepos: VkRepoOption[];
   listInitialLoading: boolean;
   listErrorMessage: string | null;
   showEmptyHint: boolean;
-  editingId: string | null;
-  draft: Partial<MappingGqlRow>;
   deleteBusy: boolean;
-  onDraftChange: (patch: Partial<MappingGqlRow>) => void;
-  onStartEdit: (row: MappingGqlRow) => void;
-  onCancelEdit: () => void;
-  onSaveEdit: (id: string) => void;
   onRequestDelete: (id: string) => void;
 };
 
 export function MappingsTable({
   rows,
-  vkRepos,
   listInitialLoading,
   listErrorMessage,
   showEmptyHint,
-  editingId,
-  draft,
   deleteBusy,
-  onDraftChange,
-  onStartEdit,
-  onCancelEdit,
-  onSaveEdit,
   onRequestDelete,
 }: MappingsTableProps) {
   return (
@@ -63,14 +47,7 @@ export function MappingsTable({
               <MappingEditableRow
                 key={row.id}
                 row={row}
-                vkRepos={vkRepos}
-                isEditing={editingId === row.id}
-                draft={draft}
                 deleteBusy={deleteBusy}
-                onDraftChange={onDraftChange}
-                onStartEdit={() => onStartEdit(row)}
-                onCancelEdit={onCancelEdit}
-                onSave={() => onSaveEdit(row.id)}
                 onRequestDelete={() => {
                   if (confirm('Delete this mapping?')) {
                     onRequestDelete(row.id);
