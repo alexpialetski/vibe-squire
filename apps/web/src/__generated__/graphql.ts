@@ -151,6 +151,21 @@ export enum GhState {
   Unknown = 'unknown',
 }
 
+export type GithubField = {
+  __typename?: 'GithubField';
+  description?: Maybe<Scalars['String']['output']>;
+  envVar?: Maybe<Scalars['String']['output']>;
+  key: Scalars['String']['output'];
+  label: Scalars['String']['output'];
+  value: Scalars['String']['output'];
+};
+
+export type GithubFieldsPayload = {
+  __typename?: 'GithubFieldsPayload';
+  disabled: Scalars['Boolean']['output'];
+  fields: Array<GithubField>;
+};
+
 export type HealthStatus = {
   __typename?: 'HealthStatus';
   ok: Scalars['Boolean']['output'];
@@ -181,8 +196,10 @@ export type Mutation = {
   reconsiderTriage: ReconsiderTriagePayload;
   reinitIntegration: ReinitIntegrationPayload;
   triggerSync: TriggerSyncPayload;
+  updateDestinationSettings: EffectiveSettings;
   updateMapping: MappingGql;
   updateSettings: UpdateSettingsPayload;
+  updateSourceSettings: EffectiveSettings;
   upsertMapping: MappingGql;
 };
 
@@ -202,6 +219,10 @@ export type MutationReconsiderTriageArgs = {
   prUrl: Scalars['String']['input'];
 };
 
+export type MutationUpdateDestinationSettingsArgs = {
+  input: UpdateDestinationSettingsInput;
+};
+
 export type MutationUpdateMappingArgs = {
   id: Scalars['ID']['input'];
   input: UpdateMappingInput;
@@ -209,6 +230,10 @@ export type MutationUpdateMappingArgs = {
 
 export type MutationUpdateSettingsArgs = {
   input: UpdateSettingsInput;
+};
+
+export type MutationUpdateSourceSettingsArgs = {
+  input: UpdateSourceSettingsInput;
 };
 
 export type MutationUpsertMappingArgs = {
@@ -220,15 +245,24 @@ export type Query = {
   activityFeed: ActivityFeedConnection;
   dashboardSetup: DashboardSetupGql;
   effectiveSettings: EffectiveSettings;
+  githubFields: GithubFieldsPayload;
   health: HealthStatus;
   integrationNav: IntegrationNavGql;
   mappings: Array<MappingGql>;
   status: StatusSnapshot;
+  vibeKanbanOrganizations: Array<VibeKanbanOrganization>;
+  vibeKanbanProjects: Array<VibeKanbanProject>;
+  vibeKanbanRepos: Array<VibeKanbanRepo>;
+  vibeKanbanUiState: VibeKanbanUiState;
 };
 
 export type QueryActivityFeedArgs = {
   after?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
+};
+
+export type QueryVibeKanbanProjectsArgs = {
+  organizationId: Scalars['ID']['input'];
 };
 
 export type ReconsiderTriagePayload = {
@@ -377,6 +411,13 @@ export type UiNavEntryGql = {
   label: Scalars['String']['output'];
 };
 
+export type UpdateDestinationSettingsInput = {
+  default_organization_id?: InputMaybe<Scalars['String']['input']>;
+  default_project_id?: InputMaybe<Scalars['String']['input']>;
+  kanban_done_status?: InputMaybe<Scalars['String']['input']>;
+  vk_workspace_executor?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type UpdateMappingInput = {
   githubRepo?: InputMaybe<Scalars['String']['input']>;
   label?: InputMaybe<Scalars['String']['input']>;
@@ -397,10 +438,60 @@ export type UpdateSettingsPayload = {
   ok: Scalars['Boolean']['output'];
 };
 
+export type UpdateSourceSettingsInput = {
+  pr_ignore_author_logins?: InputMaybe<Scalars['String']['input']>;
+  pr_review_body_template?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type UpsertMappingInput = {
   githubRepo: Scalars['String']['input'];
   label?: InputMaybe<Scalars['String']['input']>;
   vibeKanbanRepoId: Scalars['String']['input'];
+};
+
+export type VibeKanbanExecutorOption = {
+  __typename?: 'VibeKanbanExecutorOption';
+  label: Scalars['String']['output'];
+  value: Scalars['String']['output'];
+};
+
+export type VibeKanbanLabels = {
+  __typename?: 'VibeKanbanLabels';
+  default_organization_id: Scalars['String']['output'];
+  kanban_done_status: Scalars['String']['output'];
+  vk_workspace_executor: Scalars['String']['output'];
+};
+
+export type VibeKanbanOrganization = {
+  __typename?: 'VibeKanbanOrganization';
+  id: Scalars['ID']['output'];
+  name?: Maybe<Scalars['String']['output']>;
+};
+
+export type VibeKanbanProject = {
+  __typename?: 'VibeKanbanProject';
+  id: Scalars['ID']['output'];
+  name?: Maybe<Scalars['String']['output']>;
+};
+
+export type VibeKanbanRepo = {
+  __typename?: 'VibeKanbanRepo';
+  id: Scalars['ID']['output'];
+  name?: Maybe<Scalars['String']['output']>;
+};
+
+export type VibeKanbanUiState = {
+  __typename?: 'VibeKanbanUiState';
+  boardOrg: Scalars['String']['output'];
+  boardProj: Scalars['String']['output'];
+  error?: Maybe<Scalars['String']['output']>;
+  executorOptions: Array<VibeKanbanExecutorOption>;
+  kanbanDoneStatus: Scalars['String']['output'];
+  orgError?: Maybe<Scalars['String']['output']>;
+  saved: Scalars['Boolean']['output'];
+  vkBoardPicker: Scalars['Boolean']['output'];
+  vkExecutor: Scalars['String']['output'];
+  vkLabels: VibeKanbanLabels;
 };
 
 export type AcceptTriageMutationMutationVariables = Exact<{
@@ -549,6 +640,22 @@ export type EffectiveSettingsQueryQuery = {
   };
 };
 
+export type GithubFieldsQueryVariables = Exact<{ [key: string]: never }>;
+
+export type GithubFieldsQuery = {
+  __typename?: 'Query';
+  githubFields: {
+    __typename?: 'GithubFieldsPayload';
+    disabled: boolean;
+    fields: Array<{
+      __typename?: 'GithubField';
+      key: string;
+      label: string;
+      value: string;
+    }>;
+  };
+};
+
 export type IntegrationNavQueryQueryVariables = Exact<{ [key: string]: never }>;
 
 export type IntegrationNavQueryQuery = {
@@ -624,6 +731,26 @@ export type TriggerSyncMutationMutation = {
   triggerSync: { __typename?: 'TriggerSyncPayload'; ok: boolean };
 };
 
+export type UpdateDestinationSettingsMutationVariables = Exact<{
+  input: UpdateDestinationSettingsInput;
+}>;
+
+export type UpdateDestinationSettingsMutation = {
+  __typename?: 'Mutation';
+  updateDestinationSettings: {
+    __typename?: 'EffectiveSettings';
+    resolvedSourceLabel: string;
+    resolvedDestinationLabel: string;
+    scheduledSyncEnabled: boolean;
+    autoCreateIssues: boolean;
+    coreFields: Array<{
+      __typename?: 'CoreSettingField';
+      key: string;
+      value: string;
+    }>;
+  };
+};
+
 export type UpdateMappingMutationMutationVariables = Exact<{
   id: Scalars['ID']['input'];
   input: UpdateMappingInput;
@@ -649,6 +776,26 @@ export type UpdateSettingsMutationMutation = {
   updateSettings: { __typename?: 'UpdateSettingsPayload'; ok: boolean };
 };
 
+export type UpdateSourceSettingsMutationVariables = Exact<{
+  input: UpdateSourceSettingsInput;
+}>;
+
+export type UpdateSourceSettingsMutation = {
+  __typename?: 'Mutation';
+  updateSourceSettings: {
+    __typename?: 'EffectiveSettings';
+    resolvedSourceLabel: string;
+    resolvedDestinationLabel: string;
+    scheduledSyncEnabled: boolean;
+    autoCreateIssues: boolean;
+    coreFields: Array<{
+      __typename?: 'CoreSettingField';
+      key: string;
+      value: string;
+    }>;
+  };
+};
+
 export type UpsertMappingMutationMutationVariables = Exact<{
   input: UpsertMappingInput;
 }>;
@@ -661,6 +808,71 @@ export type UpsertMappingMutationMutation = {
     githubRepo: string;
     vibeKanbanRepoId: string;
     label?: string | null;
+  };
+};
+
+export type VibeKanbanOrganizationsQueryVariables = Exact<{
+  [key: string]: never;
+}>;
+
+export type VibeKanbanOrganizationsQuery = {
+  __typename?: 'Query';
+  vibeKanbanOrganizations: Array<{
+    __typename?: 'VibeKanbanOrganization';
+    id: string;
+    name?: string | null;
+  }>;
+};
+
+export type VibeKanbanProjectsQueryVariables = Exact<{
+  organizationId: Scalars['ID']['input'];
+}>;
+
+export type VibeKanbanProjectsQuery = {
+  __typename?: 'Query';
+  vibeKanbanProjects: Array<{
+    __typename?: 'VibeKanbanProject';
+    id: string;
+    name?: string | null;
+  }>;
+};
+
+export type VibeKanbanReposQueryVariables = Exact<{ [key: string]: never }>;
+
+export type VibeKanbanReposQuery = {
+  __typename?: 'Query';
+  vibeKanbanRepos: Array<{
+    __typename?: 'VibeKanbanRepo';
+    id: string;
+    name?: string | null;
+  }>;
+};
+
+export type VibeKanbanUiStateQueryVariables = Exact<{ [key: string]: never }>;
+
+export type VibeKanbanUiStateQuery = {
+  __typename?: 'Query';
+  vibeKanbanUiState: {
+    __typename?: 'VibeKanbanUiState';
+    saved: boolean;
+    error?: string | null;
+    vkBoardPicker: boolean;
+    boardOrg: string;
+    boardProj: string;
+    kanbanDoneStatus: string;
+    vkExecutor: string;
+    orgError?: string | null;
+    executorOptions: Array<{
+      __typename?: 'VibeKanbanExecutorOption';
+      value: string;
+      label: string;
+    }>;
+    vkLabels: {
+      __typename?: 'VibeKanbanLabels';
+      default_organization_id: string;
+      vk_workspace_executor: string;
+      kanban_done_status: string;
+    };
   };
 };
 
@@ -1585,6 +1797,43 @@ export const EffectiveSettingsQueryDocument = {
   EffectiveSettingsQueryQuery,
   EffectiveSettingsQueryQueryVariables
 >;
+export const GithubFieldsDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'GithubFields' },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'githubFields' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'disabled' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'fields' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'label' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<GithubFieldsQuery, GithubFieldsQueryVariables>;
 export const IntegrationNavQueryDocument = {
   kind: 'Document',
   definitions: [
@@ -1809,6 +2058,86 @@ export const TriggerSyncMutationDocument = {
   TriggerSyncMutationMutation,
   TriggerSyncMutationMutationVariables
 >;
+export const UpdateDestinationSettingsDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'UpdateDestinationSettings' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'input' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'UpdateDestinationSettingsInput' },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'updateDestinationSettings' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'input' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'coreFields' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'resolvedSourceLabel' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'resolvedDestinationLabel' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'scheduledSyncEnabled' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'autoCreateIssues' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  UpdateDestinationSettingsMutation,
+  UpdateDestinationSettingsMutationVariables
+>;
 export const UpdateMappingMutationDocument = {
   kind: 'Document',
   definitions: [
@@ -1939,6 +2268,86 @@ export const UpdateSettingsMutationDocument = {
   UpdateSettingsMutationMutation,
   UpdateSettingsMutationMutationVariables
 >;
+export const UpdateSourceSettingsDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'UpdateSourceSettings' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'input' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'UpdateSourceSettingsInput' },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'updateSourceSettings' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'input' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'coreFields' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'resolvedSourceLabel' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'resolvedDestinationLabel' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'scheduledSyncEnabled' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'autoCreateIssues' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  UpdateSourceSettingsMutation,
+  UpdateSourceSettingsMutationVariables
+>;
 export const UpsertMappingMutationDocument = {
   kind: 'Document',
   definitions: [
@@ -1998,6 +2407,192 @@ export const UpsertMappingMutationDocument = {
 } as unknown as DocumentNode<
   UpsertMappingMutationMutation,
   UpsertMappingMutationMutationVariables
+>;
+export const VibeKanbanOrganizationsDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'VibeKanbanOrganizations' },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'vibeKanbanOrganizations' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  VibeKanbanOrganizationsQuery,
+  VibeKanbanOrganizationsQueryVariables
+>;
+export const VibeKanbanProjectsDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'VibeKanbanProjects' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'organizationId' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'vibeKanbanProjects' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'organizationId' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'organizationId' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  VibeKanbanProjectsQuery,
+  VibeKanbanProjectsQueryVariables
+>;
+export const VibeKanbanReposDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'VibeKanbanRepos' },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'vibeKanbanRepos' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  VibeKanbanReposQuery,
+  VibeKanbanReposQueryVariables
+>;
+export const VibeKanbanUiStateDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'VibeKanbanUiState' },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'vibeKanbanUiState' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'saved' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'error' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'vkBoardPicker' },
+                },
+                { kind: 'Field', name: { kind: 'Name', value: 'boardOrg' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'boardProj' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'kanbanDoneStatus' },
+                },
+                { kind: 'Field', name: { kind: 'Name', value: 'vkExecutor' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'executorOptions' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'label' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'vkLabels' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: {
+                          kind: 'Name',
+                          value: 'default_organization_id',
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'vk_workspace_executor' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'kanban_done_status' },
+                      },
+                    ],
+                  },
+                },
+                { kind: 'Field', name: { kind: 'Name', value: 'orgError' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  VibeKanbanUiStateQuery,
+  VibeKanbanUiStateQueryVariables
 >;
 export const StatusQueryDocument = {
   kind: 'Document',

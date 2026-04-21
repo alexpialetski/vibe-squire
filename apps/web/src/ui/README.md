@@ -13,7 +13,7 @@ The operator UI follows an atomic-design structure under `src/ui/`:
 - Molecules may import atoms only.
 - Organisms may import atoms, molecules, and domain types.
 - Templates may import atoms, molecules, and organisms.
-- **Pages are the sole hook boundary:** only `src/pages/*` may call `@apollo/client` hooks (`useQuery`, `useMutation`, `useSubscription`) or wire imperative data loading (e.g. `fetch` / `apiJson` for REST holdouts). UI under `src/ui/` stays presentational and receives data or callbacks as props.
+- **Pages are the sole hook boundary:** only `src/pages/*` may call `@apollo/client` hooks (`useQuery`, `useMutation`, `useSubscription`) or wire imperative data loading. UI under `src/ui/` stays presentational and receives data or callbacks as props.
 
 ## Operator organisms (GraphQL / General settings)
 
@@ -23,7 +23,7 @@ The operator UI follows an atomic-design structure under `src/ui/`:
 
 ## Mappings (P2.4 layout)
 
-- `molecules/VkReposLoadErrorBanner.tsx` — VK repos fetch failure + reload control.
+- `molecules/VkReposLoadErrorBanner.tsx` — Vibe Kanban repos query failure + reload control.
 - `molecules/MappingEditableRow.tsx` — one table row (view vs edit) with edit/save/cancel/delete driven by props.
 - `organisms/MappingsTable.tsx` — “Existing” card, loading/error/empty states, and the data table of `MappingEditableRow`.
 - `organisms/NewMappingCard.tsx` — “New mapping” form card.
@@ -42,7 +42,7 @@ Passing example:
 
 - `DashboardPage` runs `useQuery` and `useSubscription`, then passes values into `DashboardTemplate`.
 - `SettingsPage` runs Apollo mutations/queries, then passes props into `GeneralSettingsTemplate`, `SyncAdaptersInfoCard`, and `GeneralSettingsForm`.
-- `MappingsPage` owns Apollo + VK `apiJson` fetch and cache-update mutations; composes `MappingsPageTemplate`, `NewMappingCard`, `MappingsTable`, and `VkReposLoadErrorBanner`.
+- `MappingsPage` owns Apollo queries/mutations and cache-update mutations; composes `MappingsPageTemplate`, `NewMappingCard`, `MappingsTable`, and `VkReposLoadErrorBanner`.
 - `ActivityPage` owns `activityFeed` query, `activityEvents` subscription, and triage mutations; composes `ActivityPageTemplate` and `ActivityFeedSection`.
 
 Rejected example:

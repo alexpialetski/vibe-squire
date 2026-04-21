@@ -112,7 +112,7 @@ describe('RunPollCycleService branches (integration)', () => {
 
       app = moduleFixture.createNestApplication();
       app.useGlobalPipes(
-        new ValidationPipe({ whitelist: true, transform: true }),
+        new ValidationPipe({ whitelist: false, transform: true }),
       );
       await app.init();
 
@@ -248,7 +248,7 @@ describe('RunPollCycleService branches (integration)', () => {
 
       app = moduleFixture.createNestApplication();
       app.useGlobalPipes(
-        new ValidationPipe({ whitelist: true, transform: true }),
+        new ValidationPipe({ whitelist: false, transform: true }),
       );
       await app.init();
 

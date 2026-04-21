@@ -9,7 +9,6 @@ export type AppEnv = {
   databaseUrl: string;
   host: string;
   port: number;
-  openapiEnabled: boolean;
   logLevel: LevelWithSilent;
   /** When set, JSON logs are also written to this path (in addition to console). */
   logFilePath: string | undefined;

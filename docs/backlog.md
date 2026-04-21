@@ -29,7 +29,7 @@ rules and the Story-files coverage invariant.
 | P2.2 | Port `/api/status` to a GraphQL query plus live subscription | done |
 | P2.3 | Apollo Client in `apps/web` with status screen migrated | done |
 | P2.4 | Migrate operator BFF (settings, mappings, activity) to GraphQL | done |
-| P2.5 | Sunset duplicate REST/SSE surfaces superseded by GraphQL | planned |
+| P2.5 | Sunset duplicate REST/SSE surfaces superseded by GraphQL | done |
 
 ### P3 — speculative (ideas, may be cut)
 

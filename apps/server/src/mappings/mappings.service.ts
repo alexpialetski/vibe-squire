@@ -5,8 +5,14 @@ import {
 } from '@nestjs/common';
 import { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import type { CreateRepoMappingDto } from './dto/create-mapping.dto';
-import type { UpdateRepoMappingDto } from './dto/update-mapping.dto';
+
+type CreateMappingInput = {
+  githubRepo: string;
+  vibeKanbanRepoId: string;
+  label?: string;
+};
+
+type UpdateMappingInput = Partial<CreateMappingInput>;
 
 @Injectable()
 export class MappingsService {
@@ -18,7 +24,7 @@ export class MappingsService {
     });
   }
 
-  async create(dto: CreateRepoMappingDto) {
+  async create(dto: CreateMappingInput) {
     const githubRepo = dto.githubRepo.trim().toLowerCase();
     try {
       return await this.prisma.repoProjectMapping.create({
@@ -39,7 +45,7 @@ export class MappingsService {
     }
   }
 
-  async update(id: string, dto: UpdateRepoMappingDto) {
+  async update(id: string, dto: UpdateMappingInput) {
     const existing = await this.prisma.repoProjectMapping.findUnique({
       where: { id },
     });

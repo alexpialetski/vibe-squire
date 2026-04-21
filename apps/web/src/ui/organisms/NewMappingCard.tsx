@@ -1,3 +1,5 @@
+import { VibeKanbanRepoPicker } from '../molecules/VibeKanbanRepoPicker';
+
 type VkRepoOption = { id: string; name?: string };
 
 type NewMappingCardProps = {
@@ -44,22 +46,12 @@ export function NewMappingCard({
             placeholder="owner/repo"
           />
         </label>
-        <label className="field">
-          <span className="field-label">Kanban repository</span>
-          <select
-            className="input"
-            value={vkRepoId}
-            onChange={(e) => onVkRepoIdChange(e.target.value)}
-            disabled={vkReposLoading}
-          >
-            <option value="">{vkReposLoading ? 'Loading…' : 'Select…'}</option>
-            {vkRepos.map((r) => (
-              <option key={r.id} value={r.id}>
-                {r.name ?? r.id}
-              </option>
-            ))}
-          </select>
-        </label>
+        <VibeKanbanRepoPicker
+          value={vkRepoId}
+          options={vkRepos}
+          loading={vkReposLoading}
+          onChange={onVkRepoIdChange}
+        />
         <label className="field">
           <span className="field-label">Label (optional)</span>
           <input

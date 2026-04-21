@@ -9,6 +9,7 @@ import {
 } from '@nestjs/graphql';
 import { BadRequestException, Inject, UseGuards } from '@nestjs/common';
 import { PubSub } from 'graphql-subscriptions';
+import { APP_ENV, type AppEnv } from '../../config/app-env.token';
 import { SettingsService } from '../../settings/settings.service';
 import { CoreSettings } from '../../settings/core-settings.service';
 import { SetupEvaluationService } from '../../setup/setup-evaluation.service';
@@ -19,12 +20,20 @@ import { StatusEventsService } from '../../events/status-events.service';
 import { ActivityUiService } from '../../ui/activity-ui.service';
 import { UiNavService } from '../../ui/ui-nav.service';
 import { coreSettingsFieldsMetadata } from '../../ui/core-settings-metadata';
+import { GITHUB_SOURCE_UI_KEYS } from '../../ui/integration-ui-registry';
+import { integrationFieldsForUi } from '../../ui/setting-labels';
+import { buildVibeKanbanPageLocals } from '../../ui/ui-vibe-kanban-presenter';
 import {
   buildSetupChecklist,
   destinationTypeLabel,
   SETUP_REASON_MESSAGES,
   sourceTypeLabel,
 } from '../../ui/ui-presenter';
+import { VibeKanbanBoardService } from '../../vibe-kanban/vibe-kanban-board.service';
+import {
+  isVibeKanbanBoardDestination,
+  VK_DESTINATION_NOT_ACTIVE_MESSAGE,
+} from '../../vibe-kanban/vibe-kanban-destination';
 import { SyncService } from '../../sync/sync.service';
 import { PollSchedulerService } from '../../sync/poll-scheduler.service';
 import { PrTriageService } from '../../sync/pr-triage.service';
@@ -40,14 +49,21 @@ import {
   DashboardSetupGql,
   DeleteMappingPayload,
   EffectiveSettings,
+  GithubFieldsPayload,
   IntegrationNavGql,
   MappingGql,
   ReconsiderTriagePayload,
   ReinitIntegrationPayload,
   ReinitSubsystemGql,
+  UpdateDestinationSettingsInput,
+  UpdateSourceSettingsInput,
   TriggerSyncPayload,
   UiNavEntryGql,
   UpdateMappingInput,
+  VibeKanbanOrganization,
+  VibeKanbanProject,
+  VibeKanbanRepo,
+  VibeKanbanUiState,
   SetupChecklistRowGql,
   SetupEvaluationGql,
   SetupReasonMessageGql,
@@ -92,10 +108,12 @@ function patchObjectFromInput(
 @Resolver()
 export class OperatorBffResolver {
   constructor(
+    @Inject(APP_ENV) private readonly appEnv: AppEnv,
     private readonly settings: SettingsService,
     private readonly coreSettings: CoreSettings,
     private readonly setupEvaluation: SetupEvaluationService,
     private readonly mappingsService: MappingsService,
+    private readonly vkBoard: VibeKanbanBoardService,
     private readonly activityUi: ActivityUiService,
     private readonly uiNav: UiNavService,
     private readonly sync: SyncService,
@@ -108,6 +126,63 @@ export class OperatorBffResolver {
 
   @Query(() => EffectiveSettings, { name: 'effectiveSettings' })
   async effectiveSettings(): Promise<EffectiveSettings> {
+    return this.buildEffectiveSettings();
+  }
+
+  @Query(() => GithubFieldsPayload, { name: 'githubFields' })
+  githubFields(): GithubFieldsPayload {
+    if (this.appEnv.sourceType !== 'github') {
+      return { disabled: true, fields: [] };
+    }
+    const values = this.settings.listEffectiveNonSecret();
+    return {
+      disabled: false,
+      fields: integrationFieldsForUi(GITHUB_SOURCE_UI_KEYS, values),
+    };
+  }
+
+  @Query(() => VibeKanbanUiState, { name: 'vibeKanbanUiState' })
+  async vibeKanbanUiState(): Promise<VibeKanbanUiState> {
+    this.ensureVibeKanbanDestinationActive();
+    const locals = await buildVibeKanbanPageLocals({
+      settings: this.settings,
+      destinationType: this.appEnv.destinationType,
+      setupEvaluation: this.setupEvaluation,
+      uiNavEntries: this.uiNav.getEntries(),
+    });
+    const { integrationNavEntries, navMinimal, ...state } = locals as Record<
+      string,
+      unknown
+    > & {
+      integrationNavEntries?: unknown;
+      navMinimal?: unknown;
+    };
+    void integrationNavEntries;
+    void navMinimal;
+    return state as unknown as VibeKanbanUiState;
+  }
+
+  @Query(() => [VibeKanbanOrganization], { name: 'vibeKanbanOrganizations' })
+  async vibeKanbanOrganizations(): Promise<VibeKanbanOrganization[]> {
+    this.ensureVibeKanbanDestinationActive();
+    return this.vkBoard.listOrganizations();
+  }
+
+  @Query(() => [VibeKanbanProject], { name: 'vibeKanbanProjects' })
+  async vibeKanbanProjects(
+    @Args('organizationId', { type: () => ID }) organizationId: string,
+  ): Promise<VibeKanbanProject[]> {
+    this.ensureVibeKanbanDestinationActive();
+    return this.vkBoard.listProjects(organizationId);
+  }
+
+  @Query(() => [VibeKanbanRepo], { name: 'vibeKanbanRepos' })
+  async vibeKanbanRepos(): Promise<VibeKanbanRepo[]> {
+    this.ensureVibeKanbanDestinationActive();
+    return this.vkBoard.listRepos();
+  }
+
+  private async buildEffectiveSettings(): Promise<EffectiveSettings> {
     const values = this.settings.listEffectiveNonSecret();
     const ev = await this.setupEvaluation.evaluate();
     const meta = coreSettingsFieldsMetadata(values);
@@ -218,6 +293,28 @@ export class OperatorBffResolver {
     return { ok: true };
   }
 
+  @Mutation(() => EffectiveSettings, { name: 'updateSourceSettings' })
+  async updateSourceSettings(
+    @Args('input', { type: () => UpdateSourceSettingsInput })
+    input: UpdateSourceSettingsInput,
+  ): Promise<EffectiveSettings> {
+    return this.updateSettingsGroupAndLoadEffective(
+      'source',
+      input as unknown as Record<string, unknown>,
+    );
+  }
+
+  @Mutation(() => EffectiveSettings, { name: 'updateDestinationSettings' })
+  async updateDestinationSettings(
+    @Args('input', { type: () => UpdateDestinationSettingsInput })
+    input: UpdateDestinationSettingsInput,
+  ): Promise<EffectiveSettings> {
+    return this.updateSettingsGroupAndLoadEffective(
+      'destination',
+      input as unknown as Record<string, unknown>,
+    );
+  }
+
   @Mutation(() => MappingGql, { name: 'upsertMapping' })
   async upsertMapping(
     @Args('input', { type: () => UpsertMappingInput })
@@ -326,6 +423,34 @@ export class OperatorBffResolver {
   @Subscription(() => ActivityEventsPayload, { name: 'activityEvents' })
   activityEvents() {
     return this.activityPubSub.asyncIterableIterator(ACTIVITY_EVENTS);
+  }
+
+  private ensureVibeKanbanDestinationActive(): void {
+    if (!isVibeKanbanBoardDestination(this.appEnv.destinationType)) {
+      throw new BadRequestException(VK_DESTINATION_NOT_ACTIVE_MESSAGE);
+    }
+  }
+
+  private async updateSettingsGroupAndLoadEffective(
+    groupId: 'source' | 'destination',
+    input: Record<string, unknown>,
+  ): Promise<EffectiveSettings> {
+    const body = Object.fromEntries(
+      Object.entries(input).filter(
+        (entry): entry is [string, string] => typeof entry[1] === 'string',
+      ),
+    );
+    if (Object.keys(body).length > 0) {
+      try {
+        await this.settings.applyGroupPatch(groupId, body);
+      } catch (e) {
+        if (isSettingsPatchError(e)) {
+          throw new BadRequestException(e.message);
+        }
+        throw e;
+      }
+    }
+    return this.buildEffectiveSettings();
   }
 }
 

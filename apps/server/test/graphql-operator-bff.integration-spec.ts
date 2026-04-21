@@ -1,12 +1,11 @@
 import { ValidationPipe } from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import { ZodSerializerInterceptor } from 'nestjs-zod';
 import { createClient } from 'graphql-ws';
 import WebSocket from 'ws';
 import request from 'supertest';
 import { configureExpressApp } from '../src/configure-express-app';
+import { APP_ENV } from '../src/config/app-env.token';
 import { PollSchedulerService } from '../src/sync/poll-scheduler.service';
 import { StatusEventsService } from '../src/events/status-events.service';
 import { SettingsService } from '../src/settings/settings.service';
@@ -101,6 +100,70 @@ const DASHBOARD_SETUP = /* GraphQL */ `
   }
 `;
 
+const GITHUB_FIELDS = /* GraphQL */ `
+  query Ghf {
+    githubFields {
+      disabled
+      fields {
+        key
+        label
+        value
+      }
+    }
+  }
+`;
+
+const VIBE_KANBAN_UI_STATE = /* GraphQL */ `
+  query VkUi {
+    vibeKanbanUiState {
+      saved
+      error
+      vkBoardPicker
+      boardOrg
+      boardProj
+      kanbanDoneStatus
+      vkExecutor
+      executorOptions {
+        value
+        label
+      }
+      vkLabels {
+        default_organization_id
+        vk_workspace_executor
+        kanban_done_status
+      }
+      orgError
+    }
+  }
+`;
+
+const VIBE_KANBAN_ORGS = /* GraphQL */ `
+  query VkOrgs {
+    vibeKanbanOrganizations {
+      id
+      name
+    }
+  }
+`;
+
+const VIBE_KANBAN_PROJECTS = /* GraphQL */ `
+  query VkProjects($organizationId: ID!) {
+    vibeKanbanProjects(organizationId: $organizationId) {
+      id
+      name
+    }
+  }
+`;
+
+const VIBE_KANBAN_REPOS = /* GraphQL */ `
+  query VkRepos {
+    vibeKanbanRepos {
+      id
+      name
+    }
+  }
+`;
+
 const ACTIVITY_EVENTS_SUB = /* GraphQL */ `
   subscription Sub {
     activityEvents {
@@ -115,8 +178,7 @@ async function createApp(): Promise<NestExpressApplication> {
   }).compile();
   const app = moduleFixture.createNestApplication<NestExpressApplication>();
   configureExpressApp(app);
-  app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
-  app.useGlobalInterceptors(new ZodSerializerInterceptor(app.get(Reflector)));
+  app.useGlobalPipes(new ValidationPipe({ whitelist: false, transform: true }));
   await app.init();
   app.get(PollSchedulerService).onModuleDestroy();
   return app;
@@ -165,14 +227,10 @@ describe('GraphQL operator BFF (integration)', () => {
     return `ws://127.0.0.1:${port}/graphql`;
   }
 
-  it('effectiveSettings matches GET /api/ui/settings-meta (core parity)', async () => {
-    const [restRes, gqlRes] = await Promise.all([
-      request(app.getHttpServer()).get('/api/ui/settings-meta'),
-      request(app.getHttpServer())
-        .post('/graphql')
-        .send({ query: EFFECTIVE_SETTINGS }),
-    ]);
-    expect(restRes.status).toBe(200);
+  it('effectiveSettings returns expected metadata fields', async () => {
+    const gqlRes = await request(app.getHttpServer())
+      .post('/graphql')
+      .send({ query: EFFECTIVE_SETTINGS });
     expect(gqlRes.status).toBe(200);
     const gqlBody = gqlRes.body as {
       data?: { effectiveSettings?: unknown };
@@ -186,49 +244,17 @@ describe('GraphQL operator BFF (integration)', () => {
       scheduledSyncEnabled: boolean;
       autoCreateIssues: boolean;
     };
-    const rest = restRes.body as {
-      coreFields: { key: string; label: string; value: string }[];
-      resolvedSourceLabel: string;
-      resolvedDestinationLabel: string;
-      scheduledSyncEnabled: boolean;
-      autoCreateIssues: boolean;
-    };
-    expect(es.resolvedSourceLabel).toBe(rest.resolvedSourceLabel);
-    expect(es.resolvedDestinationLabel).toBe(rest.resolvedDestinationLabel);
-    expect(es.scheduledSyncEnabled).toBe(rest.scheduledSyncEnabled);
-    expect(es.autoCreateIssues).toBe(rest.autoCreateIssues);
-    const gqlTextFields = es.coreFields.filter((f) =>
-      [
-        'poll_interval_minutes',
-        'jitter_max_seconds',
-        'run_now_cooldown_seconds',
-        'max_board_pr_count',
-      ].includes(f.key),
-    );
-    const restTextFields = rest.coreFields;
-    expect(
-      gqlTextFields.map((f) => ({
-        key: f.key,
-        label: f.label,
-        value: f.value,
-      })),
-    ).toEqual(
-      restTextFields.map((f) => ({
-        key: f.key,
-        label: f.label,
-        value: f.value,
-      })),
-    );
+    expect(es.coreFields.length).toBeGreaterThan(0);
+    expect(typeof es.resolvedSourceLabel).toBe('string');
+    expect(typeof es.resolvedDestinationLabel).toBe('string');
+    expect(typeof es.scheduledSyncEnabled).toBe('boolean');
+    expect(typeof es.autoCreateIssues).toBe('boolean');
   });
 
-  it('dashboardSetup matches GET /api/ui/setup', async () => {
-    const [restRes, gqlRes] = await Promise.all([
-      request(app.getHttpServer()).get('/api/ui/setup'),
-      request(app.getHttpServer())
-        .post('/graphql')
-        .send({ query: DASHBOARD_SETUP }),
-    ]);
-    expect(restRes.status).toBe(200);
+  it('dashboardSetup returns evaluation, checklist, and reason messages', async () => {
+    const gqlRes = await request(app.getHttpServer())
+      .post('/graphql')
+      .send({ query: DASHBOARD_SETUP });
     expect(gqlRes.status).toBe(200);
     const gqlBody = graphBody<{
       dashboardSetup: {
@@ -251,45 +277,78 @@ describe('GraphQL operator BFF (integration)', () => {
     }>(gqlRes);
     expect(gqlBody.errors).toBeUndefined();
     const gql = gqlBody.data!.dashboardSetup;
-    const rest = restRes.body as {
-      evaluation: {
-        complete: boolean;
-        reason?: string;
-        mappingCount: number;
-        sourceType: string;
-        destinationType: string;
-        vibeKanbanBoardActive: boolean;
-        hasRouting: boolean;
+    expect(typeof gql.evaluation.complete).toBe('boolean');
+    expect(Array.isArray(gql.checklist)).toBe(true);
+    expect(Array.isArray(gql.reasonMessages)).toBe(true);
+  });
+
+  it('githubFields returns disabled flag and field rows', async () => {
+    const gqlRes = await request(app.getHttpServer())
+      .post('/graphql')
+      .send({ query: GITHUB_FIELDS });
+    expect(gqlRes.status).toBe(200);
+    const gqlBody = graphBody<{
+      githubFields: {
+        disabled: boolean;
+        fields: Array<{ key: string; label: string; value: string }>;
       };
-      checklist: Array<{
-        text: string;
-        linkHref?: string;
-        linkLabel?: string;
-      }>;
-      reasonMessages: Record<string, string>;
-    };
-    expect(gql.evaluation.complete).toBe(rest.evaluation.complete);
-    expect(gql.evaluation.reason ?? null).toBe(rest.evaluation.reason ?? null);
-    expect(gql.evaluation.mappingCount).toBe(rest.evaluation.mappingCount);
-    expect(gql.evaluation.sourceType).toBe(rest.evaluation.sourceType);
-    expect(gql.evaluation.destinationType).toBe(
-      rest.evaluation.destinationType,
-    );
-    expect(gql.evaluation.vibeKanbanBoardActive).toBe(
-      rest.evaluation.vibeKanbanBoardActive,
-    );
-    expect(gql.evaluation.hasRouting).toBe(rest.evaluation.hasRouting);
-    const gqlReasonMessages = Object.fromEntries(
-      gql.reasonMessages.map((r) => [r.code, r.message]),
-    );
-    expect(gqlReasonMessages).toEqual(rest.reasonMessages);
-    expect(gql.checklist).toEqual(
-      rest.checklist.map((row) => ({
-        text: row.text,
-        linkHref: row.linkHref ?? null,
-        linkLabel: row.linkLabel ?? null,
-      })),
-    );
+    }>(gqlRes);
+    expect(gqlBody.errors).toBeUndefined();
+    expect(typeof gqlBody.data?.githubFields.disabled).toBe('boolean');
+    expect(Array.isArray(gqlBody.data?.githubFields.fields)).toBe(true);
+  });
+
+  it('vibeKanbanUiState returns page bootstrap shape', async () => {
+    const gqlRes = await request(app.getHttpServer())
+      .post('/graphql')
+      .send({ query: VIBE_KANBAN_UI_STATE });
+    const gqlBody = graphBody<{ vibeKanbanUiState: unknown }>(gqlRes);
+    expect(gqlBody.errors).toBeUndefined();
+    expect(gqlBody.data?.vibeKanbanUiState).toBeDefined();
+  });
+
+  it('vibeKanbanOrganizations and repos return list payloads', async () => {
+    const [orgGql, repoGql] = await Promise.all([
+      request(app.getHttpServer())
+        .post('/graphql')
+        .send({ query: VIBE_KANBAN_ORGS }),
+      request(app.getHttpServer())
+        .post('/graphql')
+        .send({ query: VIBE_KANBAN_REPOS }),
+    ]);
+    const orgBody = graphBody<{
+      vibeKanbanOrganizations: Array<{ id: string; name?: string | null }>;
+    }>(orgGql);
+    const repoBody = graphBody<{
+      vibeKanbanRepos: Array<{ id: string; name?: string | null }>;
+    }>(repoGql);
+    expect(orgBody.errors).toBeUndefined();
+    expect(repoBody.errors).toBeUndefined();
+    expect(Array.isArray(orgBody.data?.vibeKanbanOrganizations)).toBe(true);
+    expect(Array.isArray(repoBody.data?.vibeKanbanRepos)).toBe(true);
+  });
+
+  it('vibeKanbanProjects returns projects for selected organization', async () => {
+    const orgRes = await request(app.getHttpServer())
+      .post('/graphql')
+      .send({ query: VIBE_KANBAN_ORGS });
+    const orgBody = graphBody<{
+      vibeKanbanOrganizations: Array<{ id: string }>;
+    }>(orgRes);
+    expect(orgBody.errors).toBeUndefined();
+    const orgId = orgBody.data?.vibeKanbanOrganizations?.[0]?.id;
+    expect(orgId).toBeTruthy();
+    const gqlRes = await request(app.getHttpServer())
+      .post('/graphql')
+      .send({
+        query: VIBE_KANBAN_PROJECTS,
+        variables: { organizationId: orgId },
+      });
+    const gqlBody = graphBody<{
+      vibeKanbanProjects: Array<{ id: string; name?: string | null }>;
+    }>(gqlRes);
+    expect(gqlBody.errors).toBeUndefined();
+    expect(Array.isArray(gqlBody.data?.vibeKanbanProjects)).toBe(true);
   });
 
   it('updateSettings applies core patch and returns ok', async () => {
@@ -360,6 +419,120 @@ describe('GraphQL operator BFF (integration)', () => {
     expect(String(body.errors?.[0]?.message)).toMatch(
       /poll|interval|number|invalid/i,
     );
+  });
+
+  it('updateSourceSettings persists source patch and returns effective settings', async () => {
+    const settings = app.get(SettingsService);
+    const before = settings.getEffective('pr_review_body_template');
+    const next = `${before}\n\n# graphql-test`;
+
+    const res = await request(app.getHttpServer())
+      .post('/graphql')
+      .send({
+        query: /* GraphQL */ `
+          mutation Uss($input: UpdateSourceSettingsInput!) {
+            updateSourceSettings(input: $input) {
+              coreFields {
+                key
+                value
+              }
+            }
+          }
+        `,
+        variables: { input: { pr_review_body_template: next } },
+      });
+    const body = graphBody<{
+      updateSourceSettings: {
+        coreFields: Array<{ key: string; value: string }>;
+      };
+    }>(res);
+    expect(body.errors).toBeUndefined();
+    expect(settings.getEffective('pr_review_body_template')).toBe(next);
+
+    await settings.applyGroupPatch('source', {
+      pr_review_body_template: before,
+    });
+  });
+
+  it('updateDestinationSettings persists destination patch and returns effective settings', async () => {
+    const settings = app.get(SettingsService);
+    const before = settings.getEffective('kanban_done_status');
+    const next = before === 'Done' ? 'Closed' : 'Done';
+
+    const res = await request(app.getHttpServer())
+      .post('/graphql')
+      .send({
+        query: /* GraphQL */ `
+          mutation Uds($input: UpdateDestinationSettingsInput!) {
+            updateDestinationSettings(input: $input) {
+              coreFields {
+                key
+                value
+              }
+            }
+          }
+        `,
+        variables: { input: { kanban_done_status: next } },
+      });
+    const body = graphBody<{
+      updateDestinationSettings: {
+        coreFields: Array<{ key: string; value: string }>;
+      };
+    }>(res);
+    expect(body.errors).toBeUndefined();
+    expect(settings.getEffective('kanban_done_status')).toBe(next);
+
+    await settings.applyGroupPatch('destination', {
+      kanban_done_status: before,
+    });
+  });
+
+  it('updateDestinationSettings surfaces validation error', async () => {
+    const res = await request(app.getHttpServer())
+      .post('/graphql')
+      .send({
+        query: /* GraphQL */ `
+          mutation Uds($input: UpdateDestinationSettingsInput!) {
+            updateDestinationSettings(input: $input) {
+              coreFields {
+                key
+              }
+            }
+          }
+        `,
+        variables: { input: { vk_workspace_executor: 'invalid-executor' } },
+      });
+    const body = graphBody<{ updateDestinationSettings: unknown }>(res);
+    expect(body.errors?.length).toBeGreaterThan(0);
+    expect(String((body.errors?.[0] as { message?: string }).message)).toMatch(
+      /executor|invalid/i,
+    );
+  });
+
+  it('vibeKanban queries return GraphQL error when destination is not active', async () => {
+    const env = app.get<{ destinationType: string }>(APP_ENV);
+    const prev = env.destinationType;
+    env.destinationType = 'not_vibe_kanban';
+    try {
+      const res = await request(app.getHttpServer())
+        .post('/graphql')
+        .send({ query: VIBE_KANBAN_REPOS });
+      const body = graphBody<{ vibeKanbanRepos: unknown }>(res);
+      expect(body.errors?.length).toBeGreaterThan(0);
+      const firstError = body.errors?.[0];
+      const message =
+        typeof firstError === 'object' &&
+        firstError !== null &&
+        'message' in firstError
+          ? (() => {
+              const raw = (firstError as { message?: unknown }).message;
+              return typeof raw === 'string' ? raw : '';
+            })()
+          : '';
+      expect(message).toMatch(/vibe.*kanban.*require/i);
+    } finally {
+      env.destinationType = prev;
+    }
   });
 
   it('mappings CRUD via GraphQL', async () => {
@@ -485,14 +658,10 @@ describe('GraphQL operator BFF (integration)', () => {
     }
   });
 
-  it('integrationNav matches GET /api/ui/nav', async () => {
-    const [restRes, gqlRes] = await Promise.all([
-      request(app.getHttpServer()).get('/api/ui/nav'),
-      request(app.getHttpServer())
-        .post('/graphql')
-        .send({ query: INTEGRATION_NAV }),
-    ]);
-    expect(restRes.status).toBe(200);
+  it('integrationNav returns configured nav entries', async () => {
+    const gqlRes = await request(app.getHttpServer())
+      .post('/graphql')
+      .send({ query: INTEGRATION_NAV });
     const gqlWrap = graphBody<{
       integrationNav: {
         entries: { id: string; label: string; href: string }[];
@@ -500,8 +669,7 @@ describe('GraphQL operator BFF (integration)', () => {
     }>(gqlRes);
     expect(gqlWrap.errors).toBeUndefined();
     const entries = gqlWrap.data!.integrationNav.entries;
-    const restBody = restRes.body as { entries: typeof entries };
-    expect(entries).toEqual(restBody.entries);
+    expect(entries.length).toBeGreaterThan(0);
   });
 
   it('reinitIntegration returns subsystem summary', async () => {

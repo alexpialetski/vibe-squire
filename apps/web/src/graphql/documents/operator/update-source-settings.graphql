@@ -1,0 +1,12 @@
+mutation UpdateSourceSettings($input: UpdateSourceSettingsInput!) {
+  updateSourceSettings(input: $input) {
+    coreFields {
+      key
+      value
+    }
+    resolvedSourceLabel
+    resolvedDestinationLabel
+    scheduledSyncEnabled
+    autoCreateIssues
+  }
+}
