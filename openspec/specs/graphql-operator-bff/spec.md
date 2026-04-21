@@ -24,7 +24,7 @@ The GraphQL server SHALL expose a `mappings` query (non-null list or connection 
 #### Scenario: Listed mappings reflect the backing store
 
 - **WHEN** a client queries `mappings` against a server with `N` `RepoProjectMapping` rows persisted
-- **THEN** the response SHALL contain exactly `N` mapping entities whose `id`, `owner`, `repo`, `kanbanProjectId`, and `label` (where applicable) correspond one-to-one to the persisted rows
+- **THEN** the response SHALL contain exactly `N` mapping entities whose `id`, `owner`, `repo`, and `kanbanProjectId` correspond one-to-one to the persisted rows
 - **AND** each entity SHALL carry a stable `id` reused on subsequent queries so Apollo cache normalization works across refetches and mutations
 
 ### Requirement: GraphQL exposes `activityFeed` as a forward cursor connection with per-run item detail
@@ -84,8 +84,8 @@ The GraphQL server SHALL expose mutations `updateSettings`, `upsertMapping`, `up
 
 - **WHEN** a client calls `upsertMapping` followed by `mappings`
 - **THEN** the created row SHALL appear in `mappings`
-- **AND WHEN** `updateMapping` is called against an existing id with a modified `label`
-- **THEN** the returned row SHALL reflect the new `label` and a subsequent `mappings` query SHALL show the same update
+- **AND WHEN** `updateMapping` is called against an existing id with modified routing fields
+- **THEN** the returned row SHALL reflect those updates and a subsequent `mappings` query SHALL show the same update
 - **AND WHEN** `deleteMapping` is called with that id
 - **THEN** subsequent `mappings` queries SHALL not return the deleted mapping
 

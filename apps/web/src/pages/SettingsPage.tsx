@@ -14,7 +14,6 @@ import {
   UPDATE_SETTINGS_MUTATION,
 } from '../graphql/operations';
 import { OperatorSyncActions } from '../ui/molecules/OperatorSyncActions';
-import { SyncAdaptersInfoCard } from '../ui/organisms/SyncAdaptersInfoCard';
 import { GeneralSettingsForm } from '../ui/organisms/GeneralSettingsForm';
 import { GeneralSettingsTemplate } from '../ui/templates/GeneralSettingsTemplate';
 import { getErrorMessage } from '../toast';
@@ -123,8 +122,6 @@ export function SettingsPage() {
     [metaQ.data?.effectiveSettings.coreFields],
   );
 
-  const es = metaQ.data?.effectiveSettings;
-
   return (
     <GeneralSettingsTemplate
       titleRow={
@@ -132,14 +129,6 @@ export function SettingsPage() {
           <h1>General</h1>
           <OperatorSyncActions />
         </div>
-      }
-      adaptersCard={
-        es ? (
-          <SyncAdaptersInfoCard
-            resolvedSourceLabel={es.resolvedSourceLabel}
-            resolvedDestinationLabel={es.resolvedDestinationLabel}
-          />
-        ) : null
       }
       settingsCard={
         <GeneralSettingsForm

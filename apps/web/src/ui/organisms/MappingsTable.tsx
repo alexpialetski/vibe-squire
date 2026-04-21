@@ -55,7 +55,6 @@ export function MappingsTable({
             <tr>
               <th>GitHub repo</th>
               <th>Kanban repo</th>
-              <th>Label</th>
               <th />
             </tr>
           </thead>

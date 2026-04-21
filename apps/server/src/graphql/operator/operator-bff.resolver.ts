@@ -323,9 +323,6 @@ export class OperatorBffResolver {
     const row = await this.mappingsService.create({
       githubRepo: input.githubRepo,
       vibeKanbanRepoId: input.vibeKanbanRepoId,
-      ...(input.label !== undefined && input.label !== null
-        ? { label: input.label }
-        : {}),
     });
     this.statusEvents.emitChanged();
     return row;
@@ -344,7 +341,6 @@ export class OperatorBffResolver {
       ...(input.vibeKanbanRepoId !== undefined
         ? { vibeKanbanRepoId: input.vibeKanbanRepoId }
         : {}),
-      ...(input.label !== undefined ? { label: input.label } : {}),
     });
     this.statusEvents.emitChanged();
     return row;

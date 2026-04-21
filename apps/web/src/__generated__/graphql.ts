@@ -183,7 +183,6 @@ export type MappingGql = {
   createdAt: Scalars['DateTime']['output'];
   githubRepo: Scalars['String']['output'];
   id: Scalars['ID']['output'];
-  label?: Maybe<Scalars['String']['output']>;
   updatedAt: Scalars['DateTime']['output'];
   vibeKanbanRepoId: Scalars['String']['output'];
 };
@@ -420,7 +419,6 @@ export type UpdateDestinationSettingsInput = {
 
 export type UpdateMappingInput = {
   githubRepo?: InputMaybe<Scalars['String']['input']>;
-  label?: InputMaybe<Scalars['String']['input']>;
   vibeKanbanRepoId?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -445,7 +443,6 @@ export type UpdateSourceSettingsInput = {
 
 export type UpsertMappingInput = {
   githubRepo: Scalars['String']['input'];
-  label?: InputMaybe<Scalars['String']['input']>;
   vibeKanbanRepoId: Scalars['String']['input'];
 };
 
@@ -680,7 +677,6 @@ export type MappingsQueryQuery = {
     id: string;
     githubRepo: string;
     vibeKanbanRepoId: string;
-    label?: string | null;
     createdAt: any;
     updatedAt: any;
   }>;
@@ -763,7 +759,6 @@ export type UpdateMappingMutationMutation = {
     id: string;
     githubRepo: string;
     vibeKanbanRepoId: string;
-    label?: string | null;
   };
 };
 
@@ -807,7 +802,6 @@ export type UpsertMappingMutationMutation = {
     id: string;
     githubRepo: string;
     vibeKanbanRepoId: string;
-    label?: string | null;
   };
 };
 
@@ -1895,7 +1889,6 @@ export const MappingsQueryDocument = {
                   kind: 'Field',
                   name: { kind: 'Name', value: 'vibeKanbanRepoId' },
                 },
-                { kind: 'Field', name: { kind: 'Name', value: 'label' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
               ],
@@ -2202,7 +2195,6 @@ export const UpdateMappingMutationDocument = {
                   kind: 'Field',
                   name: { kind: 'Name', value: 'vibeKanbanRepoId' },
                 },
-                { kind: 'Field', name: { kind: 'Name', value: 'label' } },
               ],
             },
           },
@@ -2396,7 +2388,6 @@ export const UpsertMappingMutationDocument = {
                   kind: 'Field',
                   name: { kind: 'Name', value: 'vibeKanbanRepoId' },
                 },
-                { kind: 'Field', name: { kind: 'Name', value: 'label' } },
               ],
             },
           },

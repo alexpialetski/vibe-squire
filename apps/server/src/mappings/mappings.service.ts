@@ -9,7 +9,6 @@ import { PrismaService } from '../prisma/prisma.service';
 type CreateMappingInput = {
   githubRepo: string;
   vibeKanbanRepoId: string;
-  label?: string;
 };
 
 type UpdateMappingInput = Partial<CreateMappingInput>;
@@ -31,7 +30,6 @@ export class MappingsService {
         data: {
           githubRepo,
           vibeKanbanRepoId: dto.vibeKanbanRepoId.trim(),
-          label: dto.label?.trim() || null,
         },
       });
     } catch (e: unknown) {
@@ -66,7 +64,6 @@ export class MappingsService {
           ...(dto.vibeKanbanRepoId !== undefined && {
             vibeKanbanRepoId: dto.vibeKanbanRepoId.trim(),
           }),
-          ...(dto.label !== undefined && { label: dto.label.trim() || null }),
         },
       });
     } catch (e: unknown) {

@@ -156,9 +156,6 @@ export class MappingGql {
   @Field(() => String)
   vibeKanbanRepoId!: string;
 
-  @Field(() => String, { nullable: true })
-  label?: string | null;
-
   @Field(() => GraphQLISODateTime)
   createdAt!: Date;
 
@@ -425,9 +422,6 @@ export class UpsertMappingInput {
 
   @Field(() => String)
   vibeKanbanRepoId!: string;
-
-  @Field(() => String, { nullable: true })
-  label?: string;
 }
 
 @InputType()
@@ -437,9 +431,6 @@ export class UpdateMappingInput {
 
   @Field(() => String, { nullable: true })
   vibeKanbanRepoId?: string;
-
-  @Field(() => String, { nullable: true })
-  label?: string;
 }
 
 @ObjectType()

@@ -46,7 +46,6 @@ export function MappingsPage() {
 
   const [githubRepo, setGithubRepo] = useState('');
   const [vkRepoId, setVkRepoId] = useState('');
-  const [label, setLabel] = useState('');
 
   const [upsert, { loading: upserting }] = useMutation<
     UpsertMappingMutationMutation,
@@ -59,7 +58,6 @@ export function MappingsPage() {
         id: randomOptimisticMappingId(),
         githubRepo: vars.input.githubRepo,
         vibeKanbanRepoId: vars.input.vibeKanbanRepoId,
-        label: vars.input.label ?? null,
       },
     }),
     update(cache, { data }) {
@@ -80,7 +78,6 @@ export function MappingsPage() {
     onCompleted: () => {
       setGithubRepo('');
       setVkRepoId('');
-      setLabel('');
       toast.success('Mapping added.');
     },
     onError: (e) => toast.error(`Add failed: ${getErrorMessage(e)}`),
@@ -124,7 +121,6 @@ export function MappingsPage() {
         id: vars.id,
         githubRepo: vars.input.githubRepo ?? '',
         vibeKanbanRepoId: vars.input.vibeKanbanRepoId ?? '',
-        label: vars.input.label ?? null,
       },
     }),
     update(cache, { data }) {
@@ -155,7 +151,6 @@ export function MappingsPage() {
     setDraft({
       githubRepo: row.githubRepo,
       vibeKanbanRepoId: row.vibeKanbanRepoId,
-      label: row.label,
     });
   }, []);
 
@@ -172,7 +167,6 @@ export function MappingsPage() {
           input: {
             githubRepo: draft.githubRepo,
             vibeKanbanRepoId: draft.vibeKanbanRepoId,
-            label: draft.label ?? undefined,
           },
         },
       }).then(() => {
@@ -180,13 +174,7 @@ export function MappingsPage() {
         cancelEdit();
       });
     },
-    [
-      cancelEdit,
-      draft.githubRepo,
-      draft.label,
-      draft.vibeKanbanRepoId,
-      updateRow,
-    ],
+    [cancelEdit, draft.githubRepo, draft.vibeKanbanRepoId, updateRow],
   );
 
   return (
@@ -216,20 +204,17 @@ export function MappingsPage() {
         <NewMappingCard
           githubRepo={githubRepo}
           vkRepoId={vkRepoId}
-          label={label}
           vkRepos={vkRepos}
           vkReposLoading={vkReposLoading}
           upserting={upserting}
           onGithubRepoChange={setGithubRepo}
           onVkRepoIdChange={setVkRepoId}
-          onLabelChange={setLabel}
           onSubmit={() => {
             void upsert({
               variables: {
                 input: {
                   githubRepo,
                   vibeKanbanRepoId: vkRepoId,
-                  ...(label.trim() ? { label: label.trim() } : {}),
                 },
               },
             });

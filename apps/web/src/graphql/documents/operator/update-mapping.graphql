@@ -3,6 +3,5 @@ mutation UpdateMappingMutation($id: ID!, $input: UpdateMappingInput!) {
     id
     githubRepo
     vibeKanbanRepoId
-    label
   }
 }

@@ -46,7 +46,6 @@ export function mergeMappingListAfterWrite(
       id: m.id,
       githubRepo: m.githubRepo,
       vibeKanbanRepoId: m.vibeKanbanRepoId,
-      label: m.label ?? null,
       createdAt,
       updatedAt: new Date().toISOString(),
     },
