@@ -1,0 +1,5 @@
+mutation DeleteMappingMutation($id: ID!) {
+  deleteMapping(id: $id) {
+    ok
+  }
+}

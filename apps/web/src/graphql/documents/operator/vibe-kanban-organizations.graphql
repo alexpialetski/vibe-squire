@@ -1,0 +1,6 @@
+query VibeKanbanOrganizations {
+  vibeKanbanOrganizations {
+    id
+    name
+  }
+}

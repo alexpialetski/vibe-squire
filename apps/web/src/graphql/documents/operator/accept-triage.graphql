@@ -1,0 +1,5 @@
+mutation AcceptTriageMutation($prUrl: String!) {
+  acceptTriage(prUrl: $prUrl) {
+    kanbanIssueId
+  }
+}

@@ -1,0 +1,57 @@
+{
+  "$schema": "https://cdn.jsdelivr.net/npm/doccraft@3.0.1/schema/doccraft.schema.json",
+  "version": "3.0.1",
+  "_hint": "Edit with the doccraft-config skill (npx doccraft@latest llm exposes the schema).",
+  "docsDir": "docs",
+  "story": {
+    "areas": [
+      "sync",
+      "github",
+      "vibe-kanban",
+      "settings",
+      "mappings",
+      "status",
+      "ui",
+      "web",
+      "graphql",
+      "config",
+      "database",
+      "ports",
+      "ci"
+    ],
+    "slices": ["dashboard", "settings", "activity", "mappings", "integrations"],
+    "themes": [
+      "observability",
+      "reliability",
+      "testing",
+      "docs",
+      "dx",
+      "release",
+      "security"
+    ],
+    "id": {
+      "tiers": ["p0", "p1", "p2", "p3"],
+      "pattern": "^(P\\d+(\\.\\d+)?|[a-z][a-z0-9-]+)$"
+    }
+  },
+  "queue": {
+    "tables": {
+      "suggestedOrder": "Suggested order",
+      "platformSpikes": "Platform spikes"
+    }
+  },
+  "queueAudit": {
+    "laneFrom": ["area", "slice"],
+    "scale": {
+      "maxStoryFiles": 20,
+      "maxQueueReorderPct": 50
+    }
+  },
+  "sessionWrap": {
+    "capture": {
+      "research": true,
+      "reference": false,
+      "business": false
+    }
+  }
+}

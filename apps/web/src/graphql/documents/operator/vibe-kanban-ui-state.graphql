@@ -1,0 +1,21 @@
+query VibeKanbanUiState {
+  vibeKanbanUiState {
+    saved
+    error
+    vkBoardPicker
+    boardOrg
+    boardProj
+    kanbanDoneStatus
+    vkExecutor
+    executorOptions {
+      value
+      label
+    }
+    vkLabels {
+      default_organization_id
+      vk_workspace_executor
+      kanban_done_status
+    }
+    orgError
+  }
+}

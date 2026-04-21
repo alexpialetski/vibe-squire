@@ -9,7 +9,8 @@ Core domain logic has no dependency on NestJS, SQLite, GitHub, or Vibe Kanban. A
 ```mermaid
 graph TB
     subgraph Driving["Driving adapters"]
-        Controllers["NestJS controllers<br/>(HTTP, SSE)"]
+        GraphQL["GraphQL resolvers<br/>(POST /graphql, graphql-ws)"]
+        Controllers["Operator-tool REST<br/>(POST /api/sync/run, /api/reinit)"]
         Schedulers["Schedulers"]
         CLI["CLI"]
     end
@@ -51,17 +52,18 @@ graph TD
     App --> Env["EnvModule — typed AppEnv via DI"]
     App --> Logger["LoggerModule — Pino"]
     App --> Events["EventEmitterModule — domain events"]
-    App --> SSE["StatusEventsModule — SSE broadcast"]
+    App --> StatusEvents["StatusEventsModule — PubSub feed for graphql-ws"]
     App --> Prisma["PrismaModule — database client"]
     App --> SyncState["SyncRunStateModule — in-memory sync lock"]
     App --> Settings["SettingsModule — key-value settings"]
     App --> Integrations["IntegrationsModule.register()"]
     App --> Sync["SyncModule — scheduler, dispatcher, reconciliation"]
-    App --> Reinit["ReinitModule — soft reinit endpoint"]
-    App --> Mappings["MappingsModule — repo → project CRUD"]
-    App --> Status["StatusModule — /api/status aggregate"]
+    App --> Reinit["ReinitModule — POST /api/reinit operator tool"]
+    App --> Mappings["MappingsModule — repo → project CRUD (GraphQL)"]
+    App --> Status["StatusModule — aggregate health service (GraphQL)"]
     App --> Setup["SetupModule — setup-complete gate"]
-    App --> UI["UiModule — Handlebars operator UI"]
+    App --> UI["UiModule — operator BFF presenters & nav (GraphQL)"]
+    App --> GraphQLMod["OperatorGraphQLModule — schema + resolvers"]
 
     Integrations --> GH["GithubSourceModule — gh CLI scout"]
     Integrations --> VK["VibeKanbanDestinationModule — HTTP client"]
@@ -119,4 +121,39 @@ Product docs: [vibekanban.com/docs](https://vibekanban.com/docs).
 - HTTP binds to `127.0.0.1` by default — no public exposure.
 - Operator endpoints (`/api/sync/run`, `/api/reinit`) assume localhost trust.
 - Credentials live in `gh auth` and env vars; never committed.
-- Status/SSE payloads redact secrets.
+- GraphQL status payloads redact secrets.
+
+## Transport decision table
+
+GraphQL is the sole operator-console transport:
+- `POST /graphql` for queries and mutations.
+- `graphql-ws` subscriptions for live events.
+
+Only two REST endpoints remain as operator tools (`curl` / shell ergonomics): `POST /api/sync/run` and `POST /api/reinit`.
+
+| HTTP | Path | Status | Justification |
+|------|------|--------|---------------|
+| GET | `/api/activity/runs` | `removed` | Superseded by GraphQL `activityFeed`. |
+| GET | `/api/mappings` | `removed` | Superseded by GraphQL `mappings`. |
+| POST | `/api/mappings` | `removed` | Superseded by GraphQL `upsertMapping`. |
+| PATCH | `/api/mappings/:id` | `removed` | Mapping edits are retired; operators delete and recreate mappings instead. |
+| DELETE | `/api/mappings/:id` | `removed` | Superseded by GraphQL `deleteMapping`. |
+| POST | `/api/pr/accept` | `removed` | Superseded by GraphQL `acceptTriage`. |
+| POST | `/api/pr/decline` | `removed` | Superseded by GraphQL `declineTriage`. |
+| POST | `/api/pr/reconsider` | `removed` | Superseded by GraphQL `reconsiderTriage`. |
+| POST | `/api/reinit` | `kept (operator tool)` | Convenient `curl` trigger for local source/destination re-bootstrap. |
+| GET | `/api/settings` | `removed` | Superseded by GraphQL `effectiveSettings`. |
+| PATCH | `/api/settings/core` | `removed` | Superseded by GraphQL `updateSettings`. |
+| PATCH | `/api/settings/destination` | `removed` | Superseded by GraphQL `updateDestinationSettings`. |
+| PATCH | `/api/settings/source` | `removed` | Superseded by GraphQL `updateSourceSettings`. |
+| GET | `/api/status` | `removed` | Superseded by GraphQL `status`. |
+| GET | `/api/status/stream` | `removed` | Superseded by GraphQL `statusUpdated`. |
+| POST | `/api/sync/run` | `kept (operator tool)` | Convenient `curl` and shell trigger for manual sync. |
+| GET | `/api/ui/github-fields` | `removed` | Superseded by GraphQL `githubFields`. |
+| GET | `/api/ui/nav` | `removed` | Superseded by GraphQL `integrationNav`. |
+| GET | `/api/ui/settings-meta` | `removed` | Superseded by GraphQL `effectiveSettings`. |
+| GET | `/api/ui/setup` | `removed` | Superseded by GraphQL `dashboardSetup`. |
+| GET | `/api/vibe-kanban/organizations` | `removed` | Superseded by GraphQL `vibeKanbanOrganizations`. |
+| GET | `/api/vibe-kanban/projects` | `removed` | Superseded by GraphQL `vibeKanbanProjects`. |
+| GET | `/api/vibe-kanban/repos` | `removed` | Superseded by GraphQL `vibeKanbanRepos`. |
+| GET | `/api/vibe-kanban/ui-state` | `removed` | Superseded by GraphQL `vibeKanbanUiState`. |

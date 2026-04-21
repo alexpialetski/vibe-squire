@@ -1,0 +1,7 @@
+mutation UpsertMappingMutation($input: UpsertMappingInput!) {
+  upsertMapping(input: $input) {
+    id
+    githubRepo
+    vibeKanbanRepoId
+  }
+}
