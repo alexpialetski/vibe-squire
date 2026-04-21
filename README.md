@@ -8,12 +8,12 @@ Built with [NestJS](https://nestjs.com), [Prisma](https://www.prisma.io) + SQLit
 
 ```mermaid
 graph LR
-    GH["GitHub (PRs)"] -- "gh pr list<br/>review-requested:@me" --> VS["vibe-squire<br/>(localhost)"]
+    GH["GitHub (PRs)"] -- "gh search prs<br/>--review-requested=@me" --> VS["vibe-squire<br/>(localhost)"]
     VS -- "local HTTP API<br/>create / update issue" --> VK["Vibe Kanban<br/>(board)"]
     VS -- "state" --> DB["SQLite"]
 ```
 
-1. **Scout** — polls GitHub via `gh pr list --search "review-requested:@me"` on a configurable interval.
+1. **Scout** — polls GitHub via `gh search prs --review-requested=@me` on a configurable interval.
 2. **Dispatcher** — routes each PR to a Kanban project based on `owner/repo` mappings, deduplicates, and creates/updates issues via the Vibe Kanban local API.
 3. **Reconciliation** — when a PR leaves your review queue, the matching Kanban issue is closed automatically.
 
@@ -133,10 +133,21 @@ cd vibe-squire
 pnpm install
 pnpm --filter vibe-squire exec prisma generate
 cp .env.example .env
-pnpm run start:dev
+# Keep API on 4000 for Vite proxy defaults (or update apps/web/vite.config.ts)
+VIBE_SQUIRE_PORT=4000 pnpm run start:dev
 ```
 
-For UI hot reload against a running API on port 4000: `pnpm --filter @vibe-squire/web dev`.
+In a second terminal, run the web dev server:
+
+```bash
+pnpm --filter @vibe-squire/web dev
+```
+
+If you change GraphQL schema/resolvers or `apps/web/src/graphql/documents/**`, regenerate web types:
+
+```bash
+pnpm --filter @vibe-squire/web codegen
+```
 
 ### Scripts
 
