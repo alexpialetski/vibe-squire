@@ -5,8 +5,8 @@
   "scripts": {
     "build": "pnpm --filter @vibe-squire/shared build && pnpm --filter @vibe-squire/web build && pnpm --filter vibe-squire build",
     "format": "prettier --write --no-error-on-unmatched-pattern \"apps/server/**/*.ts\" \"apps/web/**/*.{ts,tsx}\" \"packages/**/*.{ts,tsx}\"",
-    "lint": "eslint \"apps/server/**/*.ts\" \"apps/web/**/*.{ts,tsx}\" \"packages/shared/**/*.ts\" --fix",
-    "lint:check": "eslint \"apps/server/**/*.ts\" \"apps/web/**/*.{ts,tsx}\" \"packages/shared/**/*.ts\" --max-warnings 0",
+    "lint": "pnpm --filter @vibe-squire/shared build && eslint \"apps/server/**/*.ts\" \"apps/web/**/*.{ts,tsx}\" \"packages/shared/**/*.ts\" --fix",
+    "lint:check": "pnpm --filter @vibe-squire/shared build && eslint \"apps/server/**/*.ts\" \"apps/web/**/*.{ts,tsx}\" \"packages/shared/**/*.ts\" --max-warnings 0",
     "typecheck": "pnpm --filter @vibe-squire/shared build && pnpm --filter @vibe-squire/web run typecheck && pnpm --filter vibe-squire typecheck",
     "test": "pnpm --filter vibe-squire test",
     "test:cov": "pnpm --filter vibe-squire test:cov",
