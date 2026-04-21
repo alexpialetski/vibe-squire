@@ -16,8 +16,9 @@ const pr = {
 
 describe('buildPollScoutContext', () => {
   it('builds urlsNow, quota from board limit minus active count, and parsed ignore set', async () => {
+    const scoutSpy = jest.fn().mockReturnValue([pr]);
     const prScout: SyncPrScoutPort = {
-      listReviewRequestedForMe: () => [pr],
+      listReviewRequestedForMe: scoutSpy,
     };
     const settings = {
       getEffective: (key: string) => {
@@ -29,6 +30,9 @@ describe('buildPollScoutContext', () => {
         }
         if (key === 'pr_ignore_author_logins') {
           return 'bot[bot]';
+        }
+        if (key === 'github_host') {
+          return 'github.ol.epicgames.net';
         }
         return '';
       },
@@ -55,6 +59,7 @@ describe('buildPollScoutContext', () => {
     expect(ctx.activeVkIssueCount).toBe(3);
     expect(ctx.quotaForCreates.remaining).toBe(7);
     expect(ctx.ignoredAuthorLogins.has('bot[bot]')).toBe(true);
+    expect(scoutSpy).toHaveBeenCalledWith('github.ol.epicgames.net');
     expect(warn).not.toHaveBeenCalled();
   });
 
@@ -72,6 +77,9 @@ describe('buildPollScoutContext', () => {
         }
         if (key === 'pr_ignore_author_logins') {
           return '';
+        }
+        if (key === 'github_host') {
+          return 'github.com';
         }
         return '';
       },
@@ -114,6 +122,9 @@ describe('buildPollScoutContext', () => {
         if (key === 'pr_ignore_author_logins') {
           return 'a'.repeat(100);
         }
+        if (key === 'github_host') {
+          return 'github.com';
+        }
         return '';
       },
     } as Pick<SettingsService, 'getEffective'>;
@@ -155,6 +166,9 @@ describe('buildPollScoutContext', () => {
         if (key === 'pr_ignore_author_logins') {
           return '';
         }
+        if (key === 'github_host') {
+          return 'github.com';
+        }
         return '';
       },
     } as Pick<SettingsService, 'getEffective'>;
@@ -177,5 +191,43 @@ describe('buildPollScoutContext', () => {
     expect(countSpy).not.toHaveBeenCalled();
     expect(ctx.activeVkIssueCount).toBe(0);
     expect(ctx.quotaForCreates.remaining).toBe(4);
+  });
+
+  it('warns and falls back to github.com when github_host is invalid', async () => {
+    const scoutSpy = jest.fn().mockReturnValue([]);
+    const prScout: SyncPrScoutPort = {
+      listReviewRequestedForMe: scoutSpy,
+    };
+    const settings = {
+      getEffective: (key: string) => {
+        if (key === 'max_board_pr_count') {
+          return '4';
+        }
+        if (key === 'default_project_id') {
+          return '';
+        }
+        if (key === 'pr_ignore_author_logins') {
+          return '';
+        }
+        if (key === 'github_host') {
+          return 'https://github.com';
+        }
+        return '';
+      },
+    } as Pick<SettingsService, 'getEffective'>;
+    const warn = jest.fn();
+
+    await buildPollScoutContext({
+      prScout,
+      settings,
+      coreSettings: { maxBoardPrCount: 4 },
+      destinationBoard: { countActiveIssues: jest.fn() },
+      warn,
+    });
+
+    expect(scoutSpy).toHaveBeenCalledWith('github.com');
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining('Invalid github_host'),
+    );
   });
 });

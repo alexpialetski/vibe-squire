@@ -54,9 +54,23 @@ const PR_IGNORE_DEFAULT =
 
 const PR_REVIEW_BODY_DEFAULT =
   'Examine the diff for PR {prUrl}. Highlight architectural risks and logic bugs. Provide a summary report in the workspace.';
+const GITHUB_HOST_DEFAULT = 'github.com';
+
+/** Hostname passed to `gh` commands via `GH_HOST` (e.g. github.com, github.ol.epicgames.net). */
+export const githubHostStorageField = z
+  .string()
+  .trim()
+  .min(1, 'GitHub host is required')
+  .max(255, 'GitHub host too long')
+  .regex(
+    /^[a-zA-Z0-9.-]+$/,
+    'GitHub host must be a hostname (no protocol/path)',
+  )
+  .default(GITHUB_HOST_DEFAULT);
 
 export const githubStorageSchema = z
   .object({
+    github_host: githubHostStorageField,
     pr_ignore_author_logins:
       prIgnoreAuthorLoginsStorageField.default(PR_IGNORE_DEFAULT),
     pr_review_body_template: z.string().default(PR_REVIEW_BODY_DEFAULT),
@@ -68,12 +82,13 @@ export type GithubStorageValues = z.output<typeof githubStorageSchema>;
 export const GITHUB_STORAGE_DEFAULTS: GithubStorageValues =
   githubStorageSchema.parse({});
 
-export const GITHUB_SETTING_ENV = {} as const satisfies Partial<
-  Record<keyof GithubStorageValues, string>
->;
+export const GITHUB_SETTING_ENV = {
+  github_host: 'VIBE_SQUIRE_GITHUB_HOST',
+} as const satisfies Partial<Record<keyof GithubStorageValues, string>>;
 
 /** Typed read layer (ignore list → Set). */
 export const githubTypedSchema = z.strictObject({
+  github_host: githubHostStorageField,
   pr_ignore_author_logins: prIgnoreAuthorLoginsSchema,
   pr_review_body_template: z.string(),
 });

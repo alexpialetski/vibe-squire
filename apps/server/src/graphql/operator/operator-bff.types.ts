@@ -394,6 +394,9 @@ export class UpdateSettingsInput {
 @InputType()
 export class UpdateSourceSettingsInput {
   @Field(() => String, { nullable: true })
+  github_host?: string;
+
+  @Field(() => String, { nullable: true })
   pr_ignore_author_logins?: string;
 
   @Field(() => String, { nullable: true })

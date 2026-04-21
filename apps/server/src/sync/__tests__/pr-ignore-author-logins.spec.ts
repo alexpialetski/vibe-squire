@@ -1,5 +1,6 @@
 import { isIgnoredAuthorLogin } from '../pr-ignore-author-logins';
 import {
+  githubHostStorageField,
   prIgnoreAuthorLoginsSchema,
   prIgnoreAuthorLoginsStorageField,
 } from '../../integrations/github/github-settings.schema';
@@ -36,6 +37,24 @@ describe('prIgnoreAuthorLoginsSchema (Set output)', () => {
     if (r.success) {
       expect([...r.data].sort()).toEqual(['bar', 'foo']);
     }
+  });
+});
+
+describe('githubHostStorageField', () => {
+  it('accepts valid hosts', () => {
+    expect(githubHostStorageField.safeParse('github.com').success).toBe(true);
+    expect(
+      githubHostStorageField.safeParse('github.ol.epicgames.net').success,
+    ).toBe(true);
+  });
+
+  it('rejects protocol/path values', () => {
+    expect(githubHostStorageField.safeParse('https://github.com').success).toBe(
+      false,
+    );
+    expect(githubHostStorageField.safeParse('github.com/path').success).toBe(
+      false,
+    );
   });
 });
 

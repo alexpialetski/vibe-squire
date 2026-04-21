@@ -20,6 +20,7 @@ export const SCHEDULER_TEXT_FIELD_KEYS: readonly string[] = [
 
 /** GitHub PR source fields on `/ui/github` (when `VIBE_SQUIRE_SOURCE_TYPE` is `github`). */
 export const GITHUB_SOURCE_UI_KEYS: readonly string[] = [
+  'github_host',
   'pr_ignore_author_logins',
   'pr_review_body_template',
 ];
