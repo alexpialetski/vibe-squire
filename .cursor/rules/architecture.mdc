@@ -11,20 +11,20 @@ vibe-squire uses hexagonal (ports & adapters) architecture. The core domain has 
 
 ### Layers
 
-1. **Core (domain + application)** — Business logic, sync rules, routing, dedupe, reconciliation. Lives in `src/sync/`, `src/settings/`, `src/mappings/`, `src/status/`, `src/setup/`.
-2. **Ports** — Interfaces in `src/ports/`. The core depends on these abstractions only.
-3. **Adapters** — Implementations in `src/integrations/` (GitHub, Vibe Kanban), `src/database/`, `src/prisma/`.
+1. **Core (domain + application)** — Business logic, sync rules, routing, dedupe, reconciliation. Lives in `apps/server/src/sync/`, `apps/server/src/settings/`, `apps/server/src/mappings/`, `apps/server/src/status/`, `apps/server/src/setup/`.
+2. **Ports** — Interfaces in `apps/server/src/ports/`. The core depends on these abstractions only.
+3. **Adapters** — Implementations in `apps/server/src/integrations/` (GitHub, Vibe Kanban), `apps/server/src/database/`, `apps/server/src/prisma/`.
 4. **Driving adapters** — NestJS controllers, schedulers, CLI entry points. They call application services.
 
 ### Rules
 
-- Domain and application code must **never** import from `src/integrations/`, `src/generated/`, or adapter-specific packages directly.
+- Domain and application code must **never** import from `apps/server/src/integrations/`, `apps/server/src/generated/`, or adapter-specific packages directly.
 - Controllers call application services, not databases or `gh` directly.
 - New integrations implement existing port interfaces; the sync pipeline works unchanged.
 
 ## Port tokens
 
-All port tokens live in `src/ports/injection-tokens.ts`:
+All port tokens live in `apps/server/src/ports/injection-tokens.ts`:
 
 | Token | Port interface | Adapter |
 |-------|---------------|---------|
@@ -37,22 +37,32 @@ All port tokens live in `src/ports/injection-tokens.ts`:
 
 For any tunable key: **env var (non-empty) > SQLite Setting row > code default**.
 
-- Boot-time env is validated by Zod in `src/config/env-schema.ts`, producing `AppEnv`.
+- Boot-time env is validated by Zod in `apps/server/src/config/env-schema.ts`, producing `AppEnv`.
 - `SettingsService` resolves effective values at runtime using this precedence.
-- On settings write: update SQLite, refresh in-memory cache, emit `SettingsChanged` event so schedulers and SSE react.
+- On settings write: update SQLite, refresh in-memory cache, emit `SettingsChanged` event so schedulers and GraphQL subscribers react.
+
+## Transport policy
+
+GraphQL is the sole operator-console transport (`POST /graphql` for queries/mutations and `graphql-ws` for subscriptions).
+
+Only two REST endpoints are retained as operator tools:
+- `POST /api/sync/run`
+- `POST /api/reinit`
+
+`docs/ARCHITECTURE.md` (`## Transport decision table`) is the authoritative endpoint inventory. Any `/api/*` route add/remove/reclassification must update that table in the same change.
 
 ## Adding a new integration
 
-1. Create a module under `src/integrations/<name>/`.
+1. Create a module under `apps/server/src/integrations/<name>/`.
 2. Implement the relevant port (`SyncPrScoutPort` or `DestinationBoardPort`).
-3. Add the type to `SUPPORTED_SOURCE_TYPES` or `SUPPORTED_DESTINATION_TYPES` in `src/config/integration-types.ts`.
+3. Add the type to `SUPPORTED_SOURCE_TYPES` or `SUPPORTED_DESTINATION_TYPES` in `apps/server/src/config/integration-types.ts`.
 4. Register the module conditionally in `IntegrationsModule.register()`.
 5. Provide a status service implementing `SourceStatusPort` or `DestinationStatusPort`.
 6. Optionally add a settings group service and UI controller under the same integration folder.
 
 ## Sync pipeline
 
-The poll cycle in `src/sync/poll-cycle/` follows this sequence:
+The poll cycle in `apps/server/src/sync/poll-cycle/` follows this sequence:
 
 1. **Guard** — `SyncDependenciesGuard` checks setup complete + source ok + destination ok.
 2. **Scout** — Adapter returns PR candidates via `SyncPrScoutPort`.
@@ -73,6 +83,6 @@ Both scheduled and manual ("Sync now") runs execute the same pipeline. After a m
 ## Database
 
 - **Prisma** with SQLite (`@prisma/adapter-better-sqlite3`).
-- Schema: `prisma/schema.prisma`. Generated client: `src/generated/prisma/`.
-- Migrations run automatically on bootstrap via a lightweight `better-sqlite3` runner (`src/database/sqlite-migrate.ts`), not `prisma migrate deploy`. The Prisma CLI is a dev-only dependency.
+- Schema: `apps/server/prisma/schema.prisma`. Generated client: `apps/server/src/generated/prisma/`.
+- Migrations run automatically on bootstrap via a lightweight `better-sqlite3` runner (`apps/server/src/database/sqlite-migrate.ts`), not `prisma migrate deploy`. The Prisma CLI is a dev-only dependency.
 - One process per SQLite file (concurrent access unsupported).

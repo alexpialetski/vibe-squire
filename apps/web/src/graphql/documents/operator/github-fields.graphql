@@ -1,0 +1,10 @@
+query GithubFields {
+  githubFields {
+    disabled
+    fields {
+      key
+      label
+      value
+    }
+  }
+}

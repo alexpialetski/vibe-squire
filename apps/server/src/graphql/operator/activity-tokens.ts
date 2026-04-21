@@ -1,0 +1,2 @@
+export const ACTIVITY_PUBSUB = Symbol('ACTIVITY_PUBSUB');
+export const ACTIVITY_EVENTS = 'ACTIVITY_EVENTS';

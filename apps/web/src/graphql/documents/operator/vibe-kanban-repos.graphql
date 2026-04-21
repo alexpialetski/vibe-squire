@@ -1,0 +1,6 @@
+query VibeKanbanRepos {
+  vibeKanbanRepos {
+    id
+    name
+  }
+}

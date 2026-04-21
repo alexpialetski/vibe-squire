@@ -1,0 +1,6 @@
+query VibeKanbanProjects($organizationId: ID!) {
+  vibeKanbanProjects(organizationId: $organizationId) {
+    id
+    name
+  }
+}
