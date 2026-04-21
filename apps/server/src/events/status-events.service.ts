@@ -6,7 +6,7 @@ export class StatusEventsService {
   private readonly tick = new Subject<void>();
   private readonly scheduleRefresh = new Subject<void>();
 
-  /** Notify SSE subscribers that status may have changed. */
+  /** Notify GraphQL status subscribers that status may have changed. */
   emitChanged(): void {
     this.tick.next();
   }
@@ -16,7 +16,7 @@ export class StatusEventsService {
     this.scheduleRefresh.next();
   }
 
-  /** Stream of refresh requests (merge with heartbeat in the controller). */
+  /** Stream of refresh requests consumed by GraphQL subscription bridges. */
   updates() {
     return this.tick.asObservable();
   }

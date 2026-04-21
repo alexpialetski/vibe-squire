@@ -6,14 +6,13 @@ import { SyncService } from './sync.service';
 import { RunPollCycleService } from './run-poll-cycle.service';
 import { PollSchedulerService } from './poll-scheduler.service';
 import { SyncController } from './sync.controller';
-import { PrTriageController } from './pr-triage.controller';
 import { SyncDependenciesGuard } from './sync-dependencies.guard';
 import { PollRunHistoryService } from './poll-run-history.service';
 import { PrTriageService } from './pr-triage.service';
 
 @Module({
   imports: [PrismaModule, SetupModule, SyncRunStateModule],
-  controllers: [SyncController, PrTriageController],
+  controllers: [SyncController],
   providers: [
     SyncService,
     RunPollCycleService,

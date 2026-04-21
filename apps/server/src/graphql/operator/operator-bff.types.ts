@@ -1,6 +1,5 @@
 import { Field, ID, InputType, Int, ObjectType } from '@nestjs/graphql';
 import { GraphQLISODateTime } from '@nestjs/graphql';
-import { Allow, IsOptional } from 'class-validator';
 
 @ObjectType()
 export class CoreSettingField {
@@ -36,6 +35,114 @@ export class EffectiveSettings {
 
   @Field(() => Boolean)
   autoCreateIssues!: boolean;
+}
+
+@ObjectType()
+export class GithubField {
+  @Field(() => String)
+  key!: string;
+
+  @Field(() => String)
+  label!: string;
+
+  @Field(() => String)
+  value!: string;
+
+  @Field(() => String, { nullable: true })
+  envVar?: string;
+
+  @Field(() => String, { nullable: true })
+  description?: string;
+}
+
+@ObjectType()
+export class GithubFieldsPayload {
+  @Field(() => Boolean)
+  disabled!: boolean;
+
+  @Field(() => [GithubField])
+  fields!: GithubField[];
+}
+
+@ObjectType()
+export class VibeKanbanExecutorOption {
+  @Field(() => String)
+  value!: string;
+
+  @Field(() => String)
+  label!: string;
+}
+
+@ObjectType()
+export class VibeKanbanLabels {
+  @Field(() => String)
+  default_organization_id!: string;
+
+  @Field(() => String)
+  vk_workspace_executor!: string;
+
+  @Field(() => String)
+  kanban_done_status!: string;
+}
+
+@ObjectType()
+export class VibeKanbanUiState {
+  @Field(() => Boolean)
+  saved!: boolean;
+
+  @Field(() => String, { nullable: true })
+  error!: string | null;
+
+  @Field(() => Boolean)
+  vkBoardPicker!: boolean;
+
+  @Field(() => String)
+  boardOrg!: string;
+
+  @Field(() => String)
+  boardProj!: string;
+
+  @Field(() => String)
+  kanbanDoneStatus!: string;
+
+  @Field(() => String)
+  vkExecutor!: string;
+
+  @Field(() => [VibeKanbanExecutorOption])
+  executorOptions!: VibeKanbanExecutorOption[];
+
+  @Field(() => VibeKanbanLabels)
+  vkLabels!: VibeKanbanLabels;
+
+  @Field(() => String, { nullable: true })
+  orgError!: string | null;
+}
+
+@ObjectType()
+export class VibeKanbanOrganization {
+  @Field(() => ID)
+  id!: string;
+
+  @Field(() => String, { nullable: true })
+  name?: string | null;
+}
+
+@ObjectType()
+export class VibeKanbanProject {
+  @Field(() => ID)
+  id!: string;
+
+  @Field(() => String, { nullable: true })
+  name?: string | null;
+}
+
+@ObjectType()
+export class VibeKanbanRepo {
+  @Field(() => ID)
+  id!: string;
+
+  @Field(() => String, { nullable: true })
+  name?: string | null;
 }
 
 @ObjectType()
@@ -269,67 +376,69 @@ export class UpdateSettingsPayload {
 @InputType()
 export class UpdateSettingsInput {
   @Field(() => String, { nullable: true })
-  @Allow()
-  @IsOptional()
   poll_interval_minutes?: string;
 
   @Field(() => String, { nullable: true })
-  @Allow()
-  @IsOptional()
   jitter_max_seconds?: string;
 
   @Field(() => String, { nullable: true })
-  @Allow()
-  @IsOptional()
   run_now_cooldown_seconds?: string;
 
   @Field(() => String, { nullable: true })
-  @Allow()
-  @IsOptional()
   max_board_pr_count?: string;
 
   @Field(() => String, { nullable: true })
-  @Allow()
-  @IsOptional()
   scheduled_sync_enabled?: string;
 
   @Field(() => String, { nullable: true })
-  @Allow()
-  @IsOptional()
   auto_create_issues?: string;
+}
+
+@InputType()
+export class UpdateSourceSettingsInput {
+  @Field(() => String, { nullable: true })
+  pr_ignore_author_logins?: string;
+
+  @Field(() => String, { nullable: true })
+  pr_review_body_template?: string;
+}
+
+@InputType()
+export class UpdateDestinationSettingsInput {
+  @Field(() => String, { nullable: true })
+  default_organization_id?: string;
+
+  @Field(() => String, { nullable: true })
+  default_project_id?: string;
+
+  @Field(() => String, { nullable: true })
+  vk_workspace_executor?: string;
+
+  @Field(() => String, { nullable: true })
+  kanban_done_status?: string;
 }
 
 @InputType()
 export class UpsertMappingInput {
   @Field(() => String)
-  @Allow()
   githubRepo!: string;
 
   @Field(() => String)
-  @Allow()
   vibeKanbanRepoId!: string;
 
   @Field(() => String, { nullable: true })
-  @Allow()
-  @IsOptional()
   label?: string;
 }
 
 @InputType()
 export class UpdateMappingInput {
   @Field(() => String, { nullable: true })
-  @Allow()
-  @IsOptional()
   githubRepo?: string;
 
   @Field(() => String, { nullable: true })
-  @Allow()
-  @IsOptional()
   vibeKanbanRepoId?: string;
 
   @Field(() => String, { nullable: true })
-  @Allow()
-  @IsOptional()
   label?: string;
 }
 

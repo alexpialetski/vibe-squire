@@ -39,7 +39,17 @@ For any tunable key: **env var (non-empty) > SQLite Setting row > code default**
 
 - Boot-time env is validated by Zod in `apps/server/src/config/env-schema.ts`, producing `AppEnv`.
 - `SettingsService` resolves effective values at runtime using this precedence.
-- On settings write: update SQLite, refresh in-memory cache, emit `SettingsChanged` event so schedulers and SSE react.
+- On settings write: update SQLite, refresh in-memory cache, emit `SettingsChanged` event so schedulers and GraphQL subscribers react.
+
+## Transport policy
+
+GraphQL is the sole operator-console transport (`POST /graphql` for queries/mutations and `graphql-ws` for subscriptions).
+
+Only two REST endpoints are retained as operator tools:
+- `POST /api/sync/run`
+- `POST /api/reinit`
+
+`docs/ARCHITECTURE.md` (`## Transport decision table`) is the authoritative endpoint inventory. Any `/api/*` route add/remove/reclassification must update that table in the same change.
 
 ## Adding a new integration
 

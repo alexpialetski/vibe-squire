@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from '@apollo/client';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import type {
   MappingsQueryQuery,
@@ -7,8 +7,8 @@ import type {
   UpdateMappingMutationMutationVariables,
   UpsertMappingMutationMutation,
   UpsertMappingMutationMutationVariables,
+  VibeKanbanReposQuery,
 } from '../__generated__/graphql';
-import { apiJson } from '../api';
 import {
   mergeMappingListAfterWrite,
   randomOptimisticMappingId,
@@ -19,6 +19,7 @@ import {
   MAPPINGS_QUERY,
   UPDATE_MAPPING_MUTATION,
   UPSERT_MAPPING_MUTATION,
+  VIBE_KANBAN_REPOS_QUERY,
 } from '../graphql/operations';
 import { OperatorSyncActions } from '../ui/molecules/OperatorSyncActions';
 import { VkReposLoadErrorBanner } from '../ui/molecules/VkReposLoadErrorBanner';
@@ -33,35 +34,15 @@ export function MappingsPage() {
   const listQ = useQuery<MappingsQueryQuery>(MAPPINGS_QUERY, {
     fetchPolicy: 'cache-and-network',
   });
-
-  const [vkRepos, setVkRepos] = useState<{ id: string; name?: string }[]>([]);
-  const [vkReposError, setVkReposError] = useState<string | null>(null);
-  const [vkReposLoading, setVkReposLoading] = useState(true);
-
-  useEffect(() => {
-    let cancelled = false;
-    setVkReposLoading(true);
-    setVkReposError(null);
-    void apiJson<{ repos: { id: string; name?: string }[] }>(
-      '/api/vibe-kanban/repos',
-    )
-      .then((data) => {
-        if (!cancelled) {
-          setVkRepos(data.repos ?? []);
-        }
-      })
-      .catch((e: unknown) => {
-        if (!cancelled) {
-          setVkReposError(getErrorMessage(e));
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setVkReposLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const reposQ = useQuery<VibeKanbanReposQuery>(VIBE_KANBAN_REPOS_QUERY, {
+    fetchPolicy: 'cache-and-network',
+  });
+  const vkRepos = (reposQ.data?.vibeKanbanRepos ?? []).map((repo) => ({
+    id: repo.id,
+    name: repo.name ?? undefined,
+  }));
+  const vkReposError = reposQ.error ? getErrorMessage(reposQ.error) : null;
+  const vkReposLoading = Boolean(reposQ.loading && !reposQ.data);
 
   const [githubRepo, setGithubRepo] = useState('');
   const [vkRepoId, setVkRepoId] = useState('');

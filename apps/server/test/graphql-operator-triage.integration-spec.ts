@@ -1,8 +1,6 @@
 import { ValidationPipe } from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import { ZodSerializerInterceptor } from 'nestjs-zod';
 import request from 'supertest';
 import { configureExpressApp } from '../src/configure-express-app';
 import { GhCliService } from '../src/integrations/github/gh-cli.service';
@@ -93,8 +91,7 @@ async function createApp(): Promise<NestExpressApplication> {
 
   const app = moduleFixture.createNestApplication<NestExpressApplication>();
   configureExpressApp(app);
-  app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
-  app.useGlobalInterceptors(new ZodSerializerInterceptor(app.get(Reflector)));
+  app.useGlobalPipes(new ValidationPipe({ whitelist: false, transform: true }));
   await app.init();
   app.get(PollSchedulerService).onModuleDestroy();
   return app;

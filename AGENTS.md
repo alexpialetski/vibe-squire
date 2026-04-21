@@ -16,9 +16,19 @@ Hexagonal (ports & adapters). Core domain logic has no dependency on NestJS, Git
 - **Ports:** `apps/server/src/ports/` — interfaces (`SyncPrScoutPort`, `DestinationBoardPort`, `SourceStatusPort`, `DestinationStatusPort`) and DI tokens.
 - **Adapters:** `apps/server/src/integrations/github/` (gh CLI), `apps/server/src/integrations/vibe-kanban/` (local HTTP API client).
 - **Core:** `apps/server/src/sync/`, `apps/server/src/settings/`, `apps/server/src/mappings/`, `apps/server/src/status/`, `apps/server/src/setup/`.
-- **Driving:** NestJS controllers (`apps/server/src/ui/`, `apps/server/src/sync/`, `apps/server/src/reinit/`, …) and the React operator UI in `apps/web`.
+- **Driving:** GraphQL resolvers (`apps/server/src/graphql/`), a thin set of operator-tool REST controllers (`apps/server/src/sync/`, `apps/server/src/reinit/`), and the React operator UI in `apps/web`.
 
 **Key rule:** Domain code imports port interfaces, never concrete adapter types.
+
+## Transport policy
+
+GraphQL is the sole operator-console transport:
+- Queries/mutations via `POST /graphql`
+- Subscriptions via `graphql-ws`
+
+The only retained REST endpoints are `POST /api/sync/run` and `POST /api/reinit`, both kept strictly as operator tools for shell/curl workflows.
+
+Treat `docs/ARCHITECTURE.md` (`## Transport decision table`) as the source of truth for endpoint keep/remove decisions. Any `/api/*` route addition or removal must update that table in the same change.
 
 ## Distribution
 
@@ -37,8 +47,9 @@ Published to npm from `apps/server`; end users run `npx vibe-squire`. No clone r
 | `apps/server/src/sync/poll-cycle/` | Core sync logic: guard → scout → route → dedupe → create → reconcile |
 | `apps/server/src/settings/` | Key-value settings with env > SQLite > default precedence |
 | `apps/server/src/mappings/` | Repo → project mapping CRUD |
-| `apps/server/src/status/` | Aggregate health endpoint, SSE stream |
-| `apps/server/src/ui/` | Operator BFF (`/api/ui/*`), activity API, nav aggregation |
+| `apps/server/src/status/` | Aggregate health service feeding GraphQL `status` query and `statusUpdated` subscription |
+| `apps/server/src/ui/` | Operator BFF presenters (GitHub fields, VK UI state, setup checklist, nav) consumed by GraphQL resolvers |
+| `apps/server/src/graphql/` | GraphQL schema, resolvers, and PubSub wiring (operator console transport) |
 | `apps/web/` | React + Vite SPA (served as static files from Nest) |
 | `packages/shared/` | Zod schemas/types (`@vibe-squire/shared`) |
 | `apps/server/src/generated/prisma/` | Auto-generated Prisma client — do not edit |
@@ -92,7 +103,7 @@ pnpm run typecheck
 
 Boot-time env validated by Zod (`apps/server/src/config/env-schema.ts`): `VIBE_SQUIRE_DATABASE_URL`, `VIBE_SQUIRE_HOST`, `VIBE_SQUIRE_PORT`, `VIBE_SQUIRE_SOURCE_TYPE`, `VIBE_SQUIRE_DESTINATION_TYPE`, `VIBE_SQUIRE_LOG_LEVEL`, etc.
 
-Runtime settings stored in SQLite `Setting` table, managed via `SettingsService` and exposed at `PATCH /api/settings`.
+Runtime settings stored in SQLite `Setting` table, managed via `SettingsService` and exposed through the GraphQL `effectiveSettings` query plus the `updateSettings`, `updateSourceSettings`, and `updateDestinationSettings` mutations.
 
 Precedence for each key: **env (non-empty) > SQLite row > code default**.
 

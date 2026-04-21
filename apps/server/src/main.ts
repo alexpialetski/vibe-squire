@@ -1,10 +1,8 @@
 import './load-dotenv';
 import { ValidationPipe } from '@nestjs/common';
-import { NestFactory, Reflector } from '@nestjs/core';
+import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { Logger } from 'nestjs-pino';
-import { ZodSerializerInterceptor } from 'nestjs-zod';
 import { AppModule } from './app.module';
 import { configureExpressApp } from './configure-express-app';
 import { parseAppEnv } from './config/env-schema';
@@ -30,23 +28,10 @@ async function bootstrap() {
   app.useLogger(app.get(Logger));
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true,
+      whitelist: false,
       transform: true,
     }),
   );
-  app.useGlobalInterceptors(new ZodSerializerInterceptor(app.get(Reflector)));
-
-  if (env.openapiEnabled) {
-    const swaggerConfig = new DocumentBuilder()
-      .setTitle('vibe-squire')
-      .setDescription(
-        'Local orchestrator: GitHub PR review queue → Vibe Kanban via local HTTP API.',
-      )
-      .setVersion('0.0.1')
-      .build();
-    const document = SwaggerModule.createDocument(app, swaggerConfig);
-    SwaggerModule.setup('api/docs', app, document);
-  }
 
   await app.listen(env.port, env.host);
   const logger = app.get(Logger);

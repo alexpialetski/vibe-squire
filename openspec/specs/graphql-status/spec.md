@@ -3,7 +3,6 @@
 ## Purpose
 
 Defines the GraphQL `status` query and `statusUpdated` subscription — the live operator-console surface that mirrors `GET /api/status` and `GET /api/status/stream`, delivered over the code-first Apollo driver set up in `graphql-server-foundation`. Resolvers are thin driving adapters over `StatusService.getSnapshot()` and must stay decoupled from Prisma and integration adapters. Zod (`statusSnapshotSchema` in `@vibe-squire/shared`) remains the single validation source of truth; GraphQL types mirror it with shared enum literals so the two representations cannot drift.
-
 ## Requirements
 ### Requirement: GraphQL schema exposes `status` query returning `StatusSnapshot!`
 
@@ -49,20 +48,31 @@ The subscription MUST reuse the existing `StatusEventsService.updates()` Observa
 - **WHEN** the Nest application is closed while a `graphql-ws` subscriber is active
 - **THEN** the RxJS bridge between `StatusEventsService.updates()` and the GraphQL subscription SHALL be unsubscribed and MUST NOT keep the event loop alive
 
-### Requirement: REST and SSE status endpoints remain unchanged during the GraphQL migration
+### Requirement: REST and SSE status endpoints are removed once GraphQL parity is shipped
 
-The existing `GET /api/status` controller and `GET /api/status/stream` SSE controller SHALL remain behaviorally unchanged by this change. Sunsetting these endpoints is deferred to story P2.5.
+The `GET /api/status` REST controller and the `GET /api/status/stream` SSE controller SHALL be deleted. The status snapshot and live-update transports are served exclusively by the GraphQL `status` query and `statusUpdated` subscription delivered over `graphql-ws`. `StatusEventsService.updates()` SHALL feed only the GraphQL PubSub — no `@Sse` consumer, interceptor, or bridge SHALL subscribe to it outside the GraphQL subscription pipeline. The transport decision table in `docs/ARCHITECTURE.md` SHALL record both endpoints as `removed` with a one-sentence justification naming the GraphQL operation that supersedes them.
 
-#### Scenario: REST status endpoint continues to return the documented snapshot
+#### Scenario: REST status endpoint responds 404
 
 - **WHEN** a client sends `GET /api/status` after this change is deployed
-- **THEN** the response status, body shape, and validation against `statusSnapshotSchema` SHALL be identical to the pre-change behavior
+- **THEN** the server SHALL respond `404 Not Found`, because the route handler has been deleted
 
-#### Scenario: SSE stream continues to emit snapshots on change
+#### Scenario: SSE status stream responds 404
 
-- **WHEN** a client is connected to `GET /api/status/stream`
-- **AND** `StatusEventsService.emitChanged()` fires
-- **THEN** the SSE client SHALL receive a `data:` frame carrying the current snapshot, identical to the pre-change behavior
+- **WHEN** a client sends `GET /api/status/stream` after this change is deployed
+- **THEN** the server SHALL respond `404 Not Found`, because the `@Sse('stream')` handler has been deleted
+
+#### Scenario: `StatusEventsService.updates()` has exactly one downstream subscriber
+
+- **WHEN** the status module is initialised after this change lands
+- **THEN** the only code path subscribing to `StatusEventsService.updates()` SHALL be the `statusUpdated` subscription resolver (directly or via the GraphQL PubSub bridge)
+- **AND** no `@Sse` handler, SSE gateway, or non-GraphQL HTTP interceptor SHALL subscribe to it
+
+#### Scenario: Transport decision table records the removal
+
+- **WHEN** `docs/ARCHITECTURE.md` is inspected after this change lands
+- **THEN** the transport decision table SHALL contain rows for `GET /api/status` and `GET /api/status/stream`, each with status `removed`
+- **AND** each justification SHALL name the GraphQL operation (`status` query and `statusUpdated` subscription respectively) that supersedes the removed endpoint
 
 ### Requirement: Zod remains the server-side validation source of truth
 

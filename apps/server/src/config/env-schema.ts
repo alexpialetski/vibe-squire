@@ -38,7 +38,6 @@ const appEnvInputSchema = z.looseObject({
     .optional()
     .default('127.0.0.1'),
   VIBE_SQUIRE_PORT: z.coerce.number().int().min(1).max(65535).default(3000),
-  VIBE_SQUIRE_OPENAPI_ENABLED: z.stringbool().optional().default(true),
   VIBE_SQUIRE_LOG_LEVEL: z.enum(PINO_LOG_LEVELS).optional().default('info'),
   /** When set to a non-empty string, JSON logs are also written to this path (relative paths are under cwd). */
   VIBE_SQUIRE_LOG_FILE_PATH: z.string().optional(),
@@ -62,7 +61,6 @@ export function parseAppEnv(env: NodeJS.ProcessEnv = process.env): AppEnv {
     databaseUrl: parsed.VIBE_SQUIRE_DATABASE_URL,
     host: parsed.VIBE_SQUIRE_HOST,
     port: parsed.VIBE_SQUIRE_PORT,
-    openapiEnabled: parsed.VIBE_SQUIRE_OPENAPI_ENABLED,
     logLevel: parsed.VIBE_SQUIRE_LOG_LEVEL,
     logFilePath: parsed.VIBE_SQUIRE_LOG_FILE_PATH?.trim() || undefined,
     sourceType: parsed.VIBE_SQUIRE_SOURCE_TYPE,

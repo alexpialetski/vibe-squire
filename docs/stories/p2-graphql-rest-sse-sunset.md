@@ -1,7 +1,7 @@
 ---
 id: P2.5
 title: Sunset duplicate REST/SSE surfaces superseded by GraphQL
-status: todo
+status: done
 impact: L
 urgency: later
 tags:
@@ -27,15 +27,15 @@ After **every** consumer of a REST/SSE surface is migrated (web, integration tes
 
 ## Acceptance criteria
 
-- [ ] Decision table published in `docs/ARCHITECTURE.md` listing each previously REST-exposed surface with status: `removed`, `kept (operator tool)`, or `kept (internal)`. Include reasoning in one sentence per row.
-- [ ] **SSE endpoint removed:** `GET /api/status/stream` and its `@Sse` handler deleted; `StatusEventsService.updates()` now only feeds the GraphQL PubSub.
-- [ ] **REST GET endpoints removed** only where **no remaining callers** exist (grep `apps/web`, `apps/server/test`, `README`, scripts). Candidates once clear include: `GET /api/status`, `GET /api/ui/setup` (superseded for web by GraphQL `dashboardSetup` — still verify smoke tests and any external tooling), other `GET /api/ui/*` reads, settings/mappings/activity GETs that duplicate GraphQL. Each removal is a separate commit or a clearly bullet-pointed PR for reversibility.
-- [ ] **Web REST holdouts closed or documented:** today `apps/web/src/api.ts` (`apiJson`) is still used from `GithubPage`, `VibeKanbanPage`, and VK repo loading on `MappingsPage` (paths under `/api/ui/*`, `/api/vibe-kanban/*`, `/api/settings/*`). Either migrate these to GraphQL and then drop the redundant REST reads/writes, or list them as **kept (REST)** in the decision table with rationale — do not leave them implicit.
-- [ ] **REST endpoints kept** (default candidates; adjust per the decision table): `POST /api/sync/run`, `POST /api/reinit`, Swagger / OpenAPI endpoints if useful. Justify each keeper in the decision table.
-- [ ] Integration tests for removed endpoints are deleted; tests for kept endpoints stay. GraphQL integration specs remain the coverage for removed REST surfaces.
-- [ ] `apps/server/src/ui/operator-bff.controller.ts` slimmed or deleted if its surface is fully superseded.
-- [ ] `AGENTS.md` and `.cursor/rules/architecture.mdc` updated to reflect the transport change (mention `/graphql`, WebSocket subscriptions, and the remaining REST surface).
-- [ ] `nestjs-zod` usage audited — legacy class-validator DTOs may no longer have consumers.
+- [x] Decision table published in `docs/ARCHITECTURE.md` listing each previously REST-exposed surface with status: `removed`, `kept (operator tool)`, or `kept (internal)`. Include reasoning in one sentence per row.
+- [x] **SSE endpoint removed:** `GET /api/status/stream` and its `@Sse` handler deleted; `StatusEventsService.updates()` now only feeds the GraphQL PubSub.
+- [x] **REST GET endpoints removed** only where **no remaining callers** exist (grep `apps/web`, `apps/server/test`, `README`, scripts). Candidates once clear include: `GET /api/status`, `GET /api/ui/setup` (superseded for web by GraphQL `dashboardSetup` — still verify smoke tests and any external tooling), other `GET /api/ui/*` reads, settings/mappings/activity GETs that duplicate GraphQL. Each removal is a separate commit or a clearly bullet-pointed PR for reversibility.
+- [x] **Web REST holdouts closed or documented:** today `apps/web/src/api.ts` (`apiJson`) is still used from `GithubPage`, `VibeKanbanPage`, and VK repo loading on `MappingsPage` (paths under `/api/ui/*`, `/api/vibe-kanban/*`, `/api/settings/*`). Either migrate these to GraphQL and then drop the redundant REST reads/writes, or list them as **kept (REST)** in the decision table with rationale — do not leave them implicit.
+- [x] **REST endpoints kept** (default candidates; adjust per the decision table): `POST /api/sync/run`, `POST /api/reinit`, Swagger / OpenAPI endpoints if useful. Justify each keeper in the decision table.
+- [x] Integration tests for removed endpoints are deleted; tests for kept endpoints stay. GraphQL integration specs remain the coverage for removed REST surfaces.
+- [x] `apps/server/src/ui/operator-bff.controller.ts` slimmed or deleted if its surface is fully superseded.
+- [x] `AGENTS.md` and `.cursor/rules/architecture.mdc` updated to reflect the transport change (mention `/graphql`, WebSocket subscriptions, and the remaining REST surface).
+- [x] `nestjs-zod` usage audited — legacy class-validator DTOs may no longer have consumers.
 
 ## Notes
 

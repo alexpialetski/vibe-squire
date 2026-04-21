@@ -1,6 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
-import request from 'supertest';
 import { App } from 'supertest/types';
 import { testingAppModule } from './testing-app-module';
 import { VibeKanbanBoardService } from '../src/vibe-kanban/vibe-kanban-board.service';
@@ -46,7 +45,7 @@ describe('VkBoardIntegrationListener (integration)', () => {
 
     app = moduleFixture.createNestApplication();
     app.useGlobalPipes(
-      new ValidationPipe({ whitelist: true, transform: true }),
+      new ValidationPipe({ whitelist: false, transform: true }),
     );
     await app.init();
 
@@ -83,19 +82,17 @@ describe('VkBoardIntegrationListener (integration)', () => {
   });
 
   it('PATCH destination rejects unknown keys (strict schema)', async () => {
-    await request(app.getHttpServer())
-      .patch('/api/settings/destination')
-      .send({ not_a_valid_destination_setting: 'x' })
-      .expect(400);
+    await expect(
+      settings.applyGroupPatch('destination', {
+        not_a_valid_destination_setting: 'x',
+      }),
+    ).rejects.toThrow(/unknown|unrecognized|invalid/i);
   });
 
   it('integration-settings event with healthy VK: probe failure → degraded if lastOkAt set', async () => {
     vkStub.probe.mockRejectedValueOnce(new Error('probe transient'));
 
-    await request(app.getHttpServer())
-      .patch('/api/settings/core')
-      .send({ poll_interval_minutes: '12' })
-      .expect(200);
+    await settings.applyGroupPatch('core', { poll_interval_minutes: '12' });
 
     const h = runState.getDestinationHealth('vibe_kanban');
     expect(h.state).toBe('degraded');
@@ -104,9 +101,8 @@ describe('VkBoardIntegrationListener (integration)', () => {
   });
 
   it('PATCH destination_type is rejected (not a persisted setting key)', async () => {
-    await request(app.getHttpServer())
-      .patch('/api/settings/core')
-      .send({ destination_type: '' })
-      .expect(400);
+    await expect(
+      settings.applyGroupPatch('core', { destination_type: '' }),
+    ).rejects.toThrow(/unknown|unrecognized|invalid/i);
   });
 });

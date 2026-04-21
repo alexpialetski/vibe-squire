@@ -62,7 +62,7 @@ describe('Triage mode (integration)', () => {
 
     app = moduleFixture.createNestApplication();
     app.useGlobalPipes(
-      new ValidationPipe({ whitelist: true, transform: true }),
+      new ValidationPipe({ whitelist: false, transform: true }),
     );
     await app.init();
 
@@ -123,10 +123,20 @@ describe('Triage mode (integration)', () => {
     await request(app.getHttpServer()).post('/api/sync/run').expect(201);
 
     // Decline PR #11
-    await request(app.getHttpServer())
-      .post('/api/pr/decline')
-      .send({ prUrl: 'https://github.com/acme/demo/pull/11' })
-      .expect(201);
+    const declineRes = await request(app.getHttpServer())
+      .post('/graphql')
+      .send({
+        query: /* GraphQL */ `
+          mutation Decline($prUrl: String!) {
+            declineTriage(prUrl: $prUrl) {
+              ok
+            }
+          }
+        `,
+        variables: { prUrl: 'https://github.com/acme/demo/pull/11' },
+      })
+      .expect(200);
+    expect((declineRes.body as { errors?: unknown[] }).errors).toBeUndefined();
 
     const declined = await prisma.declinedPullRequest.findUnique({
       where: { prUrl: 'https://github.com/acme/demo/pull/11' },
@@ -162,13 +172,24 @@ describe('Triage mode (integration)', () => {
 
     // Accept PR #10
     const res = await request(app.getHttpServer())
-      .post('/api/pr/accept')
-      .send({ prUrl: 'https://github.com/acme/demo/pull/10' })
-      .expect(201);
-
-    expect((res.body as { kanbanIssueId: string }).kanbanIssueId).toBe(
-      'triage-issue-id',
-    );
+      .post('/graphql')
+      .send({
+        query: /* GraphQL */ `
+          mutation Accept($prUrl: String!) {
+            acceptTriage(prUrl: $prUrl) {
+              kanbanIssueId
+            }
+          }
+        `,
+        variables: { prUrl: 'https://github.com/acme/demo/pull/10' },
+      })
+      .expect(200);
+    const body = res.body as {
+      data?: { acceptTriage?: { kanbanIssueId: string } };
+      errors?: unknown[];
+    };
+    expect(body.errors).toBeUndefined();
+    expect(body.data?.acceptTriage?.kanbanIssueId).toBe('triage-issue-id');
     expect(vkStub.createIssue).toHaveBeenCalledTimes(1);
 
     const synced = await prisma.syncedPullRequest.findUnique({
@@ -181,10 +202,20 @@ describe('Triage mode (integration)', () => {
   it('reconsider removes declined status', async () => {
     // First sync + decline
     await request(app.getHttpServer()).post('/api/sync/run').expect(201);
-    await request(app.getHttpServer())
-      .post('/api/pr/decline')
-      .send({ prUrl: 'https://github.com/acme/demo/pull/11' })
-      .expect(201);
+    const declineRes = await request(app.getHttpServer())
+      .post('/graphql')
+      .send({
+        query: /* GraphQL */ `
+          mutation Decline($prUrl: String!) {
+            declineTriage(prUrl: $prUrl) {
+              ok
+            }
+          }
+        `,
+        variables: { prUrl: 'https://github.com/acme/demo/pull/11' },
+      })
+      .expect(200);
+    expect((declineRes.body as { errors?: unknown[] }).errors).toBeUndefined();
 
     expect(
       await prisma.declinedPullRequest.findUnique({
@@ -193,10 +224,22 @@ describe('Triage mode (integration)', () => {
     ).not.toBeNull();
 
     // Reconsider
-    await request(app.getHttpServer())
-      .post('/api/pr/reconsider')
-      .send({ prUrl: 'https://github.com/acme/demo/pull/11' })
-      .expect(201);
+    const reconsiderRes = await request(app.getHttpServer())
+      .post('/graphql')
+      .send({
+        query: /* GraphQL */ `
+          mutation Reconsider($prUrl: String!) {
+            reconsiderTriage(prUrl: $prUrl) {
+              ok
+            }
+          }
+        `,
+        variables: { prUrl: 'https://github.com/acme/demo/pull/11' },
+      })
+      .expect(200);
+    expect(
+      (reconsiderRes.body as { errors?: unknown[] }).errors,
+    ).toBeUndefined();
 
     expect(
       await prisma.declinedPullRequest.findUnique({

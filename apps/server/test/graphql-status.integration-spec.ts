@@ -1,8 +1,6 @@
 import { ValidationPipe } from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import { ZodSerializerInterceptor } from 'nestjs-zod';
 import { createClient } from 'graphql-ws';
 import WebSocket from 'ws';
 import request from 'supertest';
@@ -78,45 +76,6 @@ const SUBSCRIPTION = /* GraphQL */ `
   }
 `;
 
-/** GraphQL JSON often includes explicit `null` for nullable fields; REST omits them. Compare after dropping nulls. */
-function omitNullDeep(value: unknown): unknown {
-  if (value === null || value === undefined) {
-    return undefined;
-  }
-  if (Array.isArray(value)) {
-    return value.map(omitNullDeep);
-  }
-  if (typeof value === 'object' && value !== null) {
-    const out: Record<string, unknown> = {};
-    for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
-      const inner = omitNullDeep(v);
-      if (inner !== undefined) {
-        out[k] = inner;
-      }
-    }
-    return out;
-  }
-  return value;
-}
-
-function assertSnapshotParity(restBody: unknown, gqlStatus: unknown): void {
-  const rest = statusSnapshotSchema.parse(restBody);
-  const gql = statusSnapshotSchema.parse(gqlStatus);
-  const dr = Date.parse(rest.timestamp);
-  const dg = Date.parse(gql.timestamp);
-  expect(Math.abs(dr - dg)).toBeLessThan(5000);
-  const stripTimestamp = <T extends { timestamp: string }>(
-    v: T,
-  ): Omit<T, 'timestamp'> => {
-    const copy = { ...v } as Partial<T>;
-    delete copy.timestamp;
-    return copy as Omit<T, 'timestamp'>;
-  };
-  expect(omitNullDeep(stripTimestamp(rest))).toEqual(
-    omitNullDeep(stripTimestamp(gql)),
-  );
-}
-
 async function createGraphqlTestApp(): Promise<NestExpressApplication> {
   const moduleFixture: TestingModule = await Test.createTestingModule({
     imports: [testingAppModule()],
@@ -124,8 +83,7 @@ async function createGraphqlTestApp(): Promise<NestExpressApplication> {
 
   const app = moduleFixture.createNestApplication<NestExpressApplication>();
   configureExpressApp(app);
-  app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
-  app.useGlobalInterceptors(new ZodSerializerInterceptor(app.get(Reflector)));
+  app.useGlobalPipes(new ValidationPipe({ whitelist: false, transform: true }));
   await app.init();
   app.get(PollSchedulerService).onModuleDestroy();
   return app;
@@ -197,23 +155,6 @@ describe('GraphQL status (integration)', () => {
     const snap = body.data?.status;
     expect(snap).toBeDefined();
     expect(() => statusSnapshotSchema.parse(snap)).not.toThrow();
-  });
-
-  it('matches GET /api/status (Zod parity excluding timestamp epsilon)', async () => {
-    const restRes = await request(app.getHttpServer()).get('/api/status');
-    const gqlRes = await request(app.getHttpServer())
-      .post('/graphql')
-      .send({ query: STATUS_QUERY });
-    expect(restRes.status).toBe(200);
-    expect(gqlRes.status).toBe(200);
-
-    const gqlBody = gqlRes.body as {
-      data?: { status?: unknown };
-      errors?: unknown[];
-    };
-    expect(gqlBody.errors).toBeUndefined();
-
-    assertSnapshotParity(restRes.body, gqlBody.data?.status);
   });
 
   it('subscription: receives statusUpdated after StatusEventsService.emitChanged()', async () => {

@@ -1,5 +1,5 @@
 import type { SettingsGroupBase } from './settings-group.base';
-import { formatZodIssuesForBadRequest } from './dto/patch-settings-body.schema';
+import { formatZodIssuesForBadRequest } from './settings-zod-errors';
 
 export class SettingsPatchError extends Error {
   constructor(message: string) {

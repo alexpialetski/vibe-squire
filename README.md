@@ -53,11 +53,10 @@ VIBE_SQUIRE_PORT=4000 VIBE_SQUIRE_LOG_LEVEL=debug npx vibe-squire
 | `VIBE_SQUIRE_RUN_NOW_COOLDOWN_SECONDS` | `60` | Minimum gap after a manual sync before another is allowed. |
 | `VIBE_SQUIRE_LOG_LEVEL` | `info` | Pino log level (`fatal` / `error` / `warn` / `info` / `debug` / `trace` / `silent`). |
 | `VIBE_SQUIRE_LOG_FILE_PATH` | — | Path for JSON file logging (in addition to console). |
-| `VIBE_SQUIRE_OPENAPI_ENABLED` | `true` | Expose Swagger UI at `/api/docs`. |
 
 ### Runtime settings (SQLite)
 
-These have no env var equivalent — set them via the operator UI or `PATCH /api/settings`:
+These have no env var equivalent — set them via the operator UI (which now edits them through the GraphQL `updateSettings`, `updateSourceSettings`, and `updateDestinationSettings` mutations):
 
 `default_organization_id`, `default_project_id`, `vk_workspace_executor`, `kanban_done_status`, `pr_ignore_author_logins`, `pr_review_body_template`, `max_board_pr_count`.
 
@@ -94,25 +93,16 @@ React + Vite SPA (`apps/web/`) built into `apps/server/dist/client` and served b
 | `/github` | GitHub source integration fields |
 | `/vibe-kanban` | Organisation/project picker, workspace executor |
 
-## HTTP API
+## API transport
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `GET` | `/api/status` | Aggregate health, setup, and scheduler snapshot |
-| `GET` | `/api/status/stream` | SSE status stream (heartbeat + events) |
+| `POST` | `/graphql` | GraphQL query + mutation endpoint for the operator console |
+| `WS` | `graphql-ws` | GraphQL subscriptions transport for live updates |
 | `POST` | `/api/sync/run` | Trigger manual sync (cooldown + guards) |
 | `POST` | `/api/reinit` | Soft reinit: re-probe `gh`, DB, Vibe Kanban API; reset backoff |
-| `CRUD` | `/api/settings` | Runtime settings |
-| `CRUD` | `/api/mappings` | Repo → project mappings |
-| `GET` | `/api/vibe-kanban/organizations` | Proxies VK `GET /api/organizations` |
-| `GET` | `/api/vibe-kanban/projects?organization_id=` | Proxies VK `GET /api/remote/projects` |
-| `GET` | `/api/ui/nav` | Sidebar integration nav entries |
-| `GET` | `/api/ui/setup` | Setup evaluation + checklist (dashboard); web uses GraphQL `dashboardSetup` |
-| `GET` | `/api/ui/settings-meta` | General settings form metadata |
-| `GET` | `/api/ui/github-fields` | GitHub integration field rows |
-| `GET` | `/api/vibe-kanban/ui-state` | Vibe Kanban settings bootstrap (saved ids, labels, executor enum); org/project lists use `/organizations` and `/projects` |
 
-OpenAPI docs (when enabled): **http://127.0.0.1:3000/api/docs**
+Endpoint status policy and historical `/api/*` decisions live in `docs/ARCHITECTURE.md` under `## Transport decision table`.
 
 ## Running as a service
 

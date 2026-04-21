@@ -1,36 +1,38 @@
-import { githubFieldsResponseSchema } from '@vibe-squire/shared';
-import { useCallback, useEffect, useState } from 'react';
+import { useMutation, useQuery } from '@apollo/client';
+import { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
-import { apiJson } from '../api';
+import type {
+  GithubFieldsQuery,
+  UpdateSourceSettingsMutation,
+  UpdateSourceSettingsMutationVariables,
+} from '../__generated__/graphql';
+import {
+  GITHUB_FIELDS_QUERY,
+  UPDATE_SOURCE_SETTINGS_MUTATION,
+} from '../graphql/operations';
+import { GithubFieldsForm } from '../ui/organisms/GithubFieldsForm';
 import { getErrorMessage } from '../toast';
 
 export function GithubPage() {
-  const [fieldsData, setFieldsData] = useState<ReturnType<
-    typeof githubFieldsResponseSchema.parse
-  > | null>(null);
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-
-  const reload = useCallback(async () => {
-    setLoading(true);
-    setLoadError(null);
-    try {
-      const raw = await apiJson<unknown>('/api/ui/github-fields');
-      setFieldsData(githubFieldsResponseSchema.parse(raw));
-    } catch (e: unknown) {
-      setLoadError(getErrorMessage(e));
-      setFieldsData(null);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    void reload();
-  }, [reload]);
+  const query = useQuery<GithubFieldsQuery>(GITHUB_FIELDS_QUERY, {
+    fetchPolicy: 'cache-and-network',
+  });
+  const [saveMutation, saveState] = useMutation<
+    UpdateSourceSettingsMutation,
+    UpdateSourceSettingsMutationVariables
+  >(UPDATE_SOURCE_SETTINGS_MUTATION, {
+    onCompleted: () => {
+      void query.refetch().then(() => {
+        toast.success('GitHub settings saved.');
+      });
+    },
+    onError: (error: unknown) => {
+      toast.error(`Save failed: ${getErrorMessage(error)}`);
+    },
+  });
 
   const [values, setValues] = useState<Record<string, string>>({});
+  const fieldsData = query.data?.githubFields ?? null;
 
   useEffect(() => {
     if (!fieldsData || fieldsData.disabled) return;
@@ -42,22 +44,10 @@ export function GithubPage() {
   }, [fieldsData]);
 
   const handleSave = async (body: Record<string, string>) => {
-    setSaving(true);
-    try {
-      await apiJson('/api/settings/source', {
-        method: 'PATCH',
-        body: JSON.stringify(body),
-      });
-      await reload();
-      toast.success('GitHub settings saved.');
-    } catch (error: unknown) {
-      toast.error(`Save failed: ${getErrorMessage(error)}`);
-    } finally {
-      setSaving(false);
-    }
+    await saveMutation({ variables: { input: body } });
   };
 
-  if (loading && !fieldsData && !loadError) {
+  if (query.loading && !fieldsData && !query.error) {
     return (
       <div className="stack">
         <h1>GitHub</h1>
@@ -66,11 +56,11 @@ export function GithubPage() {
     );
   }
 
-  if (loadError) {
+  if (query.error) {
     return (
       <div className="stack">
         <h1>GitHub</h1>
-        <p className="text-danger">{loadError}</p>
+        <p className="text-danger">{getErrorMessage(query.error)}</p>
       </div>
     );
   }
@@ -87,32 +77,17 @@ export function GithubPage() {
   return (
     <div className="stack">
       <h1>GitHub</h1>
-      <section className="card">
-        <form
-          className="form-stack"
-          onSubmit={(e) => {
-            e.preventDefault();
-            void handleSave(values);
-          }}
-        >
-          {(fieldsData?.fields ?? []).map((f) => (
-            <label key={f.key} className="field">
-              <span className="field-label">{f.label}</span>
-              <textarea
-                className="input"
-                rows={3}
-                value={values[f.key] ?? ''}
-                onChange={(ev) =>
-                  setValues((s) => ({ ...s, [f.key]: ev.target.value }))
-                }
-              />
-            </label>
-          ))}
-          <button type="submit" className="btn primary" disabled={saving}>
-            {saving ? 'Saving…' : 'Save'}
-          </button>
-        </form>
-      </section>
+      <GithubFieldsForm
+        fields={fieldsData?.fields ?? []}
+        values={values}
+        saving={saveState.loading}
+        onValueChange={(key, value) =>
+          setValues((state) => ({ ...state, [key]: value }))
+        }
+        onSubmit={() => {
+          void handleSave(values);
+        }}
+      />
     </div>
   );
 }
