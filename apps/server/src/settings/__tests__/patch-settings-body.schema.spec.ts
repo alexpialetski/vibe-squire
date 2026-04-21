@@ -49,9 +49,23 @@ describe('partition patchSchema (core)', () => {
 describe('partition patchSchema (source / github)', () => {
   const schema = new GithubSettingsGroup().patchSchema;
 
+  it('accepts github_host update', () => {
+    const r = schema.safeParse({
+      github_host: 'github.ol.epicgames.net',
+    });
+    expect(r.success).toBe(true);
+  });
+
   it('rejects invalid pr_ignore_author_logins', () => {
     const r = schema.safeParse({
       pr_ignore_author_logins: 'x'.repeat(9000),
+    });
+    expect(r.success).toBe(false);
+  });
+
+  it('rejects invalid github_host', () => {
+    const r = schema.safeParse({
+      github_host: 'https://github.com',
     });
     expect(r.success).toBe(false);
   });

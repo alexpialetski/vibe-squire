@@ -35,7 +35,7 @@ export class GithubPrScoutService implements GithubPrScoutPort {
    * Uses `gh search prs` (no local git repo required); host comes from `gh` auth default.
    * Results are ordered oldest PR first (`createdAt` ascending) for stable board limits.
    */
-  listReviewRequestedForMe(): GithubPrCandidate[] {
+  listReviewRequestedForMe(githubHost: string): GithubPrCandidate[] {
     const proc = spawnSync(
       'gh',
       [
@@ -51,7 +51,10 @@ export class GithubPrScoutService implements GithubPrScoutPort {
       ],
       {
         encoding: 'utf-8',
-        env: { ...process.env } as NodeJS.ProcessEnv,
+        env: {
+          ...process.env,
+          GH_HOST: githubHost,
+        } as NodeJS.ProcessEnv,
         cwd: tmpdir(),
       },
     );

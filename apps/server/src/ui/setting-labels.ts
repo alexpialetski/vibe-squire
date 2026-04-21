@@ -20,6 +20,8 @@ export const SETTING_LABELS: Record<string, string> = {
   kanban_done_status: 'Kanban "done" status name',
   pr_ignore_author_logins:
     'Ignore authors (login, exact match): semicolon-separated; case-insensitive',
+  github_host:
+    'GitHub host for gh CLI (e.g. github.com or github.ol.epicgames.net). Override: VIBE_SQUIRE_GITHUB_HOST',
   pr_review_body_template: 'PR review body template',
 };
 

@@ -27,6 +27,10 @@ export class GithubSettings {
     return this.getAll().pr_ignore_author_logins;
   }
 
+  get githubHost(): string {
+    return this.getAll().github_host;
+  }
+
   get prReviewBodyTemplate(): string {
     return this.getAll().pr_review_body_template;
   }

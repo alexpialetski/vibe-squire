@@ -3,7 +3,10 @@ import type { DestinationBoardPort } from '../../ports/destination-board.port';
 import type { EffectiveSettingsReader } from '../../settings/settings.service';
 import type { CoreSettings } from '../../settings/core-settings.service';
 import type { GithubPrCandidate } from '../../ports/github-pr-candidate';
-import { prIgnoreAuthorLoginsSchema } from '../../integrations/github/github-settings.schema';
+import {
+  githubHostStorageField,
+  prIgnoreAuthorLoginsSchema,
+} from '../../integrations/github/github-settings.schema';
 import { redactHttpUrls } from '../../logging/redact-urls';
 
 /** Mutable create quota for one poll; only `createIssue` decrements. */
@@ -31,7 +34,15 @@ export async function buildPollScoutContext(deps: {
   destinationBoard: Pick<DestinationBoardPort, 'countActiveIssues'>;
   warn: (msg: string) => void;
 }): Promise<PollScoutContext> {
-  const candidates = deps.prScout.listReviewRequestedForMe();
+  const githubHostRaw = deps.settings.getEffective('github_host');
+  const parsedHost = githubHostStorageField.safeParse(githubHostRaw);
+  const githubHost = parsedHost.success ? parsedHost.data : 'github.com';
+  if (!parsedHost.success) {
+    const message = parsedHost.error.issues.map((i) => i.message).join('; ');
+    deps.warn(`Invalid github_host (${message}); using github.com`);
+  }
+
+  const candidates = deps.prScout.listReviewRequestedForMe(githubHost);
   const urlsNow = new Set(candidates.map((c) => c.url));
   const boardLimit = deps.coreSettings.maxBoardPrCount;
 

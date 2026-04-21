@@ -426,6 +426,7 @@ export type UpdateSettingsPayload = {
 };
 
 export type UpdateSourceSettingsInput = {
+  github_host?: InputMaybe<Scalars['String']['input']>;
   pr_ignore_author_logins?: InputMaybe<Scalars['String']['input']>;
   pr_review_body_template?: InputMaybe<Scalars['String']['input']>;
 };

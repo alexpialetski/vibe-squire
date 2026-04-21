@@ -56,9 +56,9 @@ VIBE_SQUIRE_PORT=4000 VIBE_SQUIRE_LOG_LEVEL=debug npx vibe-squire
 
 ### Runtime settings (SQLite)
 
-These have no env var equivalent — set them via the operator UI (which now edits them through the GraphQL `updateSettings`, `updateSourceSettings`, and `updateDestinationSettings` mutations):
+These are set via the operator UI (which edits them through the GraphQL `updateSettings`, `updateSourceSettings`, and `updateDestinationSettings` mutations):
 
-`default_organization_id`, `default_project_id`, `vk_workspace_executor`, `kanban_done_status`, `pr_ignore_author_logins`, `pr_review_body_template`, `max_board_pr_count`.
+`default_organization_id`, `default_project_id`, `vk_workspace_executor`, `kanban_done_status`, `github_host`, `pr_ignore_author_logins`, `pr_review_body_template`, `max_board_pr_count`.
 
 ### Effective precedence
 

@@ -13,7 +13,7 @@ export class GhCliService {
    * Non-interactive check: `gh` on PATH and `gh auth status` succeeds.
    * Uses the default host from `gh` configuration (see `gh auth status`).
    */
-  checkAuth(): { state: GhHealthState; message?: string } {
+  checkAuth(githubHost: string): { state: GhHealthState; message?: string } {
     const version = spawnSync('gh', ['--version'], {
       encoding: 'utf-8',
     });
@@ -26,7 +26,10 @@ export class GhCliService {
 
     const auth = spawnSync('gh', ['auth', 'status'], {
       encoding: 'utf-8',
-      env: { ...process.env } as NodeJS.ProcessEnv,
+      env: {
+        ...process.env,
+        GH_HOST: githubHost,
+      } as NodeJS.ProcessEnv,
     });
 
     if (auth.status === 0) {

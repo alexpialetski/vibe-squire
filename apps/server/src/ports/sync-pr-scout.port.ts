@@ -6,5 +6,5 @@ import type { GithubPrCandidate } from './github-pr-candidate';
  * v1 surface matches GitHub; narrow or rename candidates when a second SCM differs.
  */
 export interface SyncPrScoutPort {
-  listReviewRequestedForMe(): GithubPrCandidate[];
+  listReviewRequestedForMe(githubHost: string): GithubPrCandidate[];
 }

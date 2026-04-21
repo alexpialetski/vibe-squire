@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { GhCliService } from './gh-cli.service';
+import { GithubSettings } from './github-settings.service';
 import type {
   SourceReadinessResult,
   SourceStatusProvider,
@@ -9,10 +10,13 @@ import type {
 export class GithubSourceStatusService implements SourceStatusProvider {
   readonly sourceType = 'github' as const;
 
-  constructor(private readonly gh: GhCliService) {}
+  constructor(
+    private readonly gh: GhCliService,
+    private readonly githubSettings: GithubSettings,
+  ) {}
 
   checkReadiness(): SourceReadinessResult {
-    const r = this.gh.checkAuth();
+    const r = this.gh.checkAuth(this.githubSettings.githubHost);
     if (r.state === 'ok') {
       return { state: 'ok' };
     }
