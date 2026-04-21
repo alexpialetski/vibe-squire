@@ -9,7 +9,6 @@ import {
   MAPPINGS_QUERY,
   REINIT_INTEGRATION_MUTATION,
   STATUS_QUERY,
-  TRIGGER_SYNC_MUTATION,
 } from '../../graphql/operations';
 import { dashboardNeedsReinit } from '../../operator/sync-health';
 const FEED_VARS = { first: 40 } as const;
@@ -34,26 +33,6 @@ export function OperatorSyncActions() {
     return parsed.success ? parsed.data : null;
   })();
 
-  const manualSync = snapshot?.manual_sync ?? {
-    canRun: false as const,
-    reason: undefined as string | undefined,
-    cooldownUntil: undefined as string | undefined,
-  };
-
-  const [triggerSync, { loading: syncPending }] = useMutation(
-    TRIGGER_SYNC_MUTATION,
-    {
-      refetchQueries: [...REFETCH_AFTER_OPERATOR_ACTION],
-      awaitRefetchQueries: true,
-      onCompleted: () => {
-        toast.success('Sync finished.');
-      },
-      onError: (e) => {
-        toast.error(`Sync failed: ${parseGraphqlOperatorActionError(e)}`);
-      },
-    },
-  );
-
   const [reinitIntegration, { loading: reinitPending }] = useMutation(
     REINIT_INTEGRATION_MUTATION,
     {
@@ -69,38 +48,27 @@ export function OperatorSyncActions() {
   );
 
   const showReinit = snapshot ? dashboardNeedsReinit(snapshot) : false;
+  if (!showReinit) return null;
 
   return (
     <div className="actions-row operator-head-actions">
       <button
         type="button"
-        className="btn primary btn-sm"
-        disabled={!manualSync.canRun || syncPending}
+        className="btn ghost btn-sm"
+        disabled={reinitPending}
         onClick={() => {
-          void triggerSync();
+          if (
+            !confirm(
+              'Run soft reinit? This refreshes settings, rescans checks, clears scout backoff, and reschedules sync.',
+            )
+          ) {
+            return;
+          }
+          void reinitIntegration();
         }}
       >
-        {syncPending ? 'Syncing…' : 'Sync now'}
+        {reinitPending ? 'Reinit…' : 'Reinit'}
       </button>
-      {showReinit ? (
-        <button
-          type="button"
-          className="btn ghost btn-sm"
-          disabled={reinitPending}
-          onClick={() => {
-            if (
-              !confirm(
-                'Run soft reinit? This refreshes settings, rescans checks, clears scout backoff, and reschedules sync.',
-              )
-            ) {
-              return;
-            }
-            void reinitIntegration();
-          }}
-        >
-          {reinitPending ? 'Reinit…' : 'Reinit'}
-        </button>
-      ) : null}
     </div>
   );
 }

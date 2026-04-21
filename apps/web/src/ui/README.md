@@ -17,9 +17,8 @@ The operator UI follows an atomic-design structure under `src/ui/`:
 
 ## Operator organisms (GraphQL / General settings)
 
-- `organisms/SyncAdaptersInfoCard.tsx` — resolved source/destination labels plus env-var hints (`VIBE_SQUIRE_SOURCE_TYPE`, `VIBE_SQUIRE_DESTINATION_TYPE`).
 - `organisms/GeneralSettingsForm.tsx` — toggles and numeric fields with per-field `key` / `envVar` / `description` hints from `effectiveSettings.coreFields`.
-- `molecules/OperatorSyncActions.tsx` — manual sync + conditional reinit; uses `STATUS_QUERY` for `manual_sync` gating (still presentational: no GraphQL document definitions in `ui/`).
+- `molecules/OperatorSyncActions.tsx` — conditional reinit action in page headers; uses `STATUS_QUERY` to decide when reinit should be offered (still presentational: no GraphQL document definitions in `ui/`).
 
 ## Mappings (P2.4 layout)
 
@@ -41,7 +40,7 @@ The operator UI follows an atomic-design structure under `src/ui/`:
 Passing example:
 
 - `DashboardPage` runs `useQuery` and `useSubscription`, then passes values into `DashboardTemplate`.
-- `SettingsPage` runs Apollo mutations/queries, then passes props into `GeneralSettingsTemplate`, `SyncAdaptersInfoCard`, and `GeneralSettingsForm`.
+- `SettingsPage` runs Apollo mutations/queries, then passes props into `GeneralSettingsTemplate` and `GeneralSettingsForm`.
 - `MappingsPage` owns Apollo queries/mutations and cache-update mutations; composes `MappingsPageTemplate`, `NewMappingCard`, `MappingsTable`, and `VkReposLoadErrorBanner`.
 - `ActivityPage` owns `activityFeed` query, `activityEvents` subscription, and triage mutations; composes `ActivityPageTemplate` and `ActivityFeedSection`.
 

@@ -3,6 +3,5 @@ mutation UpsertMappingMutation($input: UpsertMappingInput!) {
     id
     githubRepo
     vibeKanbanRepoId
-    label
   }
 }

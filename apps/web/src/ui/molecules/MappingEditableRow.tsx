@@ -59,17 +59,6 @@ export function MappingEditableRow({
           <code>{row.vibeKanbanRepoId}</code>
         )}
       </td>
-      <td>
-        {isEditing ? (
-          <input
-            className="input"
-            value={draft.label ?? ''}
-            onChange={(e) => onDraftChange({ label: e.target.value })}
-          />
-        ) : (
-          (row.label ?? '—')
-        )}
-      </td>
       <td className="table-actions">
         {isEditing ? (
           <>

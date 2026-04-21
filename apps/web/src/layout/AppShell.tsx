@@ -57,6 +57,12 @@ export function AppShell() {
               {e.label}
             </NavLink>
           ))}
+          <NavLink
+            className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
+            to="/mappings"
+          >
+            Mappings
+          </NavLink>
         </nav>
       </aside>
       <main className="main">
