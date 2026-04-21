@@ -79,10 +79,10 @@ This requirement applies to `DashboardPage.tsx` from P2.3 and to `SettingsPage.t
 
 ### Requirement: Restored UX from the pre-split UI ships as atomic components
 
-The pre-split UX dropped in commit `2b71f909` — Settings "Sync adapters" info card with resolved source/destination labels and env-var references, Mappings data-table with inline edit/save/cancel per row and a visible VK-repos error banner, Activity per-run tables with item rows and triage-action controls — SHALL be re-implemented as components under `apps/web/src/ui/` following the layering rules, not as inline markup in pages. At minimum:
+The pre-split UX dropped in commit `2b71f909` — Settings "Sync adapters" info card with resolved source/destination labels and env-var references, Mappings data-table with per-row delete controls and a visible VK-repos error banner, Activity per-run tables with item rows and triage-action controls — SHALL be re-implemented as components under `apps/web/src/ui/` following the layering rules, not as inline markup in pages. At minimum:
 
 - **Settings:** an organism for the "Sync adapters" info card (consumes resolved labels + env-var references as props), and a settings-form organism that consumes `effectiveSettings` field metadata (`key`, `label`, `envVar`, `description`) to render muted setting-key hints next to each input.
-- **Mappings:** an editable-row molecule that owns its local edit state (edit / save / cancel) and invokes the `updateMapping` mutation via a callback prop, plus a mappings-table organism that composes those rows. Pages remain the hook boundary; the row molecule does not call mutations directly — it receives handlers as props.
+- **Mappings:** a row molecule that renders mapping fields and a delete action via callback prop, plus a mappings-table organism that composes those rows. Pages remain the hook boundary; row molecules do not call mutations directly — they receive handlers as props.
 - **Activity:** a run-item molecule with triage-action buttons (Review / Decline / Reconsider), a run-with-items organism that renders an expandable run section, and an activity-feed organism that composes runs and accepts a "load more" handler as a prop.
 
 #### Scenario: Settings adapters info card is a dedicated organism
@@ -90,10 +90,10 @@ The pre-split UX dropped in commit `2b71f909` — Settings "Sync adapters" info 
 - **WHEN** a developer inspects the restored Settings page
 - **THEN** the "Sync adapters" info card SHALL live as its own organism under `apps/web/src/ui/organisms/` and be imported by `SettingsPage.tsx` (directly or via a template slot), not inlined in the page file
 
-#### Scenario: Mappings editable row is a dedicated molecule
+#### Scenario: Mappings row action is a dedicated molecule
 
 - **WHEN** a developer inspects the restored Mappings page
-- **THEN** the per-row edit/save/cancel affordance SHALL live in a molecule under `apps/web/src/ui/molecules/` that receives row data and mutation handlers as props, and MUST NOT call `useMutation` or `useApolloClient` directly
+- **THEN** the per-row delete affordance SHALL live in a molecule under `apps/web/src/ui/molecules/` that receives row data and mutation handlers as props, and MUST NOT call `useMutation` or `useApolloClient` directly
 - **AND** the table itself SHALL be an organism that composes those molecules, with the page owning the `mappings` query and mutation wiring
 
 #### Scenario: Activity triage controls are a dedicated molecule

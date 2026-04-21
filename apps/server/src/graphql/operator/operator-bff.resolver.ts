@@ -59,7 +59,6 @@ import {
   UpdateSourceSettingsInput,
   TriggerSyncPayload,
   UiNavEntryGql,
-  UpdateMappingInput,
   VibeKanbanOrganization,
   VibeKanbanProject,
   VibeKanbanRepo,
@@ -323,24 +322,6 @@ export class OperatorBffResolver {
     const row = await this.mappingsService.create({
       githubRepo: input.githubRepo,
       vibeKanbanRepoId: input.vibeKanbanRepoId,
-    });
-    this.statusEvents.emitChanged();
-    return row;
-  }
-
-  @Mutation(() => MappingGql, { name: 'updateMapping' })
-  async updateMapping(
-    @Args('id', { type: () => ID }) id: string,
-    @Args('input', { type: () => UpdateMappingInput })
-    input: UpdateMappingInput,
-  ): Promise<MappingGql> {
-    const row = await this.mappingsService.update(id, {
-      ...(input.githubRepo !== undefined
-        ? { githubRepo: input.githubRepo }
-        : {}),
-      ...(input.vibeKanbanRepoId !== undefined
-        ? { vibeKanbanRepoId: input.vibeKanbanRepoId }
-        : {}),
     });
     this.statusEvents.emitChanged();
     return row;

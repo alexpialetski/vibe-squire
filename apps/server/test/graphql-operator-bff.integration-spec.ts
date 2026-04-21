@@ -535,7 +535,7 @@ describe('GraphQL operator BFF (integration)', () => {
     }
   });
 
-  it('mappings CRUD via GraphQL', async () => {
+  it('mappings create and delete via GraphQL', async () => {
     const list0 = await request(app.getHttpServer())
       .post('/graphql')
       .send({
@@ -569,30 +569,12 @@ describe('GraphQL operator BFF (integration)', () => {
           input: {
             githubRepo: 'acme/graphql-op-bff-test',
             vibeKanbanRepoId: 'vk-repo-test-id',
-            label: 't',
           },
         },
       });
     const createWrap = graphBody<{ upsertMapping: { id: string } }>(createRes);
     expect(createWrap.errors).toBeUndefined();
     const id = createWrap.data!.upsertMapping.id;
-
-    const upd = await request(app.getHttpServer())
-      .post('/graphql')
-      .send({
-        query: /* GraphQL */ `
-          mutation U($id: ID!, $input: UpdateMappingInput!) {
-            updateMapping(id: $id, input: $input) {
-              id
-              label
-            }
-          }
-        `,
-        variables: { id, input: { label: 'updated' } },
-      });
-    const updWrap = graphBody<{ updateMapping: { label: string | null } }>(upd);
-    expect(updWrap.errors).toBeUndefined();
-    expect(updWrap.data!.updateMapping.label).toBe('updated');
 
     const del = await request(app.getHttpServer())
       .post('/graphql')
