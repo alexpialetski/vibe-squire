@@ -282,10 +282,13 @@ describe('GraphQL operator BFF (integration)', () => {
 
   let app: NestExpressApplication;
   let vkMockServer: Server;
+  let previousVkBackendUrl: string | undefined;
 
   beforeAll(async () => {
     const vkMock = await startVkMockServer();
     vkMockServer = vkMock.server;
+    previousVkBackendUrl = process.env.VIBE_SQUIRE_VK_BACKEND_URL;
+    process.env.VIBE_SQUIRE_VK_BACKEND_URL = vkMock.baseUrl;
     app = await createApp({
       ...process.env,
       VIBE_SQUIRE_VK_BACKEND_URL: vkMock.baseUrl,
@@ -295,6 +298,11 @@ describe('GraphQL operator BFF (integration)', () => {
 
   afterAll(async () => {
     await app.close();
+    if (previousVkBackendUrl === undefined) {
+      delete process.env.VIBE_SQUIRE_VK_BACKEND_URL;
+    } else {
+      process.env.VIBE_SQUIRE_VK_BACKEND_URL = previousVkBackendUrl;
+    }
     await new Promise<void>((resolve, reject) => {
       vkMockServer.close((err) => {
         if (err) {
