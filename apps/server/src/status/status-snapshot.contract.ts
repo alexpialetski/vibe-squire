@@ -1,4 +1,8 @@
 export {
+  dbStateValues,
+  destStateValues,
+  ghStateValues,
+  scoutUiStateValues,
   statusSnapshotSchema,
   validateStatusSnapshot,
-} from '@vibe-squire/shared';
+} from './status-snapshot.schema';
