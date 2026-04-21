@@ -1,4 +1,5 @@
 import type { ActivityRunsResponse } from '@vibe-squire/shared';
+import { useMemo } from 'react';
 import { ActivityRunWithItems } from './ActivityRunWithItems';
 
 type ActivityRun = ActivityRunsResponse['runs'][number];
@@ -15,6 +16,13 @@ type ActivityFeedSectionProps = {
   onReconsider: (prUrl: string) => void;
 };
 
+function isTriageableDecision(effectiveDecision: string): boolean {
+  return (
+    effectiveDecision === 'skipped_triage' ||
+    effectiveDecision === 'skipped_board_limit'
+  );
+}
+
 export function ActivityFeedSection({
   initialLoading,
   errorMessage,
@@ -26,14 +34,37 @@ export function ActivityFeedSection({
   onDecline,
   onReconsider,
 }: ActivityFeedSectionProps) {
+  const latestCompleted = useMemo(
+    () => runs.find((r) => r.phase === 'completed') ?? null,
+    [runs],
+  );
+  const latestCompletedId = latestCompleted?.id ?? null;
+  const triageableCount = useMemo(() => {
+    if (!latestCompleted) return 0;
+    const unique = new Set<string>();
+    for (const item of latestCompleted.items) {
+      if (isTriageableDecision(item.effectiveDecision)) {
+        unique.add(item.prUrl);
+      }
+    }
+    return unique.size;
+  }, [latestCompleted]);
+
   return (
     <>
       {initialLoading ? <p>Loading…</p> : null}
       {errorMessage ? <p className="text-danger">{errorMessage}</p> : null}
+      {triageableCount > 0 ? (
+        <div className="banner-triage-attention">
+          <strong>{triageableCount} PR(s)</strong> awaiting your review or
+          decline decision.
+        </div>
+      ) : null}
       {runs.map((run) => (
         <ActivityRunWithItems
           key={run.id}
           run={run}
+          highlight={run.id === latestCompletedId}
           onAccept={onAccept}
           onDecline={onDecline}
           onReconsider={onReconsider}
