@@ -2,10 +2,7 @@ import { Controller, Get, Query } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ZodResponse } from 'nestjs-zod';
 import { ActivityRunsOutputDto } from './dto/activity-runs-output.dto';
-import { PrismaService } from '../prisma/prisma.service';
-import { PollRunHistoryService } from '../sync/poll-run-history.service';
-import { fetchTriageLiveState } from '../sync/triage-live-state.queries';
-import { presentActivityRunsForView } from './ui-presenter';
+import { ActivityUiService } from './activity-ui.service';
 
 const DEFAULT_LIMIT = 40;
 const MAX_LIMIT = 100;
@@ -13,10 +10,7 @@ const MAX_LIMIT = 100;
 @ApiTags('activity')
 @Controller('api/activity')
 export class ActivityApiController {
-  constructor(
-    private readonly pollRunHistory: PollRunHistoryService,
-    private readonly prisma: PrismaService,
-  ) {}
+  constructor(private readonly activityUi: ActivityUiService) {}
 
   @Get('runs')
   @ApiOperation({
@@ -36,12 +30,7 @@ export class ActivityApiController {
         limit = Math.min(n, MAX_LIMIT);
       }
     }
-    const rows = await this.pollRunHistory.listRecentForUi(limit);
-    const allPrUrls = new Set(rows.flatMap((r) => r.items.map((i) => i.prUrl)));
-    const live = await fetchTriageLiveState(this.prisma, allPrUrls);
-
-    return {
-      runs: presentActivityRunsForView(rows, live),
-    };
+    const runs = await this.activityUi.listPresentedRuns(limit);
+    return { runs };
   }
 }

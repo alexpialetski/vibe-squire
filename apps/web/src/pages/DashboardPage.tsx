@@ -1,21 +1,21 @@
-import { useQuery as useApolloQuery, useSubscription } from '@apollo/client';
 import {
   useMutation,
-  useQuery as useTanstackQuery,
-} from '@tanstack/react-query';
-import {
-  setupApiResponseSchema,
-  type StatusSnapshot,
-} from '@vibe-squire/shared';
+  useQuery as useApolloQuery,
+  useSubscription,
+} from '@apollo/client';
+import { type StatusSnapshot } from '@vibe-squire/shared';
 import { toast } from 'react-hot-toast';
-import { apiJson } from '../api';
+import { parseGraphqlOperatorActionError } from '../graphql/operator-action-errors';
 import {
+  DASHBOARD_SETUP_QUERY,
+  REINIT_INTEGRATION_MUTATION,
   STATUS_QUERY,
   STATUS_UPDATED_SUBSCRIPTION,
+  TRIGGER_SYNC_MUTATION,
   type StatusQueryData,
   type StatusUpdatedSubscriptionData,
 } from '../graphql';
-import { getErrorMessage } from '../toast';
+import { dashboardNeedsReinit } from '../operator/sync-health';
 import { LoadingLine } from '../ui/atoms/LoadingLine';
 import { CardSection } from '../ui/molecules/CardSection';
 import { ConfigurationCard } from '../ui/organisms/ConfigurationCard';
@@ -28,63 +28,9 @@ import { ScoutList } from '../ui/organisms/ScoutList';
 import { SetupChecklistCard } from '../ui/organisms/SetupChecklistCard';
 import { DashboardTemplate } from '../ui/templates/DashboardTemplate';
 
-function parseDashboardActionError(status: number, text: string): string {
-  if (!text.trim()) {
-    return `HTTP ${status}`;
-  }
-
-  try {
-    const parsed = JSON.parse(text) as {
-      message?: string;
-      reason?: string;
-      cooldownUntil?: string;
-      error?: string;
-    };
-    if (
-      parsed.reason === 'cooldown' &&
-      typeof parsed.cooldownUntil === 'string' &&
-      parsed.cooldownUntil.length > 0
-    ) {
-      return `Cooldown active until ${parsed.cooldownUntil}`;
-    }
-    if (typeof parsed.message === 'string' && parsed.message.length > 0) {
-      return parsed.message;
-    }
-    if (typeof parsed.reason === 'string' && parsed.reason.length > 0) {
-      return parsed.reason;
-    }
-    if (typeof parsed.error === 'string' && parsed.error.length > 0) {
-      return parsed.error;
-    }
-  } catch {
-    // Fall through to plain text.
-  }
-
-  return text;
-}
-
-/** Matches legacy dashboard: show recovery reinit when core checks look unhealthy. */
-function dashboardNeedsReinit(snapshot: StatusSnapshot): boolean {
-  if (snapshot.database.state === 'error') {
-    return true;
-  }
-  const { state: ghState } = snapshot.gh;
-  if (ghState && ghState !== 'ok') {
-    return true;
-  }
-  const dest0 = snapshot.destinations[0];
-  if (dest0 && (dest0.state === 'degraded' || dest0.state === 'error')) {
-    return true;
-  }
-  const scout0 = snapshot.scouts[0];
-  if (scout0?.state === 'error') {
-    return true;
-  }
-  return false;
-}
-
 export function DashboardPage() {
   const statusQ = useApolloQuery<StatusQueryData>(STATUS_QUERY);
+  const setupQ = useApolloQuery(DASHBOARD_SETUP_QUERY);
 
   useSubscription<StatusUpdatedSubscriptionData>(STATUS_UPDATED_SUBSCRIPTION, {
     onData: ({ data, client }) => {
@@ -99,49 +45,39 @@ export function DashboardPage() {
     },
   });
 
-  const setupQ = useTanstackQuery({
-    queryKey: ['ui', 'setup'],
-    queryFn: async () => {
-      const data = await apiJson<unknown>('/api/ui/setup');
-      return setupApiResponseSchema.parse(data);
+  const [triggerSync, { loading: syncNowPending }] = useMutation(
+    TRIGGER_SYNC_MUTATION,
+    {
+      refetchQueries: [
+        { query: STATUS_QUERY },
+        { query: DASHBOARD_SETUP_QUERY },
+      ],
+      awaitRefetchQueries: true,
+      onCompleted: () => {
+        toast.success('Sync finished.');
+      },
+      onError: (error) => {
+        toast.error(`Sync failed: ${parseGraphqlOperatorActionError(error)}`);
+      },
     },
-  });
+  );
 
-  const syncNow = useMutation({
-    mutationFn: async () => {
-      const response = await fetch('/api/sync/run', { method: 'POST' });
-      const text = await response.text();
-      if (!response.ok) {
-        throw new Error(parseDashboardActionError(response.status, text));
-      }
+  const [reinitIntegration, { loading: reinitPending }] = useMutation(
+    REINIT_INTEGRATION_MUTATION,
+    {
+      refetchQueries: [
+        { query: STATUS_QUERY },
+        { query: DASHBOARD_SETUP_QUERY },
+      ],
+      awaitRefetchQueries: true,
+      onCompleted: () => {
+        toast.success('Reinit completed.');
+      },
+      onError: (error) => {
+        toast.error(`Reinit failed: ${parseGraphqlOperatorActionError(error)}`);
+      },
     },
-    onSuccess: async () => {
-      toast.success('Sync finished.');
-      await statusQ.refetch();
-      await setupQ.refetch();
-    },
-    onError: (error) => {
-      toast.error(`Sync failed: ${getErrorMessage(error)}`);
-    },
-  });
-
-  const reinit = useMutation({
-    mutationFn: async () => {
-      const response = await fetch('/api/reinit', { method: 'POST' });
-      const text = await response.text();
-      if (!response.ok) {
-        throw new Error(parseDashboardActionError(response.status, text));
-      }
-    },
-    onSuccess: async () => {
-      toast.success('Reinit completed.');
-      await statusQ.refetch();
-      await setupQ.refetch();
-    },
-    onError: (error) => {
-      toast.error(`Reinit failed: ${getErrorMessage(error)}`);
-    },
-  });
+  );
 
   if (statusQ.loading && !statusQ.data && !statusQ.error) {
     return (
@@ -196,7 +132,7 @@ export function DashboardPage() {
     );
   }
 
-  const snapshot = statusQ.data.status;
+  const snapshot = statusQ.data.status as StatusSnapshot;
 
   const showReinit = dashboardNeedsReinit(snapshot);
 
@@ -207,7 +143,7 @@ export function DashboardPage() {
           <button
             type="button"
             className="btn ghost btn-sm"
-            disabled={reinit.isPending}
+            disabled={reinitPending}
             onClick={() => {
               if (
                 !confirm(
@@ -216,10 +152,10 @@ export function DashboardPage() {
               ) {
                 return;
               }
-              reinit.mutate();
+              void reinitIntegration();
             }}
           >
-            {reinit.isPending ? 'Reinit…' : 'Reinit'}
+            {reinitPending ? 'Reinit…' : 'Reinit'}
           </button>
         ) : null
       }
@@ -234,8 +170,10 @@ export function DashboardPage() {
         <>
           <ManualSyncCallout
             manualSync={snapshot.manual_sync}
-            onSyncNow={() => syncNow.mutate()}
-            syncNowPending={syncNow.isPending}
+            onSyncNow={() => {
+              void triggerSync();
+            }}
+            syncNowPending={syncNowPending}
           />
           <ScheduledSyncIndicator scheduledSync={snapshot.scheduled_sync} />
         </>
@@ -249,7 +187,11 @@ export function DashboardPage() {
       setup={
         <SetupChecklistCard
           setup={snapshot.setup}
-          items={setupQ.data?.checklist}
+          items={setupQ.data?.dashboardSetup.checklist.map((row) => ({
+            text: row.text,
+            ...(row.linkHref ? { linkHref: row.linkHref } : {}),
+            ...(row.linkLabel ? { linkLabel: row.linkLabel } : {}),
+          }))}
         />
       }
     />

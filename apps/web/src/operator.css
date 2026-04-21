@@ -248,6 +248,49 @@ code {
   align-items: center;
 }
 
+.page-title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.page-title-row h1 {
+  margin: 0;
+}
+
+.operator-head-actions {
+  margin: 0;
+}
+
+.setting-field-meta {
+  font-size: 0.8rem;
+  margin: 0.15rem 0 0.25rem;
+}
+
+.setting-field-desc {
+  font-size: 0.82rem;
+  margin: 0 0 0.35rem;
+}
+
+.field-hints-dl {
+  margin: 0.75rem 0 0;
+  font-size: 0.85rem;
+}
+
+.field-hints-dl dt {
+  margin: 0.35rem 0 0.1rem;
+}
+
+.field-hints-dl dd {
+  margin: 0;
+}
+
+.sync-adapters-lead {
+  margin-top: 0;
+}
+
 .manual-sync-actions {
   margin-top: 1rem;
 }

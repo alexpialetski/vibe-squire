@@ -8,5 +8,6 @@ import { ReinitController } from './reinit.controller';
   imports: [PrismaModule, SyncModule],
   controllers: [ReinitController],
   providers: [ReinitService],
+  exports: [ReinitService],
 })
 export class ReinitModule {}

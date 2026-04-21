@@ -1,0 +1,5 @@
+mutation ReconsiderTriageMutation($prUrl: String!) {
+  reconsiderTriage(prUrl: $prUrl) {
+    ok
+  }
+}

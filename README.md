@@ -107,7 +107,7 @@ React + Vite SPA (`apps/web/`) built into `apps/server/dist/client` and served b
 | `GET` | `/api/vibe-kanban/organizations` | Proxies VK `GET /api/organizations` |
 | `GET` | `/api/vibe-kanban/projects?organization_id=` | Proxies VK `GET /api/remote/projects` |
 | `GET` | `/api/ui/nav` | Sidebar integration nav entries |
-| `GET` | `/api/ui/setup` | Setup evaluation + checklist (dashboard) |
+| `GET` | `/api/ui/setup` | Setup evaluation + checklist (dashboard); web uses GraphQL `dashboardSetup` |
 | `GET` | `/api/ui/settings-meta` | General settings form metadata |
 | `GET` | `/api/ui/github-fields` | GitHub integration field rows |
 | `GET` | `/api/vibe-kanban/ui-state` | Vibe Kanban settings bootstrap (saved ids, labels, executor enum); org/project lists use `/organizations` and `/projects` |

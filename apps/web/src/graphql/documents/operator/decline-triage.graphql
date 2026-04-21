@@ -1,0 +1,5 @@
+mutation DeclineTriageMutation($prUrl: String!) {
+  declineTriage(prUrl: $prUrl) {
+    ok
+  }
+}

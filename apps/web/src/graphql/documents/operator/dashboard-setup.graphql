@@ -1,0 +1,22 @@
+query DashboardSetupQuery {
+  dashboardSetup {
+    evaluation {
+      complete
+      reason
+      mappingCount
+      sourceType
+      destinationType
+      vibeKanbanBoardActive
+      hasRouting
+    }
+    checklist {
+      text
+      linkHref
+      linkLabel
+    }
+    reasonMessages {
+      code
+      message
+    }
+  }
+}

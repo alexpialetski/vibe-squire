@@ -1,0 +1,45 @@
+query ActivityFeedQuery($first: Int, $after: String) {
+  activityFeed(first: $first, after: $after) {
+    edges {
+      cursor
+      node {
+        id
+        startedAt
+        startedAtLabel
+        finishedAt
+        trigger
+        phase
+        phaseLabel
+        abortReason
+        errorMessage
+        candidatesCount
+        issuesCreated
+        skippedUnmapped
+        skippedBot
+        skippedBoardLimit
+        skippedAlreadyTracked
+        skippedLinkedExisting
+        skippedTriage
+        skippedDeclined
+        itemCount
+        items {
+          id
+          prUrl
+          githubRepo
+          prNumber
+          prTitle
+          authorLogin
+          decision
+          effectiveDecision
+          decisionLabel
+          detail
+          kanbanIssueId
+        }
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}

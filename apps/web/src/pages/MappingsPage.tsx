@@ -1,173 +1,279 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useMutation, useQuery } from '@apollo/client';
+import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import type {
+  MappingsQueryQuery,
+  UpdateMappingMutationMutation,
+  UpdateMappingMutationMutationVariables,
+  UpsertMappingMutationMutation,
+  UpsertMappingMutationMutationVariables,
+} from '../__generated__/graphql';
 import { apiJson } from '../api';
+import {
+  mergeMappingListAfterWrite,
+  randomOptimisticMappingId,
+} from '../graphql/mappings-cache-merge';
+import type { MappingGqlRow } from '../graphql/operator-query-types';
+import {
+  DELETE_MAPPING_MUTATION,
+  MAPPINGS_QUERY,
+  UPDATE_MAPPING_MUTATION,
+  UPSERT_MAPPING_MUTATION,
+} from '../graphql/operations';
+import { OperatorSyncActions } from '../ui/molecules/OperatorSyncActions';
+import { VkReposLoadErrorBanner } from '../ui/molecules/VkReposLoadErrorBanner';
+import { MappingsTable } from '../ui/organisms/MappingsTable';
+import { NewMappingCard } from '../ui/organisms/NewMappingCard';
+import { MappingsPageTemplate } from '../ui/templates/MappingsPageTemplate';
 import { getErrorMessage } from '../toast';
 
-type MappingRow = {
-  id: string;
-  githubRepo: string;
-  vibeKanbanRepoId: string;
-  label: string | null;
-};
+type MappingRow = MappingGqlRow;
 
 export function MappingsPage() {
-  const qc = useQueryClient();
-  const listQ = useQuery({
-    queryKey: ['mappings'],
-    queryFn: () => apiJson<MappingRow[]>('/api/mappings'),
+  const listQ = useQuery<MappingsQueryQuery>(MAPPINGS_QUERY, {
+    fetchPolicy: 'cache-and-network',
   });
 
-  const reposQ = useQuery({
-    queryKey: ['vk', 'repos'],
-    queryFn: () =>
-      apiJson<{ repos: { id: string; name?: string }[] }>(
-        '/api/vibe-kanban/repos',
-      ),
-    retry: false,
-  });
+  const [vkRepos, setVkRepos] = useState<{ id: string; name?: string }[]>([]);
+  const [vkReposError, setVkReposError] = useState<string | null>(null);
+  const [vkReposLoading, setVkReposLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    setVkReposLoading(true);
+    setVkReposError(null);
+    void apiJson<{ repos: { id: string; name?: string }[] }>(
+      '/api/vibe-kanban/repos',
+    )
+      .then((data) => {
+        if (!cancelled) {
+          setVkRepos(data.repos ?? []);
+        }
+      })
+      .catch((e: unknown) => {
+        if (!cancelled) {
+          setVkReposError(getErrorMessage(e));
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setVkReposLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const [githubRepo, setGithubRepo] = useState('');
   const [vkRepoId, setVkRepoId] = useState('');
   const [label, setLabel] = useState('');
 
-  const create = useMutation({
-    mutationFn: () =>
-      apiJson<MappingRow>('/api/mappings', {
-        method: 'POST',
-        body: JSON.stringify({
-          githubRepo,
-          vibeKanbanRepoId: vkRepoId,
-          ...(label.trim() ? { label: label.trim() } : {}),
-        }),
-      }),
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ['mappings'] });
+  const [upsert, { loading: upserting }] = useMutation<
+    UpsertMappingMutationMutation,
+    UpsertMappingMutationMutationVariables
+  >(UPSERT_MAPPING_MUTATION, {
+    optimisticResponse: (vars) => ({
+      __typename: 'Mutation' as const,
+      upsertMapping: {
+        __typename: 'MappingGql' as const,
+        id: randomOptimisticMappingId(),
+        githubRepo: vars.input.githubRepo,
+        vibeKanbanRepoId: vars.input.vibeKanbanRepoId,
+        label: vars.input.label ?? null,
+      },
+    }),
+    update(cache, { data }) {
+      const m = data?.upsertMapping;
+      if (!m) return;
+      const existing = cache.readQuery<MappingsQueryQuery>({
+        query: MAPPINGS_QUERY,
+      });
+      if (!existing) return;
+      cache.writeQuery({
+        query: MAPPINGS_QUERY,
+        data: {
+          mappings: mergeMappingListAfterWrite(existing.mappings, m),
+        },
+      });
+    },
+    refetchQueries: [{ query: MAPPINGS_QUERY }],
+    onCompleted: () => {
       setGithubRepo('');
       setVkRepoId('');
       setLabel('');
       toast.success('Mapping added.');
     },
-    onError: (error) => {
-      toast.error(`Add failed: ${getErrorMessage(error)}`);
-    },
+    onError: (e) => toast.error(`Add failed: ${getErrorMessage(e)}`),
   });
 
-  const remove = useMutation({
-    mutationFn: (id: string) =>
-      apiJson<{ ok: boolean }>(`/api/mappings/${encodeURIComponent(id)}`, {
-        method: 'DELETE',
-      }),
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ['mappings'] });
-      toast.success('Mapping deleted.');
+  const [remove, { loading: deleting }] = useMutation(DELETE_MAPPING_MUTATION, {
+    optimisticResponse: () => ({
+      __typename: 'Mutation' as const,
+      deleteMapping: {
+        __typename: 'DeleteMappingPayload' as const,
+        ok: true,
+      },
+    }),
+    update(cache, _result, { variables }) {
+      const id = variables?.id;
+      if (id === undefined) return;
+      const existing = cache.readQuery<MappingsQueryQuery>({
+        query: MAPPINGS_QUERY,
+      });
+      if (!existing) return;
+      cache.writeQuery({
+        query: MAPPINGS_QUERY,
+        data: {
+          mappings: existing.mappings.filter((m) => m.id !== id),
+        },
+      });
     },
-    onError: (error) => {
-      toast.error(`Delete failed: ${getErrorMessage(error)}`);
-    },
+    refetchQueries: [{ query: MAPPINGS_QUERY }],
+    onCompleted: () => toast.success('Mapping deleted.'),
+    onError: (e) => toast.error(`Delete failed: ${getErrorMessage(e)}`),
   });
+
+  const [updateRow] = useMutation<
+    UpdateMappingMutationMutation,
+    UpdateMappingMutationMutationVariables
+  >(UPDATE_MAPPING_MUTATION, {
+    optimisticResponse: (vars) => ({
+      __typename: 'Mutation' as const,
+      updateMapping: {
+        __typename: 'MappingGql' as const,
+        id: vars.id,
+        githubRepo: vars.input.githubRepo ?? '',
+        vibeKanbanRepoId: vars.input.vibeKanbanRepoId ?? '',
+        label: vars.input.label ?? null,
+      },
+    }),
+    update(cache, { data }) {
+      const m = data?.updateMapping;
+      if (!m) return;
+      const existing = cache.readQuery<MappingsQueryQuery>({
+        query: MAPPINGS_QUERY,
+      });
+      if (!existing) return;
+      cache.writeQuery({
+        query: MAPPINGS_QUERY,
+        data: {
+          mappings: mergeMappingListAfterWrite(existing.mappings, m),
+        },
+      });
+    },
+    refetchQueries: [{ query: MAPPINGS_QUERY }],
+    onError: (e) => toast.error(`Update failed: ${getErrorMessage(e)}`),
+  });
+
+  const rows: MappingRow[] = listQ.data?.mappings ?? [];
+
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [draft, setDraft] = useState<Partial<MappingRow>>({});
+
+  const startEdit = useCallback((row: MappingRow) => {
+    setEditingId(row.id);
+    setDraft({
+      githubRepo: row.githubRepo,
+      vibeKanbanRepoId: row.vibeKanbanRepoId,
+      label: row.label,
+    });
+  }, []);
+
+  const cancelEdit = useCallback(() => {
+    setEditingId(null);
+    setDraft({});
+  }, []);
+
+  const saveEdit = useCallback(
+    (id: string) => {
+      void updateRow({
+        variables: {
+          id,
+          input: {
+            githubRepo: draft.githubRepo,
+            vibeKanbanRepoId: draft.vibeKanbanRepoId,
+            label: draft.label ?? undefined,
+          },
+        },
+      }).then(() => {
+        toast.success('Mapping updated.');
+        cancelEdit();
+      });
+    },
+    [
+      cancelEdit,
+      draft.githubRepo,
+      draft.label,
+      draft.vibeKanbanRepoId,
+      updateRow,
+    ],
+  );
 
   return (
-    <div className="stack">
-      <h1>Mappings</h1>
-      <p className="muted">
-        GitHub repo (<code>owner/repo</code>) → Vibe Kanban repository. Default
-        Kanban <strong>project</strong> for new issues is set on the{' '}
-        <a href="/vibe-kanban">Vibe Kanban</a> page.
-      </p>
-      <section className="card">
-        <h2>New mapping</h2>
-        <form
-          className="form-stack"
-          onSubmit={(e) => {
-            e.preventDefault();
-            create.mutate();
+    <MappingsPageTemplate
+      titleRow={
+        <div className="page-title-row">
+          <h1>Mappings</h1>
+          <OperatorSyncActions />
+        </div>
+      }
+      intro={
+        <p className="muted">
+          GitHub repo (<code>owner/repo</code>) → Vibe Kanban repository.
+          Default Kanban <strong>project</strong> for new issues is set on the{' '}
+          <a href="/vibe-kanban">Vibe Kanban</a> page.
+        </p>
+      }
+      vkReposError={
+        vkReposError ? (
+          <VkReposLoadErrorBanner
+            message={vkReposError}
+            onReloadPage={() => window.location.reload()}
+          />
+        ) : null
+      }
+      newMapping={
+        <NewMappingCard
+          githubRepo={githubRepo}
+          vkRepoId={vkRepoId}
+          label={label}
+          vkRepos={vkRepos}
+          vkReposLoading={vkReposLoading}
+          upserting={upserting}
+          onGithubRepoChange={setGithubRepo}
+          onVkRepoIdChange={setVkRepoId}
+          onLabelChange={setLabel}
+          onSubmit={() => {
+            void upsert({
+              variables: {
+                input: {
+                  githubRepo,
+                  vibeKanbanRepoId: vkRepoId,
+                  ...(label.trim() ? { label: label.trim() } : {}),
+                },
+              },
+            });
           }}
-        >
-          <label className="field">
-            <span className="field-label">GitHub repo</span>
-            <input
-              className="input"
-              value={githubRepo}
-              onChange={(e) => setGithubRepo(e.target.value)}
-              placeholder="owner/repo"
-            />
-          </label>
-          <label className="field">
-            <span className="field-label">Kanban repository</span>
-            <select
-              className="input"
-              value={vkRepoId}
-              onChange={(e) => setVkRepoId(e.target.value)}
-            >
-              <option value="">Select…</option>
-              {(reposQ.data?.repos ?? []).map((r) => (
-                <option key={r.id} value={r.id}>
-                  {r.name ?? r.id}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="field">
-            <span className="field-label">Label (optional)</span>
-            <input
-              className="input"
-              value={label}
-              onChange={(e) => setLabel(e.target.value)}
-            />
-          </label>
-          <button
-            type="submit"
-            className="btn primary"
-            disabled={create.isPending}
-          >
-            {create.isPending ? 'Adding…' : 'Add mapping'}
-          </button>
-        </form>
-      </section>
-      <section className="card mappings-existing-card">
-        <h2>Existing</h2>
-        {listQ.isLoading ? <p className="muted">Loading mappings…</p> : null}
-        {listQ.isError ? (
-          <p className="text-danger">
-            Failed to load mappings: {listQ.error.message}
-          </p>
-        ) : null}
-        {listQ.data && listQ.data.length === 0 ? (
-          <p className="muted">
-            No mappings yet. Add one above to route GitHub PRs to a Kanban
-            repository.
-          </p>
-        ) : null}
-        {listQ.data && listQ.data.length > 0 ? (
-          <ul className="mappings-existing-list">
-            {listQ.data.map((row) => {
-              const isDeleting =
-                remove.isPending && remove.variables === row.id;
-              return (
-                <li key={row.id} className="mappings-existing-item">
-                  <div className="mappings-existing-main">
-                    <code>{row.githubRepo}</code>
-                    <span className="mappings-arrow">→</span>
-                    <code>{row.vibeKanbanRepoId}</code>
-                  </div>
-                  <button
-                    type="button"
-                    className="btn danger ghost"
-                    disabled={isDeleting}
-                    onClick={() => {
-                      if (confirm('Delete this mapping?'))
-                        remove.mutate(row.id);
-                    }}
-                  >
-                    {isDeleting ? 'Deleting…' : 'Delete'}
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        ) : null}
-      </section>
-    </div>
+        />
+      }
+      existingMappings={
+        <MappingsTable
+          rows={rows}
+          vkRepos={vkRepos}
+          listInitialLoading={Boolean(listQ.loading && !listQ.data)}
+          listErrorMessage={listQ.error?.message ?? null}
+          showEmptyHint={rows.length === 0 && !listQ.loading}
+          editingId={editingId}
+          draft={draft}
+          deleteBusy={deleting}
+          onDraftChange={(patch) => setDraft((d) => ({ ...d, ...patch }))}
+          onStartEdit={startEdit}
+          onCancelEdit={cancelEdit}
+          onSaveEdit={saveEdit}
+          onRequestDelete={(id) => {
+            void remove({ variables: { id } });
+          }}
+        />
+      }
+    />
   );
 }

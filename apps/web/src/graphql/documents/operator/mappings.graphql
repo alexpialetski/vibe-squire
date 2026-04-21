@@ -1,0 +1,10 @@
+query MappingsQuery {
+  mappings {
+    id
+    githubRepo
+    vibeKanbanRepoId
+    label
+    createdAt
+    updatedAt
+  }
+}

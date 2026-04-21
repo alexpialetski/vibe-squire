@@ -59,6 +59,8 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 apps/server/src/generated/prisma
 # GraphQL code-first emitted SDL (written on server boot / schema build)
 apps/server/src/generated/schema.graphql
+# Same SDL when the server is started from the monorepo root (process.cwd()-relative path)
+/src/generated/schema.graphql
 
 # Local SQLite database (see VIBE_SQUIRE_DATABASE_URL in .env)
 *.db

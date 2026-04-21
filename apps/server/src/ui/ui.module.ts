@@ -4,6 +4,7 @@ import { MappingsModule } from '../mappings/mappings.module';
 import { SetupModule } from '../setup/setup.module';
 import { SyncModule } from '../sync/sync.module';
 import { ActivityApiController } from './activity-api.controller';
+import { ActivityUiService } from './activity-ui.service';
 import { OperatorBffController } from './operator-bff.controller';
 import { UiNavService } from './ui-nav.service';
 
@@ -11,7 +12,7 @@ import { UiNavService } from './ui-nav.service';
 @Module({
   imports: [StatusModule, MappingsModule, SetupModule, SyncModule],
   controllers: [ActivityApiController, OperatorBffController],
-  providers: [UiNavService],
-  exports: [UiNavService],
+  providers: [UiNavService, ActivityUiService],
+  exports: [UiNavService, ActivityUiService],
 })
 export class UiModule {}
