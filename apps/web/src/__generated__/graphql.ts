@@ -398,12 +398,12 @@ export type UpdateDestinationSettingsInput = {
 };
 
 export type UpdateSettingsInput = {
-  auto_create_issues?: InputMaybe<Scalars['String']['input']>;
+  auto_create_issues?: InputMaybe<Scalars['Boolean']['input']>;
   jitter_max_seconds?: InputMaybe<Scalars['String']['input']>;
   max_board_pr_count?: InputMaybe<Scalars['String']['input']>;
   poll_interval_minutes?: InputMaybe<Scalars['String']['input']>;
   run_now_cooldown_seconds?: InputMaybe<Scalars['String']['input']>;
-  scheduled_sync_enabled?: InputMaybe<Scalars['String']['input']>;
+  scheduled_sync_enabled?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
 export type UpdateSourceSettingsInput = {

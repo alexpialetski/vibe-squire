@@ -93,12 +93,12 @@ export function SettingsPage() {
           resolvedSourceLabel: existing.resolvedSourceLabel,
           resolvedDestinationLabel: existing.resolvedDestinationLabel,
           scheduledSyncEnabled:
-            input.scheduled_sync_enabled !== undefined
-              ? input.scheduled_sync_enabled === 'true'
+            input.scheduled_sync_enabled != null
+              ? input.scheduled_sync_enabled
               : existing.scheduledSyncEnabled,
           autoCreateIssues:
-            input.auto_create_issues !== undefined
-              ? input.auto_create_issues === 'true'
+            input.auto_create_issues != null
+              ? input.auto_create_issues
               : existing.autoCreateIssues,
         },
       };
@@ -174,12 +174,8 @@ export function SettingsPage() {
                     run_now_cooldown_seconds:
                       formValues.run_now_cooldown_seconds,
                     max_board_pr_count: formValues.max_board_pr_count,
-                    scheduled_sync_enabled: formValues.scheduled_sync_enabled
-                      ? 'true'
-                      : 'false',
-                    auto_create_issues: formValues.auto_create_issues
-                      ? 'true'
-                      : 'false',
+                    scheduled_sync_enabled: formValues.scheduled_sync_enabled,
+                    auto_create_issues: formValues.auto_create_issues,
                   },
                 },
               });
