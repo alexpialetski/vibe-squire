@@ -15,9 +15,12 @@ import { ActivityFeedSection } from '../ui/organisms/ActivityFeedSection';
 import { ActivityPageTemplate } from '../ui/templates/ActivityPageTemplate';
 import { getErrorMessage } from '../toast';
 
+/** Poll runs to fetch per page (server orders newest first). */
+const ACTIVITY_FEED_PAGE = 10;
+
 export function ActivityPage() {
   const feed = useQuery<ActivityFeedQueryData>(ACTIVITY_FEED_QUERY, {
-    variables: { first: 40 },
+    variables: { first: ACTIVITY_FEED_PAGE },
     fetchPolicy: 'cache-and-network',
   });
 
@@ -127,7 +130,7 @@ export function ActivityPage() {
     const cursor = feed.data?.activityFeed?.pageInfo?.endCursor;
     if (!cursor || !feed.data?.activityFeed?.pageInfo?.hasNextPage) return;
     void feed.fetchMore({
-      variables: { first: 40, after: cursor },
+      variables: { first: ACTIVITY_FEED_PAGE, after: cursor },
     });
   }, [feed]);
 

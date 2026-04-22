@@ -36,21 +36,19 @@ export function ActivityFeedSection({
   onReconsider,
   triageActionPendingPr,
 }: ActivityFeedSectionProps) {
-  const latestCompleted = useMemo(
-    () => runs.find((r) => r.phase === 'completed') ?? null,
-    [runs],
-  );
-  const latestCompletedId = latestCompleted?.id ?? null;
+  /** Newest run first; index 0 is the latest activity. */
+  const latestRun = useMemo(() => runs[0] ?? null, [runs]);
+  const latestRunId = latestRun?.id ?? null;
   const triageableCount = useMemo(() => {
-    if (!latestCompleted) return 0;
+    if (!latestRun) return 0;
     const unique = new Set<string>();
-    for (const item of latestCompleted.items) {
+    for (const item of latestRun.items) {
       if (isTriageableDecision(item.effectiveDecision)) {
         unique.add(item.prUrl);
       }
     }
     return unique.size;
-  }, [latestCompleted]);
+  }, [latestRun]);
 
   return (
     <>
@@ -66,7 +64,7 @@ export function ActivityFeedSection({
         <ActivityRunWithItems
           key={run.id}
           run={run}
-          highlight={run.id === latestCompletedId}
+          highlight={run.id === latestRunId}
           onAccept={onAccept}
           onDecline={onDecline}
           onReconsider={onReconsider}

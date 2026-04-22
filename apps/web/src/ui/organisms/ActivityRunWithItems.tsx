@@ -64,12 +64,10 @@ export function ActivityRunWithItems({
     [run.items],
   );
 
-  const hasActionable = sortedItems.some(
-    (i) =>
-      isPendingTriage(i.effectiveDecision) ||
-      i.effectiveDecision === 'skipped_declined',
+  const hasItemsNeedingReview = sortedItems.some((i) =>
+    isPendingTriage(i.effectiveDecision),
   );
-  const detailsDefaultOpen = highlight && hasActionable;
+  const detailsDefaultOpen = highlight && hasItemsNeedingReview;
   const [detailsOpen, setDetailsOpen] = useState(detailsDefaultOpen);
   useEffect(() => {
     if (detailsDefaultOpen) {
