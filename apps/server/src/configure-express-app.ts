@@ -7,18 +7,15 @@ const CLIENT_INDEX = 'index.html';
 
 /**
  * Nest emits `dist/main.js`; SPA static files live in `dist/client/` (copied from
- * `apps/web/dist` via nest-cli assets). Under ts-jest, `__dirname` may be `src/`.
+ * `apps/web/dist` via nest-cli assets). Under ts-jest, `__dirname` may be `src/`,
+ * so integration tests should prebuild `apps/web` and use the monorepo fallback.
  */
 function resolveClientRoot(): string {
   const distClient = join(__dirname, 'client');
-  const distSiblingClient = join(__dirname, '..', 'client');
   const monorepoDev = join(__dirname, '../../web/dist');
 
   if (existsSync(join(distClient, CLIENT_INDEX))) {
     return distClient;
-  }
-  if (existsSync(join(distSiblingClient, CLIENT_INDEX))) {
-    return distSiblingClient;
   }
   if (existsSync(join(monorepoDev, CLIENT_INDEX))) {
     return monorepoDev;
