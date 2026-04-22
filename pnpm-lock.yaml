@@ -89,6 +89,12 @@ importers:
       better-sqlite3:
         specifier: ^12.8.0
         version: 12.9.0
+      class-transformer:
+        specifier: ^0.5
+        version: 0.5.1
+      class-validator:
+        specifier: ^0.14
+        version: 0.14.4
       dotenv:
         specifier: ^17.3.1
         version: 17.4.2
@@ -107,6 +113,9 @@ importers:
       pino:
         specifier: ^10.3.1
         version: 10.3.1
+      pino-http:
+        specifier: ^11
+        version: 11.0.0
       pino-pretty:
         specifier: ^13.1.3
         version: 13.1.3
@@ -9137,8 +9146,7 @@ snapshots:
       '@types/methods': 1.1.4
       '@types/superagent': 8.1.9
 
-  '@types/validator@13.15.10':
-    optional: true
+  '@types/validator@13.15.10': {}
 
   '@types/ws@8.18.1':
     dependencies:
@@ -9873,15 +9881,13 @@ snapshots:
 
   cjs-module-lexer@2.2.0: {}
 
-  class-transformer@0.5.1:
-    optional: true
+  class-transformer@0.5.1: {}
 
   class-validator@0.14.4:
     dependencies:
       '@types/validator': 13.15.10
       libphonenumber-js: 1.12.41
       validator: 13.15.35
-    optional: true
 
   clean-stack@5.3.0:
     dependencies:
@@ -11606,8 +11612,7 @@ snapshots:
       prelude-ls: 1.2.1
       type-check: 0.4.0
 
-  libphonenumber-js@1.12.41:
-    optional: true
+  libphonenumber-js@1.12.41: {}
 
   lines-and-columns@1.2.4: {}
 
@@ -13383,8 +13388,7 @@ snapshots:
       spdx-correct: 3.2.0
       spdx-expression-parse: 3.0.1
 
-  validator@13.15.35:
-    optional: true
+  validator@13.15.35: {}
 
   vary@1.1.2: {}
 
