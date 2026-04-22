@@ -7,7 +7,7 @@
     "assets": [
       {
         "include": "../../web/dist/**/*",
-        "outDir": "client",
+        "outDir": "dist/client",
         "watchAssets": true
       }
     ]
