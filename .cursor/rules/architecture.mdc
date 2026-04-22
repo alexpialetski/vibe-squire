@@ -9,6 +9,8 @@ alwaysApply: true
 
 vibe-squire uses hexagonal (ports & adapters) architecture. The core domain has zero imports from NestJS, Prisma, GitHub, or Vibe Kanban adapter code.
 
+Server runtime default: NestJS on Fastify (`@nestjs/platform-fastify`) with Mercurius (`@nestjs/mercurius`) as the GraphQL driver.
+
 ### Layers
 
 1. **Core (domain + application)** — Business logic, sync rules, routing, dedupe, reconciliation. Lives in `apps/server/src/sync/`, `apps/server/src/settings/`, `apps/server/src/mappings/`, `apps/server/src/status/`, `apps/server/src/setup/`.

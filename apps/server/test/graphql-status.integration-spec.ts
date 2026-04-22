@@ -1,10 +1,12 @@
-import { ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { NestExpressApplication } from '@nestjs/platform-express';
+import {
+  FastifyAdapter,
+  NestFastifyApplication,
+} from '@nestjs/platform-fastify';
 import { createClient } from 'graphql-ws';
 import WebSocket from 'ws';
 import request from 'supertest';
-import { configureExpressApp } from '../src/configure-express-app';
+import { configureFastifyApp } from '../src/configure-fastify-app';
 import { StatusEventsService } from '../src/events/status-events.service';
 import { SettingsService } from '../src/settings/settings.service';
 import { statusSnapshotSchema } from '../src/status/status-snapshot.contract';
@@ -76,21 +78,23 @@ const SUBSCRIPTION = /* GraphQL */ `
   }
 `;
 
-async function createGraphqlTestApp(): Promise<NestExpressApplication> {
+async function createGraphqlTestApp(): Promise<NestFastifyApplication> {
   const moduleFixture: TestingModule = await Test.createTestingModule({
     imports: [testingAppModule()],
   }).compile();
 
-  const app = moduleFixture.createNestApplication<NestExpressApplication>();
-  configureExpressApp(app);
-  app.useGlobalPipes(new ValidationPipe({ whitelist: false, transform: true }));
+  const app = moduleFixture.createNestApplication<NestFastifyApplication>(
+    new FastifyAdapter(),
+  );
+  await configureFastifyApp(app);
   await app.init();
+  await app.getHttpAdapter().getInstance().ready();
   app.get(PollSchedulerService).onModuleDestroy();
   return app;
 }
 
 function listenPort(
-  server: ReturnType<NestExpressApplication['getHttpServer']>,
+  server: ReturnType<NestFastifyApplication['getHttpServer']>,
 ): number {
   const addr = server.address();
   if (typeof addr === 'object' && addr !== null && 'port' in addr) {
@@ -116,7 +120,7 @@ async function waitFor(
 describe('GraphQL status (integration)', () => {
   jest.setTimeout(25_000);
 
-  let app: NestExpressApplication;
+  let app: NestFastifyApplication;
 
   beforeAll(async () => {
     app = await createGraphqlTestApp();

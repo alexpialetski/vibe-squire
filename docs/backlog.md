@@ -41,7 +41,7 @@ rules and the Story-files coverage invariant.
 
 | ID | Item | Status |
 |----|------|--------|
-|    |      |        |
+| P4.1 | Migrate server runtime from Express/Apollo to Fastify/Mercurius | done |
 
 ## Story files (incremental migration)
 
@@ -57,6 +57,7 @@ queue. Queue rows must link to files listed here.
 | P2.3 | [Apollo Client + status screen migration](stories/p2-graphql-client-apollo.md) |
 | P2.4 | [GraphQL operator BFF expansion](stories/p2-graphql-bff-expansion.md) |
 | P2.5 | [REST/SSE sunset](stories/p2-graphql-rest-sse-sunset.md) |
+| P4.1 | [Fastify + Mercurius platform migration](stories/p4-fastify-mercurius-migration.md) |
 
 ## NFRs and cross-cutting
 

@@ -1,7 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ValidationPipe } from '@nestjs/common';
+import {
+  FastifyAdapter,
+  NestFastifyApplication,
+} from '@nestjs/platform-fastify';
 import request from 'supertest';
-import { App } from 'supertest/types';
 import { testingAppModule } from './testing-app-module';
 import { GhCliService } from '../src/integrations/github/gh-cli.service';
 import { GithubPrScoutService } from '../src/integrations/github/github-pr-scout.service';
@@ -10,7 +12,7 @@ import { PrismaService } from '../src/prisma/prisma.service';
 import { SettingsService } from '../src/settings/settings.service';
 
 describe('Sync with fakes (integration)', () => {
-  let app: INestApplication<App>;
+  let app: NestFastifyApplication;
   const vkStub = {
     probe: jest.fn().mockResolvedValue(undefined),
     listOrganizations: jest.fn().mockResolvedValue([]),
@@ -52,11 +54,11 @@ describe('Sync with fakes (integration)', () => {
       .useValue(vkStub)
       .compile();
 
-    app = moduleFixture.createNestApplication();
-    app.useGlobalPipes(
-      new ValidationPipe({ whitelist: false, transform: true }),
+    app = moduleFixture.createNestApplication<NestFastifyApplication>(
+      new FastifyAdapter(),
     );
     await app.init();
+    await app.getHttpAdapter().getInstance().ready();
 
     const prisma = app.get(PrismaService);
     await prisma.pollRun.deleteMany();

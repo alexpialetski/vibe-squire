@@ -1,10 +1,8 @@
 import { join } from 'node:path';
 import { HttpException, Module } from '@nestjs/common';
-import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default';
-import { ApolloServerPluginLandingPageDisabled } from '@apollo/server/plugin/disabled';
-import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
+import { MercuriusDriver, MercuriusDriverConfig } from '@nestjs/mercurius';
 import { GraphQLModule } from '@nestjs/graphql';
-import type { GraphQLFormattedError } from 'graphql';
+import { NoSchemaIntrospectionCustomRule } from 'graphql';
 import { APP_ENV, type AppEnv } from '../config/app-env.token';
 import { HealthResolver } from './health.resolver';
 
@@ -16,8 +14,8 @@ function isProduction(nodeEnv: string | undefined): boolean {
 
 @Module({
   imports: [
-    GraphQLModule.forRootAsync<ApolloDriverConfig>({
-      driver: ApolloDriver,
+    GraphQLModule.forRootAsync<MercuriusDriverConfig>({
+      driver: MercuriusDriver,
       inject: [APP_ENV],
       useFactory: (appEnv: AppEnv) => {
         const prod = isProduction(appEnv.nodeEnv);
@@ -25,30 +23,31 @@ function isProduction(nodeEnv: string | undefined): boolean {
           path: '/graphql',
           autoSchemaFile: SCHEMA_FILE,
           sortSchema: true,
-          subscriptions: {
-            'graphql-ws': true,
-          },
-          introspection: !prod,
-          playground: false,
-          plugins: prod
-            ? [ApolloServerPluginLandingPageDisabled()]
-            : [ApolloServerPluginLandingPageLocalDefault()],
-          formatError(
-            formattedError: GraphQLFormattedError,
-            error: unknown,
-          ): GraphQLFormattedError {
-            const orig = (error as { originalError?: unknown } | undefined)
-              ?.originalError;
-            if (orig instanceof HttpException) {
-              return {
-                ...formattedError,
-                extensions: {
-                  ...formattedError.extensions,
-                  statusCode: orig.getStatus(),
-                },
-              };
-            }
-            return formattedError;
+          graphiql: !prod,
+          subscription: true,
+          validationRules: prod ? [NoSchemaIntrospectionCustomRule] : [],
+          errorFormatter(execution) {
+            const errors = execution.errors.map((error) => {
+              const formatted = error.toJSON();
+              const orig = error.originalError;
+              if (orig instanceof HttpException) {
+                return {
+                  ...formatted,
+                  extensions: {
+                    ...formatted.extensions,
+                    statusCode: orig.getStatus(),
+                  },
+                };
+              }
+              return formatted;
+            });
+            return {
+              statusCode: 200,
+              response: {
+                data: execution.data ?? null,
+                errors,
+              },
+            };
           },
         };
       },

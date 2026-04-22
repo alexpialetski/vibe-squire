@@ -1,7 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ValidationPipe } from '@nestjs/common';
+import {
+  FastifyAdapter,
+  NestFastifyApplication,
+} from '@nestjs/platform-fastify';
 import request from 'supertest';
-import { App } from 'supertest/types';
 import { testingAppModule } from './testing-app-module';
 import { GhCliService } from '../src/integrations/github/gh-cli.service';
 import { GithubPrScoutService } from '../src/integrations/github/github-pr-scout.service';
@@ -14,7 +16,7 @@ import { DEFAULT_KANBAN_DONE_STATUS } from '../src/sync/sync-constants';
  * PR disappears from scout → reconcile calls update_issue to terminal status and drops sync row.
  */
 describe('Sync reconciliation (integration)', () => {
-  let app: INestApplication<App>;
+  let app: NestFastifyApplication;
   let scoutCalls = 0;
   const vkStub = {
     probe: jest.fn().mockResolvedValue(undefined),
@@ -64,11 +66,11 @@ describe('Sync reconciliation (integration)', () => {
       .useValue(vkStub)
       .compile();
 
-    app = moduleFixture.createNestApplication();
-    app.useGlobalPipes(
-      new ValidationPipe({ whitelist: false, transform: true }),
+    app = moduleFixture.createNestApplication<NestFastifyApplication>(
+      new FastifyAdapter(),
     );
     await app.init();
+    await app.getHttpAdapter().getInstance().ready();
 
     const prisma = app.get(PrismaService);
     await prisma.pollRun.deleteMany();

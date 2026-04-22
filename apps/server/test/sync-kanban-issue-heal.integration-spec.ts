@@ -1,5 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ValidationPipe } from '@nestjs/common';
+import {
+  FastifyAdapter,
+  NestFastifyApplication,
+} from '@nestjs/platform-fastify';
 import { testingAppModule } from './testing-app-module';
 import { GhCliService } from '../src/integrations/github/gh-cli.service';
 import { GithubPrScoutService } from '../src/integrations/github/github-pr-scout.service';
@@ -15,7 +18,7 @@ import { PollSchedulerService } from '../src/sync/poll-scheduler.service';
  * the poll's create quota allows (live VK [vibe-squire] count vs max_board_pr_count).
  */
 describe('Sync heal deleted Kanban issue (integration)', () => {
-  let app: INestApplication;
+  let app: NestFastifyApplication;
   let kanbanIssueGone = false;
 
   const vkStub = {
@@ -63,11 +66,11 @@ describe('Sync heal deleted Kanban issue (integration)', () => {
       .useValue(vkStub)
       .compile();
 
-    app = moduleFixture.createNestApplication();
-    app.useGlobalPipes(
-      new ValidationPipe({ whitelist: false, transform: true }),
+    app = moduleFixture.createNestApplication<NestFastifyApplication>(
+      new FastifyAdapter(),
     );
     await app.init();
+    await app.getHttpAdapter().getInstance().ready();
 
     const scheduler = app.get(PollSchedulerService);
     scheduler.onModuleDestroy();

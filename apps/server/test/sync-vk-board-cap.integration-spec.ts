@@ -1,7 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ValidationPipe } from '@nestjs/common';
+import {
+  FastifyAdapter,
+  NestFastifyApplication,
+} from '@nestjs/platform-fastify';
 import request from 'supertest';
-import { App } from 'supertest/types';
 import { testingAppModule } from './testing-app-module';
 import { GhCliService } from '../src/integrations/github/gh-cli.service';
 import { GithubPrScoutService } from '../src/integrations/github/github-pr-scout.service';
@@ -14,7 +16,7 @@ import { SettingsService } from '../src/settings/settings.service';
  * not SQLite queue cardinality. Only createIssue consumes per-poll quota.
  */
 describe('Sync VK-first board cap (integration)', () => {
-  let app: INestApplication<App>;
+  let app: NestFastifyApplication;
   let createSeq = 0;
   const vkStub = {
     probe: jest.fn().mockResolvedValue(undefined),
@@ -76,11 +78,11 @@ describe('Sync VK-first board cap (integration)', () => {
       .useValue(vkStub)
       .compile();
 
-    app = moduleFixture.createNestApplication();
-    app.useGlobalPipes(
-      new ValidationPipe({ whitelist: false, transform: true }),
+    app = moduleFixture.createNestApplication<NestFastifyApplication>(
+      new FastifyAdapter(),
     );
     await app.init();
+    await app.getHttpAdapter().getInstance().ready();
 
     const prisma = app.get(PrismaService);
     await prisma.pollRun.deleteMany();

@@ -1,6 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ValidationPipe } from '@nestjs/common';
-import { App } from 'supertest/types';
+import {
+  FastifyAdapter,
+  NestFastifyApplication,
+} from '@nestjs/platform-fastify';
 import { testingAppModule } from './testing-app-module';
 import { VibeKanbanBoardService } from '../src/vibe-kanban/vibe-kanban-board.service';
 import { PrismaService } from '../src/prisma/prisma.service';
@@ -27,7 +29,7 @@ function buildVkStub() {
  * Vibe Kanban destination listener + IntegrationSettingsEmitter path.
  */
 describe('VkBoardIntegrationListener (integration)', () => {
-  let app: INestApplication<App>;
+  let app: NestFastifyApplication;
   let prisma: PrismaService;
   let settings: SettingsService;
   let runState: SyncRunStateService;
@@ -43,11 +45,11 @@ describe('VkBoardIntegrationListener (integration)', () => {
       .useValue(vkStub)
       .compile();
 
-    app = moduleFixture.createNestApplication();
-    app.useGlobalPipes(
-      new ValidationPipe({ whitelist: false, transform: true }),
+    app = moduleFixture.createNestApplication<NestFastifyApplication>(
+      new FastifyAdapter(),
     );
     await app.init();
+    await app.getHttpAdapter().getInstance().ready();
 
     prisma = app.get(PrismaService);
     settings = app.get(SettingsService);

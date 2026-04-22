@@ -1,26 +1,30 @@
-import { ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { NestExpressApplication } from '@nestjs/platform-express';
+import {
+  FastifyAdapter,
+  NestFastifyApplication,
+} from '@nestjs/platform-fastify';
 import request from 'supertest';
-import { configureExpressApp } from '../src/configure-express-app';
+import { configureFastifyApp } from '../src/configure-fastify-app';
 import { PollSchedulerService } from '../src/sync/poll-scheduler.service';
 import { testingAppModule } from './testing-app-module';
 
-async function createGraphqlTestApp(): Promise<NestExpressApplication> {
+async function createGraphqlTestApp(): Promise<NestFastifyApplication> {
   const moduleFixture: TestingModule = await Test.createTestingModule({
     imports: [testingAppModule()],
   }).compile();
 
-  const app = moduleFixture.createNestApplication<NestExpressApplication>();
-  configureExpressApp(app);
-  app.useGlobalPipes(new ValidationPipe({ whitelist: false, transform: true }));
+  const app = moduleFixture.createNestApplication<NestFastifyApplication>(
+    new FastifyAdapter(),
+  );
+  await configureFastifyApp(app);
   await app.init();
+  await app.getHttpAdapter().getInstance().ready();
   app.get(PollSchedulerService).onModuleDestroy();
   return app;
 }
 
 describe('GraphQL health (integration)', () => {
-  let app: NestExpressApplication;
+  let app: NestFastifyApplication;
 
   beforeAll(async () => {
     app = await createGraphqlTestApp();
@@ -46,13 +50,11 @@ describe('GraphQL health (integration)', () => {
   });
 
   it('GET /graphql is not served as the SPA shell', async () => {
-    // Apollo only serves the Sandbox HTML when Accept negotiates to text/html; otherwise
-    // the request is treated as a GraphQL operation and CSRF defaults block bare GETs (400).
     const res = await request(app.getHttpServer())
       .get('/graphql')
       .set('Accept', 'text/html')
       .expect(200);
     expect(res.text).not.toContain('<div id="root">');
-    expect(res.text.toLowerCase()).toMatch(/apollo|sandbox|graphql/);
+    expect(res.text.toLowerCase()).toContain('unknown query');
   });
 });

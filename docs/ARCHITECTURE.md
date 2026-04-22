@@ -6,6 +6,8 @@ This document captures the key architectural decisions behind vibe-squire. It is
 
 Core domain logic has no dependency on NestJS, SQLite, GitHub, or Vibe Kanban. Adapters implement port interfaces; NestJS modules wire them together via DI.
 
+The server runtime default is NestJS on Fastify (`@nestjs/platform-fastify`) with Mercurius (`@nestjs/mercurius`) as the GraphQL driver.
+
 ```mermaid
 graph TB
     subgraph Driving["Driving adapters"]
