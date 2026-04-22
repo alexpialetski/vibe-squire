@@ -888,6 +888,37 @@ textarea.input {
   display: flex;
   gap: 0.35rem;
   flex-wrap: wrap;
+  align-items: center;
+  min-height: 1.75rem;
+}
+
+.triage-actions--pending {
+  min-width: 5.5rem;
+}
+
+.triage-actions__pending {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--text-muted, #6b6b6b);
+  font-size: 0.8rem;
+}
+
+.triage-action-spinner {
+  display: inline-block;
+  width: 0.85rem;
+  height: 0.85rem;
+  border: 2px solid var(--border, #ccc);
+  border-top-color: var(--text-muted, #888);
+  border-radius: 50%;
+  animation: triage-action-spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes triage-action-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .triage-attention-hint {

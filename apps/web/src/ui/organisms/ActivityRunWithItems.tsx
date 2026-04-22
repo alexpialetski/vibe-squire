@@ -10,18 +10,19 @@ type ActivityRunWithItemsProps = {
   onAccept: (prUrl: string) => void;
   onDecline: (prUrl: string) => void;
   onReconsider: (prUrl: string) => void;
+  triageActionPendingPr: string | null;
 };
 
-function isTriageable(effectiveDecision: string): boolean {
+/** PRs awaiting Review / Decline in triage mode. */
+function isPendingTriage(effectiveDecision: string): boolean {
   return (
     effectiveDecision === 'skipped_triage' ||
-    effectiveDecision === 'skipped_board_limit' ||
-    effectiveDecision === 'skipped_declined'
+    effectiveDecision === 'skipped_board_limit'
   );
 }
 
 function triageSortKey(effectiveDecision: string): number {
-  if (isTriageable(effectiveDecision)) return 0;
+  if (isPendingTriage(effectiveDecision)) return 0;
   if (effectiveDecision === 'skipped_declined') return 1;
   return 2;
 }
@@ -36,6 +37,7 @@ export function ActivityRunWithItems({
   onAccept,
   onDecline,
   onReconsider,
+  triageActionPendingPr,
 }: ActivityRunWithItemsProps) {
   const sortedItems = useMemo(
     () =>
@@ -48,8 +50,10 @@ export function ActivityRunWithItems({
     [run.items],
   );
 
-  const hasActionable = sortedItems.some((i) =>
-    isTriageable(i.effectiveDecision),
+  const hasActionable = sortedItems.some(
+    (i) =>
+      isPendingTriage(i.effectiveDecision) ||
+      i.effectiveDecision === 'skipped_declined',
   );
   const detailsDefaultOpen = highlight && hasActionable;
   const [detailsOpen, setDetailsOpen] = useState(detailsDefaultOpen);
@@ -125,7 +129,7 @@ export function ActivityRunWithItems({
               </thead>
               <tbody>
                 {sortedItems.map((item) => {
-                  const rowClass = isTriageable(item.effectiveDecision)
+                  const rowClass = isPendingTriage(item.effectiveDecision)
                     ? 'triage-pending-row'
                     : item.effectiveDecision === 'skipped_declined'
                       ? 'triage-declined-row'
@@ -148,12 +152,13 @@ export function ActivityRunWithItems({
                       </td>
                       <td>
                         {item.decisionLabel}
-                        {(isTriageable(item.effectiveDecision) ||
+                        {(isPendingTriage(item.effectiveDecision) ||
                           item.effectiveDecision === 'skipped_declined') && (
                           <ActivityTriageActions
                             prUrl={item.prUrl}
+                            actionPending={triageActionPendingPr === item.prUrl}
                             mode={
-                              isTriageable(item.effectiveDecision)
+                              isPendingTriage(item.effectiveDecision)
                                 ? 'pending'
                                 : 'declined'
                             }
