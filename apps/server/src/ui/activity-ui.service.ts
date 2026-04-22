@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { POLL_RUN_ITEM_DECISION } from '../sync/poll-run-decisions';
 import { PollRunHistoryService } from '../sync/poll-run-history.service';
+import { pollDecisionLabel } from '../sync/poll-run-labels';
 import { fetchTriageLiveState } from '../sync/triage-live-state.queries';
 import { presentActivityRunsForView } from './ui-presenter';
 
@@ -8,6 +10,25 @@ const DEFAULT_LIMIT = 40;
 const MAX_LIMIT = 100;
 
 export type ActivityCursor = { startedAt: string; id: string };
+
+type PresentedActivityItem = {
+  id: string;
+  prUrl: string;
+  githubRepo: string;
+  prNumber: number;
+  prTitle: string;
+  authorLogin: string | null;
+  decision: string;
+  effectiveDecision: string;
+  decisionLabel: string;
+  detail: string | null;
+  kanbanIssueId: string | null;
+};
+
+const TRIAGE_DECISIONS = new Set<string>([
+  POLL_RUN_ITEM_DECISION.skippedTriage,
+  POLL_RUN_ITEM_DECISION.skippedBoardLimit,
+]);
 
 function encodeCursor(c: ActivityCursor): string {
   return Buffer.from(JSON.stringify(c), 'utf8').toString('base64url');
@@ -43,6 +64,46 @@ export class ActivityUiService {
     const allPrUrls = new Set(rows.flatMap((r) => r.items.map((i) => i.prUrl)));
     const live = await fetchTriageLiveState(this.prisma, allPrUrls);
     return presentActivityRunsForView(rows, live);
+  }
+
+  async findPresentedItemByPrUrl(
+    prUrl: string,
+  ): Promise<PresentedActivityItem | null> {
+    const item = await this.prisma.pollRunItem.findFirst({
+      where: { prUrl },
+      orderBy: [{ run: { startedAt: 'desc' } }, { id: 'desc' }],
+    });
+    if (!item) {
+      return null;
+    }
+
+    const live = await fetchTriageLiveState(this.prisma, new Set([prUrl]));
+    const synced = await this.prisma.syncedPullRequest.findUnique({
+      where: { prUrl },
+      select: { kanbanIssueId: true },
+    });
+    const effectiveDecision = resolveEffectiveDecision(item.decision, prUrl, {
+      acceptedPrUrls: live.acceptedPrUrls,
+      declinedPrUrls: live.declinedPrUrls,
+    });
+    const kanbanIssueId =
+      effectiveDecision === POLL_RUN_ITEM_DECISION.linkedExisting
+        ? (synced?.kanbanIssueId ?? item.kanbanIssueId)
+        : item.kanbanIssueId;
+
+    return {
+      id: prUrl,
+      prUrl: item.prUrl,
+      githubRepo: item.githubRepo,
+      prNumber: item.prNumber,
+      prTitle: item.prTitle,
+      authorLogin: item.authorLogin,
+      decision: item.decision,
+      effectiveDecision,
+      decisionLabel: pollDecisionLabel(effectiveDecision),
+      detail: item.detail,
+      kanbanIssueId: kanbanIssueId ?? null,
+    };
   }
 
   /**
@@ -104,4 +165,20 @@ export class ActivityUiService {
       endCursor,
     };
   }
+}
+
+function resolveEffectiveDecision(
+  decision: string,
+  prUrl: string,
+  live: {
+    acceptedPrUrls: ReadonlySet<string>;
+    declinedPrUrls: ReadonlySet<string>;
+  },
+): string {
+  if (!TRIAGE_DECISIONS.has(decision)) return decision;
+  if (live.acceptedPrUrls.has(prUrl))
+    return POLL_RUN_ITEM_DECISION.linkedExisting;
+  if (live.declinedPrUrls.has(prUrl))
+    return POLL_RUN_ITEM_DECISION.skippedDeclined;
+  return decision;
 }

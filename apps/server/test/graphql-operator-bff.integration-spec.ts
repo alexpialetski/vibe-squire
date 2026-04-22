@@ -447,7 +447,7 @@ describe('GraphQL operator BFF (integration)', () => {
     expect(Array.isArray(gqlBody.data?.vibeKanbanProjects)).toBe(true);
   });
 
-  it('updateSettings applies core patch and returns ok', async () => {
+  it('updateSettings applies core patch and returns effective settings', async () => {
     const beforeRes = await request(app.getHttpServer())
       .post('/graphql')
       .send({ query: EFFECTIVE_SETTINGS });
@@ -466,7 +466,10 @@ describe('GraphQL operator BFF (integration)', () => {
         query: /* GraphQL */ `
           mutation M($input: UpdateSettingsInput!) {
             updateSettings(input: $input) {
-              ok
+              coreFields {
+                key
+                value
+              }
             }
           }
         `,
@@ -474,11 +477,18 @@ describe('GraphQL operator BFF (integration)', () => {
       });
     expect(res.status).toBe(200);
     const body = res.body as {
-      data?: { updateSettings?: { ok: boolean } };
+      data?: {
+        updateSettings?: {
+          coreFields: Array<{ key: string; value: string }>;
+        };
+      };
       errors?: unknown[];
     };
     expect(body.errors).toBeUndefined();
-    expect(body.data?.updateSettings?.ok).toBe(true);
+    const updatedPoll = body.data?.updateSettings?.coreFields.find(
+      (field) => field.key === 'poll_interval_minutes',
+    )?.value;
+    expect(updatedPoll).toBe(next);
 
     const afterRes = await request(app.getHttpServer())
       .post('/graphql')
@@ -503,7 +513,7 @@ describe('GraphQL operator BFF (integration)', () => {
         query: /* GraphQL */ `
           mutation M($input: UpdateSettingsInput!) {
             updateSettings(input: $input) {
-              ok
+              id
             }
           }
         `,

@@ -1,8 +1,12 @@
 mutation UpdateDestinationSettings($input: UpdateDestinationSettingsInput!) {
   updateDestinationSettings(input: $input) {
+    id
     coreFields {
       key
+      label
       value
+      envVar
+      description
     }
     resolvedSourceLabel
     resolvedDestinationLabel

@@ -22,7 +22,8 @@ function graphBody<T>(res: { body: unknown }): GraphqlEnvelope<T> {
 const DECLINE_TRIAGE = /* GraphQL */ `
   mutation Decline($prUrl: String!) {
     declineTriage(prUrl: $prUrl) {
-      ok
+      id
+      effectiveDecision
     }
   }
 `;
@@ -30,7 +31,9 @@ const DECLINE_TRIAGE = /* GraphQL */ `
 const ACCEPT_TRIAGE = /* GraphQL */ `
   mutation Accept($prUrl: String!) {
     acceptTriage(prUrl: $prUrl) {
+      id
       kanbanIssueId
+      effectiveDecision
     }
   }
 `;
@@ -38,7 +41,8 @@ const ACCEPT_TRIAGE = /* GraphQL */ `
 const RECONSIDER_TRIAGE = /* GraphQL */ `
   mutation Reconsider($prUrl: String!) {
     reconsiderTriage(prUrl: $prUrl) {
-      ok
+      id
+      effectiveDecision
     }
   }
 `;
@@ -151,9 +155,16 @@ describe('GraphQL operator triage mutations (integration)', () => {
         variables: { prUrl: 'https://github.com/acme/demo/pull/11' },
       });
     expect(gqlRes.status).toBe(200);
-    const declineWrap = graphBody<{ declineTriage: { ok: boolean } }>(gqlRes);
+    const declineWrap = graphBody<{
+      declineTriage: { id: string; effectiveDecision: string };
+    }>(gqlRes);
     expect(declineWrap.errors).toBeUndefined();
-    expect(declineWrap.data?.declineTriage.ok).toBe(true);
+    expect(declineWrap.data?.declineTriage.id).toBe(
+      'https://github.com/acme/demo/pull/11',
+    );
+    expect(declineWrap.data?.declineTriage.effectiveDecision).toBe(
+      'skipped_declined',
+    );
 
     const declined = await prisma.declinedPullRequest.findUnique({
       where: { prUrl: 'https://github.com/acme/demo/pull/11' },
@@ -192,11 +203,21 @@ describe('GraphQL operator triage mutations (integration)', () => {
         variables: { prUrl: 'https://github.com/acme/demo/pull/10' },
       });
     expect(gqlRes.status).toBe(200);
-    const acceptWrap = graphBody<{ acceptTriage: { kanbanIssueId: string } }>(
-      gqlRes,
-    );
+    const acceptWrap = graphBody<{
+      acceptTriage: {
+        id: string;
+        kanbanIssueId: string | null;
+        effectiveDecision: string;
+      };
+    }>(gqlRes);
     expect(acceptWrap.errors).toBeUndefined();
+    expect(acceptWrap.data?.acceptTriage.id).toBe(
+      'https://github.com/acme/demo/pull/10',
+    );
     expect(acceptWrap.data?.acceptTriage.kanbanIssueId).toBe('triage-issue-id');
+    expect(acceptWrap.data?.acceptTriage.effectiveDecision).toBe(
+      'linked_existing',
+    );
 
     expect(triageVkStub.createIssue).toHaveBeenCalledTimes(1);
 
@@ -231,11 +252,16 @@ describe('GraphQL operator triage mutations (integration)', () => {
         variables: { prUrl: 'https://github.com/acme/demo/pull/11' },
       });
     expect(reconRes.status).toBe(200);
-    const reconWrap = graphBody<{ reconsiderTriage: { ok: boolean } }>(
-      reconRes,
-    );
+    const reconWrap = graphBody<{
+      reconsiderTriage: { id: string; effectiveDecision: string };
+    }>(reconRes);
     expect(reconWrap.errors).toBeUndefined();
-    expect(reconWrap.data?.reconsiderTriage.ok).toBe(true);
+    expect(reconWrap.data?.reconsiderTriage.id).toBe(
+      'https://github.com/acme/demo/pull/11',
+    );
+    expect(reconWrap.data?.reconsiderTriage.effectiveDecision).toBe(
+      'skipped_triage',
+    );
 
     expect(
       await prisma.declinedPullRequest.findUnique({

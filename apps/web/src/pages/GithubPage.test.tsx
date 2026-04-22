@@ -42,6 +42,7 @@ describe('GithubPage', () => {
         data: {
           updateSourceSettings: {
             __typename: 'EffectiveSettings',
+            id: 'singleton',
             coreFields: [],
             resolvedSourceLabel: 'GitHub',
             resolvedDestinationLabel: 'Vibe Kanban',
@@ -53,7 +54,7 @@ describe('GithubPage', () => {
     };
 
     render(
-      <MockedProvider mocks={[queryMock, mutationMock, queryMock]}>
+      <MockedProvider mocks={[queryMock, mutationMock]}>
         <GithubPage />
       </MockedProvider>,
     );

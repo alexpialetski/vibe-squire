@@ -31,11 +31,6 @@ export type Scalars = {
   DateTime: { input: any; output: any };
 };
 
-export type AcceptTriagePayload = {
-  __typename?: 'AcceptTriagePayload';
-  kanbanIssueId: Scalars['String']['output'];
-};
-
 export type ActivityEventsPayload = {
   __typename?: 'ActivityEventsPayload';
   invalidate: Scalars['Boolean']['output'];
@@ -119,11 +114,6 @@ export enum DatabaseState {
   Ok = 'ok',
 }
 
-export type DeclineTriagePayload = {
-  __typename?: 'DeclineTriagePayload';
-  ok: Scalars['Boolean']['output'];
-};
-
 export type DeleteMappingPayload = {
   __typename?: 'DeleteMappingPayload';
   ok: Scalars['Boolean']['output'];
@@ -140,6 +130,7 @@ export type EffectiveSettings = {
   __typename?: 'EffectiveSettings';
   autoCreateIssues: Scalars['Boolean']['output'];
   coreFields: Array<CoreSettingField>;
+  id: Scalars['ID']['output'];
   resolvedDestinationLabel: Scalars['String']['output'];
   resolvedSourceLabel: Scalars['String']['output'];
   scheduledSyncEnabled: Scalars['Boolean']['output'];
@@ -189,14 +180,14 @@ export type MappingGql = {
 
 export type Mutation = {
   __typename?: 'Mutation';
-  acceptTriage: AcceptTriagePayload;
-  declineTriage: DeclineTriagePayload;
+  acceptTriage: ActivityItemGql;
+  declineTriage: ActivityItemGql;
   deleteMapping: DeleteMappingPayload;
-  reconsiderTriage: ReconsiderTriagePayload;
+  reconsiderTriage: ActivityItemGql;
   reinitIntegration: ReinitIntegrationPayload;
   triggerSync: TriggerSyncPayload;
   updateDestinationSettings: EffectiveSettings;
-  updateSettings: UpdateSettingsPayload;
+  updateSettings: EffectiveSettings;
   updateSourceSettings: EffectiveSettings;
   upsertMapping: MappingGql;
 };
@@ -256,11 +247,6 @@ export type QueryActivityFeedArgs = {
 
 export type QueryVibeKanbanProjectsArgs = {
   organizationId: Scalars['ID']['input'];
-};
-
-export type ReconsiderTriagePayload = {
-  __typename?: 'ReconsiderTriagePayload';
-  ok: Scalars['Boolean']['output'];
 };
 
 export type ReinitIntegrationPayload = {
@@ -420,11 +406,6 @@ export type UpdateSettingsInput = {
   scheduled_sync_enabled?: InputMaybe<Scalars['String']['input']>;
 };
 
-export type UpdateSettingsPayload = {
-  __typename?: 'UpdateSettingsPayload';
-  ok: Scalars['Boolean']['output'];
-};
-
 export type UpdateSourceSettingsInput = {
   github_host?: InputMaybe<Scalars['String']['input']>;
   pr_ignore_author_logins?: InputMaybe<Scalars['String']['input']>;
@@ -487,7 +468,20 @@ export type AcceptTriageMutationMutationVariables = Exact<{
 
 export type AcceptTriageMutationMutation = {
   __typename?: 'Mutation';
-  acceptTriage: { __typename?: 'AcceptTriagePayload'; kanbanIssueId: string };
+  acceptTriage: {
+    __typename?: 'ActivityItemGql';
+    id: string;
+    prUrl: string;
+    githubRepo: string;
+    prNumber: number;
+    prTitle: string;
+    authorLogin?: string | null;
+    decision: string;
+    effectiveDecision: string;
+    decisionLabel: string;
+    detail?: string | null;
+    kanbanIssueId?: string | null;
+  };
 };
 
 export type ActivityEventsSubscriptionSubscriptionVariables = Exact<{
@@ -592,7 +586,20 @@ export type DeclineTriageMutationMutationVariables = Exact<{
 
 export type DeclineTriageMutationMutation = {
   __typename?: 'Mutation';
-  declineTriage: { __typename?: 'DeclineTriagePayload'; ok: boolean };
+  declineTriage: {
+    __typename?: 'ActivityItemGql';
+    id: string;
+    prUrl: string;
+    githubRepo: string;
+    prNumber: number;
+    prTitle: string;
+    authorLogin?: string | null;
+    decision: string;
+    effectiveDecision: string;
+    decisionLabel: string;
+    detail?: string | null;
+    kanbanIssueId?: string | null;
+  };
 };
 
 export type DeleteMappingMutationMutationVariables = Exact<{
@@ -612,6 +619,7 @@ export type EffectiveSettingsQueryQuery = {
   __typename?: 'Query';
   effectiveSettings: {
     __typename?: 'EffectiveSettings';
+    id: string;
     resolvedSourceLabel: string;
     resolvedDestinationLabel: string;
     scheduledSyncEnabled: boolean;
@@ -678,7 +686,20 @@ export type ReconsiderTriageMutationMutationVariables = Exact<{
 
 export type ReconsiderTriageMutationMutation = {
   __typename?: 'Mutation';
-  reconsiderTriage: { __typename?: 'ReconsiderTriagePayload'; ok: boolean };
+  reconsiderTriage: {
+    __typename?: 'ActivityItemGql';
+    id: string;
+    prUrl: string;
+    githubRepo: string;
+    prNumber: number;
+    prTitle: string;
+    authorLogin?: string | null;
+    decision: string;
+    effectiveDecision: string;
+    decisionLabel: string;
+    detail?: string | null;
+    kanbanIssueId?: string | null;
+  };
 };
 
 export type ReinitIntegrationMutationMutationVariables = Exact<{
@@ -725,6 +746,7 @@ export type UpdateDestinationSettingsMutation = {
   __typename?: 'Mutation';
   updateDestinationSettings: {
     __typename?: 'EffectiveSettings';
+    id: string;
     resolvedSourceLabel: string;
     resolvedDestinationLabel: string;
     scheduledSyncEnabled: boolean;
@@ -732,7 +754,10 @@ export type UpdateDestinationSettingsMutation = {
     coreFields: Array<{
       __typename?: 'CoreSettingField';
       key: string;
+      label: string;
       value: string;
+      envVar?: string | null;
+      description?: string | null;
     }>;
   };
 };
@@ -743,7 +768,22 @@ export type UpdateSettingsMutationMutationVariables = Exact<{
 
 export type UpdateSettingsMutationMutation = {
   __typename?: 'Mutation';
-  updateSettings: { __typename?: 'UpdateSettingsPayload'; ok: boolean };
+  updateSettings: {
+    __typename?: 'EffectiveSettings';
+    id: string;
+    resolvedSourceLabel: string;
+    resolvedDestinationLabel: string;
+    scheduledSyncEnabled: boolean;
+    autoCreateIssues: boolean;
+    coreFields: Array<{
+      __typename?: 'CoreSettingField';
+      key: string;
+      label: string;
+      value: string;
+      envVar?: string | null;
+      description?: string | null;
+    }>;
+  };
 };
 
 export type UpdateSourceSettingsMutationVariables = Exact<{
@@ -754,6 +794,7 @@ export type UpdateSourceSettingsMutation = {
   __typename?: 'Mutation';
   updateSourceSettings: {
     __typename?: 'EffectiveSettings';
+    id: string;
     resolvedSourceLabel: string;
     resolvedDestinationLabel: string;
     scheduledSyncEnabled: boolean;
@@ -761,7 +802,10 @@ export type UpdateSourceSettingsMutation = {
     coreFields: Array<{
       __typename?: 'CoreSettingField';
       key: string;
+      label: string;
       value: string;
+      envVar?: string | null;
+      description?: string | null;
     }>;
   };
 };
@@ -1210,6 +1254,22 @@ export const AcceptTriageMutationDocument = {
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'prUrl' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'githubRepo' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'prNumber' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'prTitle' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'authorLogin' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'decision' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'effectiveDecision' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'decisionLabel' },
+                },
+                { kind: 'Field', name: { kind: 'Name', value: 'detail' } },
                 {
                   kind: 'Field',
                   name: { kind: 'Name', value: 'kanbanIssueId' },
@@ -1643,7 +1703,26 @@ export const DeclineTriageMutationDocument = {
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'ok' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'prUrl' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'githubRepo' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'prNumber' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'prTitle' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'authorLogin' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'decision' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'effectiveDecision' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'decisionLabel' },
+                },
+                { kind: 'Field', name: { kind: 'Name', value: 'detail' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'kanbanIssueId' },
+                },
               ],
             },
           },
@@ -1719,6 +1798,7 @@ export const EffectiveSettingsQueryDocument = {
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
                 {
                   kind: 'Field',
                   name: { kind: 'Name', value: 'coreFields' },
@@ -1916,7 +1996,26 @@ export const ReconsiderTriageMutationDocument = {
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'ok' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'prUrl' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'githubRepo' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'prNumber' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'prTitle' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'authorLogin' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'decision' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'effectiveDecision' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'decisionLabel' },
+                },
+                { kind: 'Field', name: { kind: 'Name', value: 'detail' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'kanbanIssueId' },
+                },
               ],
             },
           },
@@ -2068,6 +2167,7 @@ export const UpdateDestinationSettingsDocument = {
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
                 {
                   kind: 'Field',
                   name: { kind: 'Name', value: 'coreFields' },
@@ -2075,7 +2175,16 @@ export const UpdateDestinationSettingsDocument = {
                     kind: 'SelectionSet',
                     selections: [
                       { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'label' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'envVar' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'description' },
+                      },
                     ],
                   },
                 },
@@ -2148,7 +2257,43 @@ export const UpdateSettingsMutationDocument = {
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'ok' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'coreFields' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'label' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'envVar' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'description' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'resolvedSourceLabel' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'resolvedDestinationLabel' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'scheduledSyncEnabled' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'autoCreateIssues' },
+                },
               ],
             },
           },
@@ -2202,6 +2347,7 @@ export const UpdateSourceSettingsDocument = {
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
                 {
                   kind: 'Field',
                   name: { kind: 'Name', value: 'coreFields' },
@@ -2209,7 +2355,16 @@ export const UpdateSourceSettingsDocument = {
                     kind: 'SelectionSet',
                     selections: [
                       { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'label' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'envVar' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'description' },
+                      },
                     ],
                   },
                 },

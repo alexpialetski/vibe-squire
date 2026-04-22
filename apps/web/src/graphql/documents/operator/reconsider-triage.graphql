@@ -1,5 +1,15 @@
 mutation ReconsiderTriageMutation($prUrl: String!) {
   reconsiderTriage(prUrl: $prUrl) {
-    ok
+    id
+    prUrl
+    githubRepo
+    prNumber
+    prTitle
+    authorLogin
+    decision
+    effectiveDecision
+    decisionLabel
+    detail
+    kanbanIssueId
   }
 }
