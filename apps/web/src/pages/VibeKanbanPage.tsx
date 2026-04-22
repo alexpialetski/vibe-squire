@@ -1,5 +1,6 @@
 import { useMutation, useQuery } from '@apollo/client';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
+import { useForm } from 'react-hook-form';
 import { toast } from 'react-hot-toast';
 import type {
   UpdateDestinationSettingsMutation,
@@ -24,18 +25,36 @@ export function VibeKanbanPage() {
   );
   const uiState = uiStateQuery.data?.vibeKanbanUiState ?? null;
 
-  const [boardOrg, setBoardOrg] = useState('');
-  const [boardProj, setBoardProj] = useState('');
-  const [kanbanDone, setKanbanDone] = useState('');
-  const [executor, setExecutor] = useState('');
+  type VibeKanbanFormValues = {
+    default_organization_id: string;
+    default_project_id: string;
+    kanban_done_status: string;
+    vk_workspace_executor: string;
+  };
+  const { handleSubmit, reset, setValue, watch } =
+    useForm<VibeKanbanFormValues>({
+      defaultValues: {
+        default_organization_id: '',
+        default_project_id: '',
+        kanban_done_status: '',
+        vk_workspace_executor: '',
+      },
+    });
 
   useEffect(() => {
     if (!uiState) return;
-    setBoardOrg(uiState.boardOrg);
-    setBoardProj(uiState.boardProj);
-    setKanbanDone(uiState.kanbanDoneStatus);
-    setExecutor(uiState.vkExecutor);
-  }, [uiState]);
+    reset({
+      default_organization_id: uiState.boardOrg,
+      default_project_id: uiState.boardProj,
+      kanban_done_status: uiState.kanbanDoneStatus,
+      vk_workspace_executor: uiState.vkExecutor,
+    });
+  }, [uiState, reset]);
+  const values = watch();
+  const boardOrg = values.default_organization_id ?? '';
+  const boardProj = values.default_project_id ?? '';
+  const kanbanDone = values.kanban_done_status ?? '';
+  const executor = values.vk_workspace_executor ?? '';
 
   const orgsQuery = useQuery<VibeKanbanOrganizationsQuery>(
     VIBE_KANBAN_ORGANIZATIONS_QUERY,
@@ -68,9 +87,7 @@ export function VibeKanbanPage() {
     UpdateDestinationSettingsMutationVariables
   >(UPDATE_DESTINATION_SETTINGS_MUTATION, {
     onCompleted: () => {
-      void uiStateQuery.refetch().then(() => {
-        toast.success('Vibe Kanban settings saved.');
-      });
+      toast.success('Vibe Kanban settings saved.');
     },
     onError: (error: unknown) => {
       toast.error(`Save failed: ${getErrorMessage(error)}`);
@@ -127,27 +144,35 @@ export function VibeKanbanPage() {
         orgLoading={Boolean(orgsQuery.loading)}
         selectedOrgId={boardOrg}
         onOrgChange={(value) => {
-          setBoardOrg(value);
-          setBoardProj('');
+          setValue('default_organization_id', value, { shouldDirty: true });
+          setValue('default_project_id', '', { shouldDirty: true });
         }}
         selectedProjectId={boardProj}
         projectOptions={projects}
         projectLoading={Boolean(projectsQuery.loading)}
         projectErrorMessage={projectsErrorMessage}
-        onProjectChange={setBoardProj}
+        onProjectChange={(value) => {
+          setValue('default_project_id', value, { shouldDirty: true });
+        }}
         doneStatusValue={kanbanDone}
-        onDoneStatusChange={setKanbanDone}
+        onDoneStatusChange={(value) => {
+          setValue('kanban_done_status', value, { shouldDirty: true });
+        }}
         executorValue={executor}
         executorOptions={d.executorOptions}
-        onExecutorChange={setExecutor}
+        onExecutorChange={(value) => {
+          setValue('vk_workspace_executor', value, { shouldDirty: true });
+        }}
         saving={saveState.loading}
         onSubmit={() => {
-          void handleSave({
-            default_organization_id: boardOrg,
-            default_project_id: boardProj,
-            kanban_done_status: kanbanDone,
-            vk_workspace_executor: executor,
-          });
+          void handleSubmit((formValues) => {
+            void handleSave({
+              default_organization_id: formValues.default_organization_id,
+              default_project_id: formValues.default_project_id,
+              kanban_done_status: formValues.kanban_done_status,
+              vk_workspace_executor: formValues.vk_workspace_executor,
+            });
+          })();
         }}
       />
     </div>

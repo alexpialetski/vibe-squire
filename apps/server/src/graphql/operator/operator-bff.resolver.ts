@@ -40,19 +40,17 @@ import { PrTriageService } from '../../sync/pr-triage.service';
 import { ReinitService } from '../../reinit/reinit.service';
 import { isSettingsPatchError } from '../../settings/parse-settings-patch';
 import {
-  AcceptTriagePayload,
+  ActivityItemGql,
   ActivityEventsPayload,
   ActivityFeedConnection,
   ActivityFeedEdge,
   ActivityRunGql,
-  DeclineTriagePayload,
   DashboardSetupGql,
   DeleteMappingPayload,
   EffectiveSettings,
   GithubFieldsPayload,
   IntegrationNavGql,
   MappingGql,
-  ReconsiderTriagePayload,
   ReinitIntegrationPayload,
   ReinitSubsystemGql,
   UpdateDestinationSettingsInput,
@@ -67,7 +65,6 @@ import {
   SetupEvaluationGql,
   SetupReasonMessageGql,
   UpdateSettingsInput,
-  UpdateSettingsPayload,
   UpsertMappingInput,
 } from './operator-bff.types';
 import { ACTIVITY_EVENTS, ACTIVITY_PUBSUB } from './activity-tokens';
@@ -79,7 +76,7 @@ function toActivityRunGql(
     ...run,
     items: run.items.map((i) => ({
       ...i,
-      id: `${run.id}:${i.prUrl}`,
+      id: i.prUrl,
     })),
   };
 }
@@ -186,6 +183,7 @@ export class OperatorBffResolver {
     const ev = await this.setupEvaluation.evaluate();
     const meta = coreSettingsFieldsMetadata(values);
     return {
+      id: 'singleton',
       coreFields: meta.map((m) => ({
         key: m.key,
         label: m.label,
@@ -272,24 +270,23 @@ export class OperatorBffResolver {
     };
   }
 
-  @Mutation(() => UpdateSettingsPayload, { name: 'updateSettings' })
+  @Mutation(() => EffectiveSettings, { name: 'updateSettings' })
   async updateSettings(
     @Args('input', { type: () => UpdateSettingsInput })
     input: UpdateSettingsInput,
-  ): Promise<UpdateSettingsPayload> {
+  ): Promise<EffectiveSettings> {
     const body = patchObjectFromInput(input);
-    if (Object.keys(body).length === 0) {
-      return { ok: true };
-    }
-    try {
-      await this.settings.applyGroupPatch('core', body);
-    } catch (e) {
-      if (isSettingsPatchError(e)) {
-        throw new BadRequestException(e.message);
+    if (Object.keys(body).length > 0) {
+      try {
+        await this.settings.applyGroupPatch('core', body);
+      } catch (e) {
+        if (isSettingsPatchError(e)) {
+          throw new BadRequestException(e.message);
+        }
+        throw e;
       }
-      throw e;
     }
-    return { ok: true };
+    return this.buildEffectiveSettings();
   }
 
   @Mutation(() => EffectiveSettings, { name: 'updateSourceSettings' })
@@ -336,40 +333,36 @@ export class OperatorBffResolver {
     return { ok: true };
   }
 
-  @Mutation(() => AcceptTriagePayload, { name: 'acceptTriage' })
+  @Mutation(() => ActivityItemGql, { name: 'acceptTriage' })
   @UseGuards(SetupCompleteGuard, SyncDependenciesGuard)
-  async acceptTriage(
-    @Args('prUrl') prUrl: string,
-  ): Promise<AcceptTriagePayload> {
-    const r = await this.triage.accept(prUrl);
+  async acceptTriage(@Args('prUrl') prUrl: string): Promise<ActivityItemGql> {
+    await this.triage.accept(prUrl);
     void this.activityPubSub.publish(ACTIVITY_EVENTS, {
       activityEvents: { invalidate: true },
     });
-    return r;
+    return this.requirePresentedActivityItem(prUrl);
   }
 
-  @Mutation(() => DeclineTriagePayload, { name: 'declineTriage' })
+  @Mutation(() => ActivityItemGql, { name: 'declineTriage' })
   @UseGuards(SetupCompleteGuard, SyncDependenciesGuard)
-  async declineTriage(
-    @Args('prUrl') prUrl: string,
-  ): Promise<DeclineTriagePayload> {
+  async declineTriage(@Args('prUrl') prUrl: string): Promise<ActivityItemGql> {
     await this.triage.decline(prUrl);
     void this.activityPubSub.publish(ACTIVITY_EVENTS, {
       activityEvents: { invalidate: true },
     });
-    return { ok: true };
+    return this.requirePresentedActivityItem(prUrl);
   }
 
-  @Mutation(() => ReconsiderTriagePayload, { name: 'reconsiderTriage' })
+  @Mutation(() => ActivityItemGql, { name: 'reconsiderTriage' })
   @UseGuards(SetupCompleteGuard, SyncDependenciesGuard)
   async reconsiderTriage(
     @Args('prUrl') prUrl: string,
-  ): Promise<ReconsiderTriagePayload> {
+  ): Promise<ActivityItemGql> {
     await this.triage.reconsider(prUrl);
     void this.activityPubSub.publish(ACTIVITY_EVENTS, {
       activityEvents: { invalidate: true },
     });
-    return { ok: true };
+    return this.requirePresentedActivityItem(prUrl);
   }
 
   @Mutation(() => TriggerSyncPayload, { name: 'triggerSync' })
@@ -428,6 +421,16 @@ export class OperatorBffResolver {
       }
     }
     return this.buildEffectiveSettings();
+  }
+
+  private async requirePresentedActivityItem(
+    prUrl: string,
+  ): Promise<ActivityItemGql> {
+    const item = await this.activityUi.findPresentedItemByPrUrl(prUrl);
+    if (!item) {
+      throw new BadRequestException('No activity item found for PR URL');
+    }
+    return item;
   }
 }
 

@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from '@apollo/client';
-import { useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { toast } from 'react-hot-toast';
 import type {
   MappingsQueryQuery,
@@ -41,8 +41,18 @@ export function MappingsPage() {
   const vkReposError = reposQ.error ? getErrorMessage(reposQ.error) : null;
   const vkReposLoading = Boolean(reposQ.loading && !reposQ.data);
 
-  const [githubRepo, setGithubRepo] = useState('');
-  const [vkRepoId, setVkRepoId] = useState('');
+  type NewMappingFormValues = {
+    githubRepo: string;
+    vibeKanbanRepoId: string;
+  };
+  const { handleSubmit, reset, setValue, watch } =
+    useForm<NewMappingFormValues>({
+      defaultValues: {
+        githubRepo: '',
+        vibeKanbanRepoId: '',
+      },
+    });
+  const values = watch();
 
   const [upsert, { loading: upserting }] = useMutation<
     UpsertMappingMutationMutation,
@@ -71,10 +81,8 @@ export function MappingsPage() {
         },
       });
     },
-    refetchQueries: [{ query: MAPPINGS_QUERY }],
     onCompleted: () => {
-      setGithubRepo('');
-      setVkRepoId('');
+      reset();
       toast.success('Mapping added.');
     },
     onError: (e) => toast.error(`Add failed: ${getErrorMessage(e)}`),
@@ -102,7 +110,6 @@ export function MappingsPage() {
         },
       });
     },
-    refetchQueries: [{ query: MAPPINGS_QUERY }],
     onCompleted: () => toast.success('Mapping deleted.'),
     onError: (e) => toast.error(`Delete failed: ${getErrorMessage(e)}`),
   });
@@ -134,22 +141,28 @@ export function MappingsPage() {
       }
       newMapping={
         <NewMappingCard
-          githubRepo={githubRepo}
-          vkRepoId={vkRepoId}
+          githubRepo={values.githubRepo ?? ''}
+          vkRepoId={values.vibeKanbanRepoId ?? ''}
           vkRepos={vkRepos}
           vkReposLoading={vkReposLoading}
           upserting={upserting}
-          onGithubRepoChange={setGithubRepo}
-          onVkRepoIdChange={setVkRepoId}
+          onGithubRepoChange={(value) => {
+            setValue('githubRepo', value, { shouldDirty: true });
+          }}
+          onVkRepoIdChange={(value) => {
+            setValue('vibeKanbanRepoId', value, { shouldDirty: true });
+          }}
           onSubmit={() => {
-            void upsert({
-              variables: {
-                input: {
-                  githubRepo,
-                  vibeKanbanRepoId: vkRepoId,
+            void handleSubmit((formValues) => {
+              void upsert({
+                variables: {
+                  input: {
+                    githubRepo: formValues.githubRepo,
+                    vibeKanbanRepoId: formValues.vibeKanbanRepoId,
+                  },
                 },
-              },
-            });
+              });
+            })();
           }}
         />
       }

@@ -1,5 +1,16 @@
 mutation UpdateSettingsMutation($input: UpdateSettingsInput!) {
   updateSettings(input: $input) {
-    ok
+    id
+    coreFields {
+      key
+      label
+      value
+      envVar
+      description
+    }
+    resolvedSourceLabel
+    resolvedDestinationLabel
+    scheduledSyncEnabled
+    autoCreateIssues
   }
 }

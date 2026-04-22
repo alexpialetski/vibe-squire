@@ -1,7 +1,7 @@
 import { useMutation, useQuery } from '@apollo/client';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
+import { useForm } from 'react-hook-form';
 import { toast } from 'react-hot-toast';
-import type { EffectiveSettingsQueryQuery } from '../__generated__/graphql';
 import type {
   CoreSettingFieldRow,
   EffectiveSettingsQueryData,
@@ -29,21 +29,42 @@ export function SettingsPage() {
     fetchPolicy: 'cache-and-network',
   });
 
-  const [texts, setTexts] = useState<Record<string, string>>({});
-  const [scheduledOn, setScheduledOn] = useState(false);
-  const [autoCreate, setAutoCreate] = useState(false);
+  type SettingsFormValues = {
+    poll_interval_minutes: string;
+    jitter_max_seconds: string;
+    run_now_cooldown_seconds: string;
+    max_board_pr_count: string;
+    scheduled_sync_enabled: boolean;
+    auto_create_issues: boolean;
+  };
+
+  const { handleSubmit, reset, setValue, watch } = useForm<SettingsFormValues>({
+    defaultValues: {
+      poll_interval_minutes: '',
+      jitter_max_seconds: '',
+      run_now_cooldown_seconds: '',
+      max_board_pr_count: '',
+      scheduled_sync_enabled: false,
+      auto_create_issues: false,
+    },
+  });
 
   useEffect(() => {
     const eff = metaQ.data?.effectiveSettings;
     if (!eff) return;
-    const t: Record<string, string> = {};
-    for (const f of eff.coreFields) {
-      t[f.key] = f.value ?? '';
-    }
-    setTexts(t);
-    setScheduledOn(eff.scheduledSyncEnabled);
-    setAutoCreate(eff.autoCreateIssues);
-  }, [metaQ.data]);
+    const valuesByKey = new Map(
+      eff.coreFields.map((field) => [field.key, field.value]),
+    );
+    reset({
+      poll_interval_minutes: valuesByKey.get('poll_interval_minutes') ?? '',
+      jitter_max_seconds: valuesByKey.get('jitter_max_seconds') ?? '',
+      run_now_cooldown_seconds:
+        valuesByKey.get('run_now_cooldown_seconds') ?? '',
+      max_board_pr_count: valuesByKey.get('max_board_pr_count') ?? '',
+      scheduled_sync_enabled: eff.scheduledSyncEnabled,
+      auto_create_issues: eff.autoCreateIssues,
+    });
+  }, [metaQ.data, reset]);
 
   type CoreField = CoreSettingFieldRow;
 
@@ -51,47 +72,37 @@ export function SettingsPage() {
     UpdateSettingsMutationData,
     UpdateSettingsMutationVariables
   >(UPDATE_SETTINGS_MUTATION, {
-    optimisticResponse: () => ({
-      __typename: 'Mutation',
-      updateSettings: {
-        __typename: 'UpdateSettingsPayload',
-        ok: true,
-      },
-    }),
-    update(cache, { data }, { variables }) {
-      if (!data?.updateSettings?.ok || !variables?.input) return;
-      const existing = cache.readQuery<EffectiveSettingsQueryQuery>({
-        query: EFFECTIVE_SETTINGS_QUERY,
-      });
-      if (!existing?.effectiveSettings) return;
+    optimisticResponse: (variables, { IGNORE }) => {
+      const existing:
+        | EffectiveSettingsQueryData['effectiveSettings']
+        | undefined = metaQ.data?.effectiveSettings;
+      if (!existing) return IGNORE;
+      const existingId = String(existing.id);
       const input = variables.input;
       const inputByKey = input as Record<string, string | undefined>;
-      const nextFields = existing.effectiveSettings.coreFields.map(
-        (row: CoreField) => {
-          const v = inputByKey[row.key];
-          if (v === undefined) return row;
-          return { ...row, value: v };
+      return {
+        __typename: 'Mutation',
+        updateSettings: {
+          __typename: 'EffectiveSettings',
+          id: existingId,
+          coreFields: existing.coreFields.map((row) => ({
+            __typename: 'CoreSettingField',
+            ...row,
+            value: inputByKey[row.key] ?? row.value,
+          })),
+          resolvedSourceLabel: existing.resolvedSourceLabel,
+          resolvedDestinationLabel: existing.resolvedDestinationLabel,
+          scheduledSyncEnabled:
+            input.scheduled_sync_enabled !== undefined
+              ? input.scheduled_sync_enabled === 'true'
+              : existing.scheduledSyncEnabled,
+          autoCreateIssues:
+            input.auto_create_issues !== undefined
+              ? input.auto_create_issues === 'true'
+              : existing.autoCreateIssues,
         },
-      );
-      cache.writeQuery({
-        query: EFFECTIVE_SETTINGS_QUERY,
-        data: {
-          effectiveSettings: {
-            ...existing.effectiveSettings,
-            coreFields: nextFields,
-            scheduledSyncEnabled:
-              input.scheduled_sync_enabled !== undefined
-                ? input.scheduled_sync_enabled === 'true'
-                : existing.effectiveSettings.scheduledSyncEnabled,
-            autoCreateIssues:
-              input.auto_create_issues !== undefined
-                ? input.auto_create_issues === 'true'
-                : existing.effectiveSettings.autoCreateIssues,
-          },
-        },
-      });
+      };
     },
-    refetchQueries: [{ query: EFFECTIVE_SETTINGS_QUERY }],
     onCompleted(_d, ctx) {
       const input = ctx?.variables?.input as
         | UpdateSettingsMutationVariables['input']
@@ -117,6 +128,13 @@ export function SettingsPage() {
       ),
     [metaQ.data?.effectiveSettings.coreFields],
   );
+  const values = watch();
+  const texts = {
+    poll_interval_minutes: values.poll_interval_minutes ?? '',
+    jitter_max_seconds: values.jitter_max_seconds ?? '',
+    run_now_cooldown_seconds: values.run_now_cooldown_seconds ?? '',
+    max_board_pr_count: values.max_board_pr_count ?? '',
+  };
 
   return (
     <GeneralSettingsTemplate
@@ -130,30 +148,42 @@ export function SettingsPage() {
         <GeneralSettingsForm
           loading={Boolean(metaQ.loading && !metaQ.data)}
           errorMessage={metaQ.error?.message ?? null}
-          scheduledOn={scheduledOn}
-          autoCreate={autoCreate}
-          onScheduledChange={setScheduledOn}
-          onAutoCreateChange={setAutoCreate}
+          scheduledOn={values.scheduled_sync_enabled ?? false}
+          autoCreate={values.auto_create_issues ?? false}
+          onScheduledChange={(next) => {
+            setValue('scheduled_sync_enabled', next, { shouldDirty: true });
+          }}
+          onAutoCreateChange={(next) => {
+            setValue('auto_create_issues', next, { shouldDirty: true });
+          }}
           textFields={textFields}
           texts={texts}
           onTextChange={(key, value) =>
-            setTexts((s) => ({ ...s, [key]: value }))
+            setValue(key as keyof SettingsFormValues, value, {
+              shouldDirty: true,
+            })
           }
           saving={saving}
           onSubmit={() => {
-            void patch({
-              variables: {
-                input: {
-                  poll_interval_minutes: texts.poll_interval_minutes ?? '',
-                  jitter_max_seconds: texts.jitter_max_seconds ?? '',
-                  run_now_cooldown_seconds:
-                    texts.run_now_cooldown_seconds ?? '',
-                  max_board_pr_count: texts.max_board_pr_count ?? '',
-                  scheduled_sync_enabled: scheduledOn ? 'true' : 'false',
-                  auto_create_issues: autoCreate ? 'true' : 'false',
+            void handleSubmit((formValues) => {
+              void patch({
+                variables: {
+                  input: {
+                    poll_interval_minutes: formValues.poll_interval_minutes,
+                    jitter_max_seconds: formValues.jitter_max_seconds,
+                    run_now_cooldown_seconds:
+                      formValues.run_now_cooldown_seconds,
+                    max_board_pr_count: formValues.max_board_pr_count,
+                    scheduled_sync_enabled: formValues.scheduled_sync_enabled
+                      ? 'true'
+                      : 'false',
+                    auto_create_issues: formValues.auto_create_issues
+                      ? 'true'
+                      : 'false',
+                  },
                 },
-              },
-            });
+              });
+            })();
           }}
         />
       }

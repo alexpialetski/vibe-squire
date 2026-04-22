@@ -1,5 +1,6 @@
 import { useMutation, useQuery } from '@apollo/client';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
+import { useForm } from 'react-hook-form';
 import { toast } from 'react-hot-toast';
 import type {
   GithubFieldsQuery,
@@ -22,16 +23,17 @@ export function GithubPage() {
     UpdateSourceSettingsMutationVariables
   >(UPDATE_SOURCE_SETTINGS_MUTATION, {
     onCompleted: () => {
-      void query.refetch().then(() => {
-        toast.success('GitHub settings saved.');
-      });
+      toast.success('GitHub settings saved.');
     },
     onError: (error: unknown) => {
       toast.error(`Save failed: ${getErrorMessage(error)}`);
     },
   });
 
-  const [values, setValues] = useState<Record<string, string>>({});
+  type GithubFormValues = Record<string, string>;
+  const { handleSubmit, reset, setValue, watch } = useForm<GithubFormValues>({
+    defaultValues: {},
+  });
   const fieldsData = query.data?.githubFields ?? null;
 
   useEffect(() => {
@@ -40,8 +42,8 @@ export function GithubPage() {
     for (const f of fieldsData.fields) {
       v[f.key] = f.value;
     }
-    setValues(v);
-  }, [fieldsData]);
+    reset(v);
+  }, [fieldsData, reset]);
 
   const handleSave = async (body: Record<string, string>) => {
     await saveMutation({ variables: { input: body } });
@@ -79,13 +81,15 @@ export function GithubPage() {
       <h1>GitHub</h1>
       <GithubFieldsForm
         fields={fieldsData?.fields ?? []}
-        values={values}
+        values={watch()}
         saving={saveState.loading}
         onValueChange={(key, value) =>
-          setValues((state) => ({ ...state, [key]: value }))
+          setValue(key, value, { shouldDirty: true })
         }
         onSubmit={() => {
-          void handleSave(values);
+          void handleSubmit((values) => {
+            void handleSave(values);
+          })();
         }}
       />
     </div>

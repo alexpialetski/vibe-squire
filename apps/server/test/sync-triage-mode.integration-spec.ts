@@ -131,7 +131,7 @@ describe('Triage mode (integration)', () => {
         query: /* GraphQL */ `
           mutation Decline($prUrl: String!) {
             declineTriage(prUrl: $prUrl) {
-              ok
+              id
             }
           }
         `,
@@ -179,7 +179,9 @@ describe('Triage mode (integration)', () => {
         query: /* GraphQL */ `
           mutation Accept($prUrl: String!) {
             acceptTriage(prUrl: $prUrl) {
+              id
               kanbanIssueId
+              effectiveDecision
             }
           }
         `,
@@ -187,11 +189,21 @@ describe('Triage mode (integration)', () => {
       })
       .expect(200);
     const body = res.body as {
-      data?: { acceptTriage?: { kanbanIssueId: string } };
+      data?: {
+        acceptTriage?: {
+          id: string;
+          kanbanIssueId: string;
+          effectiveDecision: string;
+        };
+      };
       errors?: unknown[];
     };
     expect(body.errors).toBeUndefined();
+    expect(body.data?.acceptTriage?.id).toBe(
+      'https://github.com/acme/demo/pull/10',
+    );
     expect(body.data?.acceptTriage?.kanbanIssueId).toBe('triage-issue-id');
+    expect(body.data?.acceptTriage?.effectiveDecision).toBe('linked_existing');
     expect(vkStub.createIssue).toHaveBeenCalledTimes(1);
 
     const synced = await prisma.syncedPullRequest.findUnique({
@@ -210,7 +222,7 @@ describe('Triage mode (integration)', () => {
         query: /* GraphQL */ `
           mutation Decline($prUrl: String!) {
             declineTriage(prUrl: $prUrl) {
-              ok
+              id
             }
           }
         `,
@@ -232,7 +244,7 @@ describe('Triage mode (integration)', () => {
         query: /* GraphQL */ `
           mutation Reconsider($prUrl: String!) {
             reconsiderTriage(prUrl: $prUrl) {
-              ok
+              id
             }
           }
         `,

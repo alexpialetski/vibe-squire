@@ -94,6 +94,7 @@ describe('VibeKanbanPage', () => {
           data: {
             updateDestinationSettings: {
               __typename: 'EffectiveSettings',
+              id: 'singleton',
               coreFields: [],
               resolvedSourceLabel: 'GitHub',
               resolvedDestinationLabel: 'Vibe Kanban',
@@ -102,10 +103,6 @@ describe('VibeKanbanPage', () => {
             },
           },
         },
-      },
-      {
-        request: { query: VIBE_KANBAN_UI_STATE_QUERY },
-        result: uiStateResult,
       },
     ];
 

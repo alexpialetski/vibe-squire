@@ -21,6 +21,9 @@ export class CoreSettingField {
 
 @ObjectType()
 export class EffectiveSettings {
+  @Field(() => ID)
+  id!: string;
+
   @Field(() => [CoreSettingField])
   coreFields!: CoreSettingField[];
 
@@ -364,12 +367,6 @@ export class DashboardSetupGql {
   reasonMessages!: SetupReasonMessageGql[];
 }
 
-@ObjectType()
-export class UpdateSettingsPayload {
-  @Field(() => Boolean)
-  ok!: boolean;
-}
-
 @InputType()
 export class UpdateSettingsInput {
   @Field(() => String, { nullable: true })
@@ -429,24 +426,6 @@ export class UpsertMappingInput {
 
 @ObjectType()
 export class DeleteMappingPayload {
-  @Field(() => Boolean)
-  ok!: boolean;
-}
-
-@ObjectType()
-export class AcceptTriagePayload {
-  @Field(() => String)
-  kanbanIssueId!: string;
-}
-
-@ObjectType()
-export class DeclineTriagePayload {
-  @Field(() => Boolean)
-  ok!: boolean;
-}
-
-@ObjectType()
-export class ReconsiderTriagePayload {
   @Field(() => Boolean)
   ok!: boolean;
 }
