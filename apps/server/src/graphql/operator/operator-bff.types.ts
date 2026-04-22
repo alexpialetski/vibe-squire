@@ -381,11 +381,11 @@ export class UpdateSettingsInput {
   @Field(() => String, { nullable: true })
   max_board_pr_count?: string;
 
-  @Field(() => String, { nullable: true })
-  scheduled_sync_enabled?: string;
+  @Field(() => Boolean, { nullable: true })
+  scheduled_sync_enabled?: boolean;
 
-  @Field(() => String, { nullable: true })
-  auto_create_issues?: string;
+  @Field(() => Boolean, { nullable: true })
+  auto_create_issues?: boolean;
 }
 
 @InputType()

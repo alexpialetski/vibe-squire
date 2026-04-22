@@ -4,12 +4,15 @@ import { POLL_RUN_ITEM_DECISION } from '../sync/poll-run-decisions';
 import { PollRunHistoryService } from '../sync/poll-run-history.service';
 import { pollDecisionLabel } from '../sync/poll-run-labels';
 import { fetchTriageLiveState } from '../sync/triage-live-state.queries';
+import {
+  decodeActivityCursor,
+  encodeActivityCursor,
+  type ActivityCursor,
+} from '../graphql/operator/activity-feed-cursor';
 import { presentActivityRunsForView } from './ui-presenter';
 
 const DEFAULT_LIMIT = 40;
 const MAX_LIMIT = 100;
-
-export type ActivityCursor = { startedAt: string; id: string };
 
 type PresentedActivityItem = {
   id: string;
@@ -29,24 +32,6 @@ const TRIAGE_DECISIONS = new Set<string>([
   POLL_RUN_ITEM_DECISION.skippedTriage,
   POLL_RUN_ITEM_DECISION.skippedBoardLimit,
 ]);
-
-function encodeCursor(c: ActivityCursor): string {
-  return Buffer.from(JSON.stringify(c), 'utf8').toString('base64url');
-}
-
-function decodeCursor(raw: string): ActivityCursor {
-  const json = Buffer.from(raw, 'base64url').toString('utf8');
-  const parsed = JSON.parse(json) as unknown;
-  if (
-    !parsed ||
-    typeof parsed !== 'object' ||
-    typeof (parsed as ActivityCursor).startedAt !== 'string' ||
-    typeof (parsed as ActivityCursor).id !== 'string'
-  ) {
-    throw new Error('invalid_cursor');
-  }
-  return parsed as ActivityCursor;
-}
 
 @Injectable()
 export class ActivityUiService {
@@ -118,7 +103,7 @@ export class ActivityUiService {
     let cursor: ActivityCursor | null = null;
     if (after) {
       try {
-        cursor = decodeCursor(after);
+        cursor = decodeActivityCursor(after);
       } catch {
         cursor = null;
       }
@@ -156,7 +141,7 @@ export class ActivityUiService {
     const nodes = hasNextPage ? presented.slice(0, first) : presented;
     const last = nodes[nodes.length - 1];
     const endCursor = last
-      ? encodeCursor({ startedAt: last.startedAt, id: last.id })
+      ? encodeActivityCursor({ startedAt: last.startedAt, id: last.id })
       : null;
 
     return {

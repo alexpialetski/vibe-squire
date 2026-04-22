@@ -13,6 +13,23 @@ import { uiNavLocals } from './ui-presenter';
 export const VK_PAGE_ORG_ERROR_WRONG_DESTINATION =
   'Vibe Kanban is not available (this UI requires VIBE_SQUIRE_DESTINATION_TYPE=vibe_kanban).';
 
+export type VibeKanbanPageLocals = ReturnType<typeof uiNavLocals> & {
+  saved: boolean;
+  error: string | null;
+  vkBoardPicker: boolean;
+  boardOrg: string;
+  boardProj: string;
+  kanbanDoneStatus: string;
+  vkExecutor: string;
+  executorOptions: Array<{ value: string; label: string }>;
+  vkLabels: {
+    default_organization_id: string;
+    vk_workspace_executor: string;
+    kanban_done_status: string;
+  };
+  orgError: string | null;
+};
+
 /**
  * Template locals for Vibe Kanban settings (saved board ids, executor, labels).
  * Org/project lists are loaded via `GET /api/vibe-kanban/organizations` and
@@ -25,7 +42,7 @@ export async function buildVibeKanbanPageLocals(deps: {
   uiNavEntries: UiNavEntry[];
   saved?: string;
   err?: string;
-}): Promise<Record<string, unknown>> {
+}): Promise<VibeKanbanPageLocals> {
   const {
     settings,
     destinationType,
