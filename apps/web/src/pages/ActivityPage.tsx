@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useSubscription } from '@apollo/client';
 import { activityRunsResponseSchema } from '@vibe-squire/shared';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import type { ActivityFeedQueryData } from '../graphql/operator-query-types';
 import {
@@ -91,6 +91,7 @@ export function ActivityPage() {
         kanbanIssueId: '…',
       }),
     }),
+    refetchQueries: [ACTIVITY_FEED_QUERY],
     onError: (e) => toast.error(getErrorMessage(e)),
   });
   const [decline] = useMutation(DECLINE_TRIAGE_MUTATION, {
@@ -102,6 +103,7 @@ export function ActivityPage() {
         kanbanIssueId: null,
       }),
     }),
+    refetchQueries: [ACTIVITY_FEED_QUERY],
     onError: (e) => toast.error(getErrorMessage(e)),
   });
   const [reconsider] = useMutation(RECONSIDER_TRIAGE_MUTATION, {
@@ -113,8 +115,13 @@ export function ActivityPage() {
         kanbanIssueId: null,
       }),
     }),
+    refetchQueries: [ACTIVITY_FEED_QUERY],
     onError: (e) => toast.error(getErrorMessage(e)),
   });
+
+  const [triageActionPendingPr, setTriageActionPendingPr] = useState<
+    string | null
+  >(null);
 
   const loadMore = useCallback(() => {
     const cursor = feed.data?.activityFeed?.pageInfo?.endCursor;
@@ -126,19 +133,28 @@ export function ActivityPage() {
 
   const onAccept = useCallback(
     (prUrl: string) => {
-      void accept({ variables: { prUrl } });
+      setTriageActionPendingPr(prUrl);
+      void accept({ variables: { prUrl } }).finally(() => {
+        setTriageActionPendingPr((c) => (c === prUrl ? null : c));
+      });
     },
     [accept],
   );
   const onDecline = useCallback(
     (prUrl: string) => {
-      void decline({ variables: { prUrl } });
+      setTriageActionPendingPr(prUrl);
+      void decline({ variables: { prUrl } }).finally(() => {
+        setTriageActionPendingPr((c) => (c === prUrl ? null : c));
+      });
     },
     [decline],
   );
   const onReconsider = useCallback(
     (prUrl: string) => {
-      void reconsider({ variables: { prUrl } });
+      setTriageActionPendingPr(prUrl);
+      void reconsider({ variables: { prUrl } }).finally(() => {
+        setTriageActionPendingPr((c) => (c === prUrl ? null : c));
+      });
     },
     [reconsider],
   );
@@ -163,6 +179,7 @@ export function ActivityPage() {
           onAccept={onAccept}
           onDecline={onDecline}
           onReconsider={onReconsider}
+          triageActionPendingPr={triageActionPendingPr}
         />
       }
     />

@@ -14,6 +14,7 @@ type ActivityFeedSectionProps = {
   onAccept: (prUrl: string) => void;
   onDecline: (prUrl: string) => void;
   onReconsider: (prUrl: string) => void;
+  triageActionPendingPr: string | null;
 };
 
 function isTriageableDecision(effectiveDecision: string): boolean {
@@ -33,6 +34,7 @@ export function ActivityFeedSection({
   onAccept,
   onDecline,
   onReconsider,
+  triageActionPendingPr,
 }: ActivityFeedSectionProps) {
   const latestCompleted = useMemo(
     () => runs.find((r) => r.phase === 'completed') ?? null,
@@ -68,6 +70,7 @@ export function ActivityFeedSection({
           onAccept={onAccept}
           onDecline={onDecline}
           onReconsider={onReconsider}
+          triageActionPendingPr={triageActionPendingPr}
         />
       ))}
       {hasNextPage ? (
