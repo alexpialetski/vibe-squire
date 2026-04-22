@@ -21,10 +21,21 @@ function isPendingTriage(effectiveDecision: string): boolean {
   );
 }
 
-function triageSortKey(effectiveDecision: string): number {
+/**
+ * Row order: needs triage/decline first, then linked+unmapped (operator attention),
+ * then other outcomes, with bot-skipped PRs last.
+ */
+function activityItemSortKey(effectiveDecision: string): number {
   if (isPendingTriage(effectiveDecision)) return 0;
   if (effectiveDecision === 'skipped_declined') return 1;
-  return 2;
+  if (
+    effectiveDecision === 'linked_existing' ||
+    effectiveDecision === 'skipped_unmapped'
+  ) {
+    return 2;
+  }
+  if (effectiveDecision === 'skipped_bot') return 4;
+  return 3;
 }
 
 function fmtCount(v: number | null | undefined): string {
@@ -42,8 +53,8 @@ export function ActivityRunWithItems({
   const sortedItems = useMemo(
     () =>
       [...run.items].sort((a, b) => {
-        const ka = triageSortKey(a.effectiveDecision);
-        const kb = triageSortKey(b.effectiveDecision);
+        const ka = activityItemSortKey(a.effectiveDecision);
+        const kb = activityItemSortKey(b.effectiveDecision);
         if (ka !== kb) return ka - kb;
         return a.prNumber - b.prNumber;
       }),
