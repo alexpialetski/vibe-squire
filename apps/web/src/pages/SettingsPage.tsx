@@ -1,5 +1,4 @@
 import { useMutation, useQuery } from '@apollo/client';
-import { settingsMetaResponseSchema } from '@vibe-squire/shared';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import type { EffectiveSettingsQueryQuery } from '../__generated__/graphql';
@@ -35,18 +34,15 @@ export function SettingsPage() {
   const [autoCreate, setAutoCreate] = useState(false);
 
   useEffect(() => {
-    if (!metaQ.data) return;
-    const parsed = settingsMetaResponseSchema.safeParse(
-      metaQ.data.effectiveSettings,
-    );
-    if (!parsed.success) return;
+    const eff = metaQ.data?.effectiveSettings;
+    if (!eff) return;
     const t: Record<string, string> = {};
-    for (const f of parsed.data.coreFields) {
-      t[f.key] = f.value;
+    for (const f of eff.coreFields) {
+      t[f.key] = f.value ?? '';
     }
     setTexts(t);
-    setScheduledOn(parsed.data.scheduledSyncEnabled);
-    setAutoCreate(parsed.data.autoCreateIssues);
+    setScheduledOn(eff.scheduledSyncEnabled);
+    setAutoCreate(eff.autoCreateIssues);
   }, [metaQ.data]);
 
   type CoreField = CoreSettingFieldRow;
