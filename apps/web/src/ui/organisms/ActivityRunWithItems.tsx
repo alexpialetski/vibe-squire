@@ -1,6 +1,9 @@
 import type { ActivityRunsResponse } from '@vibe-squire/shared';
 import { useEffect, useMemo, useState } from 'react';
-import { ActivityTriageActions } from '../molecules/ActivityTriageActions';
+import {
+  ActivityTriageActions,
+  TriageActionInFlight,
+} from '../molecules/ActivityTriageActions';
 
 type ActivityRun = ActivityRunsResponse['runs'][number];
 
@@ -163,20 +166,23 @@ export function ActivityRunWithItems({
                       </td>
                       <td>
                         {item.decisionLabel}
-                        {(isPendingTriage(item.effectiveDecision) ||
-                          item.effectiveDecision === 'skipped_declined') && (
-                          <ActivityTriageActions
-                            prUrl={item.prUrl}
-                            actionPending={triageActionPendingPr === item.prUrl}
-                            mode={
-                              isPendingTriage(item.effectiveDecision)
-                                ? 'pending'
-                                : 'declined'
-                            }
-                            onAccept={onAccept}
-                            onDecline={onDecline}
-                            onReconsider={onReconsider}
-                          />
+                        {triageActionPendingPr === item.prUrl ? (
+                          <TriageActionInFlight />
+                        ) : (
+                          (isPendingTriage(item.effectiveDecision) ||
+                            item.effectiveDecision === 'skipped_declined') && (
+                            <ActivityTriageActions
+                              prUrl={item.prUrl}
+                              mode={
+                                isPendingTriage(item.effectiveDecision)
+                                  ? 'pending'
+                                  : 'declined'
+                              }
+                              onAccept={onAccept}
+                              onDecline={onDecline}
+                              onReconsider={onReconsider}
+                            />
+                          )
                         )}
                       </td>
                       <td className="wrap muted">
