@@ -1,6 +1,6 @@
 # ADR 001: Introduce GraphQL alongside REST for the operator console
 
-**Status:** Accepted
+**Status:** Accepted — server-stack sub-decision amended by [ADR 003](003-fastify-mercurius-runtime.md) (Fastify + Mercurius replace Express + Apollo; the GraphQL-alongside-REST decision itself stands).
 
 ## Context
 

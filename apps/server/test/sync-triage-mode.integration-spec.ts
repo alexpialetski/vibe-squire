@@ -1,7 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ValidationPipe } from '@nestjs/common';
+import {
+  FastifyAdapter,
+  NestFastifyApplication,
+} from '@nestjs/platform-fastify';
 import request from 'supertest';
-import { App } from 'supertest/types';
 import { testingAppModule } from './testing-app-module';
 import { GhCliService } from '../src/integrations/github/gh-cli.service';
 import { GithubPrScoutService } from '../src/integrations/github/github-pr-scout.service';
@@ -10,7 +12,7 @@ import { PrismaService } from '../src/prisma/prisma.service';
 import { SettingsService } from '../src/settings/settings.service';
 
 describe('Triage mode (integration)', () => {
-  let app: INestApplication<App>;
+  let app: NestFastifyApplication;
   let prisma: PrismaService;
   const vkStub = {
     probe: jest.fn().mockResolvedValue(undefined),
@@ -60,11 +62,11 @@ describe('Triage mode (integration)', () => {
       .useValue(vkStub)
       .compile();
 
-    app = moduleFixture.createNestApplication();
-    app.useGlobalPipes(
-      new ValidationPipe({ whitelist: false, transform: true }),
+    app = moduleFixture.createNestApplication<NestFastifyApplication>(
+      new FastifyAdapter(),
     );
     await app.init();
+    await app.getHttpAdapter().getInstance().ready();
 
     prisma = app.get(PrismaService);
   });

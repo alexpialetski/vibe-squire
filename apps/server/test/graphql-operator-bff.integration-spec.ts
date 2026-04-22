@@ -1,11 +1,13 @@
-import { ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { NestExpressApplication } from '@nestjs/platform-express';
+import {
+  FastifyAdapter,
+  NestFastifyApplication,
+} from '@nestjs/platform-fastify';
 import { createServer, type Server } from 'node:http';
 import { createClient } from 'graphql-ws';
 import WebSocket from 'ws';
 import request from 'supertest';
-import { configureExpressApp } from '../src/configure-express-app';
+import { configureFastifyApp } from '../src/configure-fastify-app';
 import { APP_ENV } from '../src/config/app-env.token';
 import { PollSchedulerService } from '../src/sync/poll-scheduler.service';
 import { StatusEventsService } from '../src/events/status-events.service';
@@ -175,14 +177,16 @@ const ACTIVITY_EVENTS_SUB = /* GraphQL */ `
 
 async function createApp(
   env: NodeJS.ProcessEnv = process.env,
-): Promise<NestExpressApplication> {
+): Promise<NestFastifyApplication> {
   const moduleFixture: TestingModule = await Test.createTestingModule({
     imports: [testingAppModule(env)],
   }).compile();
-  const app = moduleFixture.createNestApplication<NestExpressApplication>();
-  configureExpressApp(app);
-  app.useGlobalPipes(new ValidationPipe({ whitelist: false, transform: true }));
+  const app = moduleFixture.createNestApplication<NestFastifyApplication>(
+    new FastifyAdapter(),
+  );
+  await configureFastifyApp(app);
   await app.init();
+  await app.getHttpAdapter().getInstance().ready();
   app.get(PollSchedulerService).onModuleDestroy();
   return app;
 }
@@ -254,7 +258,7 @@ async function startVkMockServer(): Promise<{
 }
 
 function listenPort(
-  server: ReturnType<NestExpressApplication['getHttpServer']>,
+  server: ReturnType<NestFastifyApplication['getHttpServer']>,
 ): number {
   const addr = server.address();
   if (typeof addr === 'object' && addr !== null && 'port' in addr) {
@@ -280,7 +284,7 @@ async function waitFor(
 describe('GraphQL operator BFF (integration)', () => {
   jest.setTimeout(35_000);
 
-  let app: NestExpressApplication;
+  let app: NestFastifyApplication;
   let vkMockServer: Server;
   let previousVkBackendUrl: string | undefined;
 

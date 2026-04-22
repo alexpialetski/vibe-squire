@@ -1,7 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ValidationPipe } from '@nestjs/common';
+import {
+  FastifyAdapter,
+  NestFastifyApplication,
+} from '@nestjs/platform-fastify';
 import request from 'supertest';
-import { App } from 'supertest/types';
 import { testingAppModule } from './testing-app-module';
 import { GhCliService } from '../src/integrations/github/gh-cli.service';
 import { GithubPrScoutService } from '../src/integrations/github/github-pr-scout.service';
@@ -87,7 +89,7 @@ async function seedCompleteRouting(
  */
 describe('RunPollCycleService branches (integration)', () => {
   describe('with gh OK and VK stub', () => {
-    let app: INestApplication<App>;
+    let app: NestFastifyApplication;
     let prisma: PrismaService;
     let settings: SettingsService;
     let runPoll: RunPollCycleService;
@@ -110,11 +112,11 @@ describe('RunPollCycleService branches (integration)', () => {
         .useValue(vkStub)
         .compile();
 
-      app = moduleFixture.createNestApplication();
-      app.useGlobalPipes(
-        new ValidationPipe({ whitelist: false, transform: true }),
+      app = moduleFixture.createNestApplication<NestFastifyApplication>(
+        new FastifyAdapter(),
       );
       await app.init();
+      await app.getHttpAdapter().getInstance().ready();
 
       prisma = app.get(PrismaService);
       settings = app.get(SettingsService);
@@ -221,7 +223,7 @@ describe('RunPollCycleService branches (integration)', () => {
   });
 
   describe('with GitHub CLI reporting not authenticated', () => {
-    let app: INestApplication<App>;
+    let app: NestFastifyApplication;
     let prisma: PrismaService;
     let settings: SettingsService;
     let runPoll: RunPollCycleService;
@@ -246,11 +248,11 @@ describe('RunPollCycleService branches (integration)', () => {
         .useValue(vkStub)
         .compile();
 
-      app = moduleFixture.createNestApplication();
-      app.useGlobalPipes(
-        new ValidationPipe({ whitelist: false, transform: true }),
+      app = moduleFixture.createNestApplication<NestFastifyApplication>(
+        new FastifyAdapter(),
       );
       await app.init();
+      await app.getHttpAdapter().getInstance().ready();
 
       prisma = app.get(PrismaService);
       settings = app.get(SettingsService);

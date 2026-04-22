@@ -1,8 +1,10 @@
-import { ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { NestExpressApplication } from '@nestjs/platform-express';
+import {
+  FastifyAdapter,
+  NestFastifyApplication,
+} from '@nestjs/platform-fastify';
 import request from 'supertest';
-import { configureExpressApp } from '../src/configure-express-app';
+import { configureFastifyApp } from '../src/configure-fastify-app';
 import { GhCliService } from '../src/integrations/github/gh-cli.service';
 import { GithubPrScoutService } from '../src/integrations/github/github-pr-scout.service';
 import { VibeKanbanBoardService } from '../src/vibe-kanban/vibe-kanban-board.service';
@@ -54,7 +56,7 @@ const triageVkStub = {
   startWorkspace: jest.fn().mockResolvedValue('ws-triage'),
 };
 
-async function createApp(): Promise<NestExpressApplication> {
+async function createApp(): Promise<NestFastifyApplication> {
   const moduleFixture: TestingModule = await Test.createTestingModule({
     imports: [testingAppModule()],
   })
@@ -89,16 +91,18 @@ async function createApp(): Promise<NestExpressApplication> {
     .useValue(triageVkStub)
     .compile();
 
-  const app = moduleFixture.createNestApplication<NestExpressApplication>();
-  configureExpressApp(app);
-  app.useGlobalPipes(new ValidationPipe({ whitelist: false, transform: true }));
+  const app = moduleFixture.createNestApplication<NestFastifyApplication>(
+    new FastifyAdapter(),
+  );
+  await configureFastifyApp(app);
   await app.init();
+  await app.getHttpAdapter().getInstance().ready();
   app.get(PollSchedulerService).onModuleDestroy();
   return app;
 }
 
 describe('GraphQL operator triage mutations (integration)', () => {
-  let app: NestExpressApplication;
+  let app: NestFastifyApplication;
   let prisma: PrismaService;
 
   beforeAll(async () => {

@@ -15,5 +15,6 @@ explicit Status and supersession).
 
 | # | Title | Status |
 |---|-------|--------|
-| 001 | [Introduce GraphQL alongside REST for the operator console](001-graphql-pilot.md) | Accepted |
+| 001 | [Introduce GraphQL alongside REST for the operator console](001-graphql-pilot.md) | Accepted (server-stack sub-decision amended by 003) |
 | 002 | [Atomic-design layout for the operator web UI](002-atomic-design-web-ui.md) | Accepted |
+| 003 | [Run the server on Fastify + Mercurius (retire Express + Apollo)](003-fastify-mercurius-runtime.md) | Accepted |

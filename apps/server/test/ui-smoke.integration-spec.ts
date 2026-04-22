@@ -1,8 +1,10 @@
-import { ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { NestExpressApplication } from '@nestjs/platform-express';
+import {
+  FastifyAdapter,
+  NestFastifyApplication,
+} from '@nestjs/platform-fastify';
 import request from 'supertest';
-import { configureExpressApp } from '../src/configure-express-app';
+import { configureFastifyApp } from '../src/configure-fastify-app';
 import { GhCliService } from '../src/integrations/github/gh-cli.service';
 import { PollSchedulerService } from '../src/sync/poll-scheduler.service';
 import { VibeKanbanBoardService } from '../src/vibe-kanban/vibe-kanban-board.service';
@@ -42,7 +44,7 @@ const vkStub = {
   startWorkspace: jest.fn().mockResolvedValue('ws-1'),
 };
 
-async function createSmokeApp(): Promise<NestExpressApplication> {
+async function createSmokeApp(): Promise<NestFastifyApplication> {
   const moduleFixture: TestingModule = await Test.createTestingModule({
     imports: [testingAppModule()],
   })
@@ -54,10 +56,12 @@ async function createSmokeApp(): Promise<NestExpressApplication> {
     .useValue(vkStub)
     .compile();
 
-  const app = moduleFixture.createNestApplication<NestExpressApplication>();
-  configureExpressApp(app);
-  app.useGlobalPipes(new ValidationPipe({ whitelist: false, transform: true }));
+  const app = moduleFixture.createNestApplication<NestFastifyApplication>(
+    new FastifyAdapter(),
+  );
+  await configureFastifyApp(app);
   await app.init();
+  await app.getHttpAdapter().getInstance().ready();
   app.get(PollSchedulerService).onModuleDestroy();
   return app;
 }
@@ -67,7 +71,7 @@ async function createSmokeApp(): Promise<NestExpressApplication> {
  */
 describe('App HTTP smoke (integration)', () => {
   describe('default operator env (no VIBE_SQUIRE_SOURCE_TYPE)', () => {
-    let app: NestExpressApplication;
+    let app: NestFastifyApplication;
     let prevEnv: Record<string, string | undefined>;
 
     beforeAll(async () => {

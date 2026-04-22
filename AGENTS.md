@@ -10,6 +10,8 @@ A local background orchestrator that polls GitHub for pull requests requesting y
 
 Hexagonal (ports & adapters). Core domain logic has no dependency on NestJS, GitHub `gh` CLI, or Vibe Kanban HTTP details. Adapters implement port interfaces in `apps/server/src/ports/`; NestJS modules wire them via DI.
 
+Runtime defaults: NestJS on Fastify (`@nestjs/platform-fastify`) and Mercurius (`@nestjs/mercurius`) for GraphQL.
+
 **Monorepo (pnpm):** `apps/server` — publishable Nest app (`vibe-squire`); `apps/web` — Vite + React SPA (static files copied into `apps/server/dist/client` on build); `packages/shared` — Zod contracts shared by server and web.
 
 **Layers:**

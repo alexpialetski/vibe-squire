@@ -1,10 +1,12 @@
 import './load-dotenv';
-import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import { NestExpressApplication } from '@nestjs/platform-express';
+import {
+  FastifyAdapter,
+  NestFastifyApplication,
+} from '@nestjs/platform-fastify';
 import { Logger } from 'nestjs-pino';
 import { AppModule } from './app.module';
-import { configureExpressApp } from './configure-express-app';
+import { configureFastifyApp } from './configure-fastify-app';
 import { parseAppEnv } from './config/env-schema';
 import {
   databaseUrlToFilePath,
@@ -17,21 +19,16 @@ async function bootstrap() {
   runSqliteMigrations(databaseUrlToFilePath(process.env.DATABASE_URL!));
   const env = parseAppEnv();
 
-  const app = await NestFactory.create<NestExpressApplication>(
+  const app = await NestFactory.create<NestFastifyApplication>(
     AppModule.forRoot(env),
+    new FastifyAdapter(),
     {
       bufferLogs: true,
     },
   );
-  configureExpressApp(app);
+  await configureFastifyApp(app);
   app.enableCors({ origin: true });
   app.useLogger(app.get(Logger));
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: false,
-      transform: true,
-    }),
-  );
 
   await app.listen(env.port, env.host);
   const logger = app.get(Logger);
