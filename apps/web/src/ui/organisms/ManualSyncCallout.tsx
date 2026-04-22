@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import type { StatusSnapshot } from '@vibe-squire/shared';
 import { formatIsoDateTime } from '../format-date-time';
 import { KeyValue } from '../atoms/KeyValue';
@@ -9,6 +10,54 @@ type ManualSyncCalloutProps = {
   onSyncNow: () => void;
   syncNowPending?: boolean;
 };
+
+/** True if manual sync is allowed, including when cached status is stale (cooldown ended, no status event). */
+function isManualSyncRunnable(
+  m: StatusSnapshot['manual_sync'],
+  nowMs: number,
+): boolean {
+  if (m.canRun) {
+    return true;
+  }
+  if (m.reason !== 'cooldown' || !m.cooldownUntil) {
+    return false;
+  }
+  const end = Date.parse(m.cooldownUntil);
+  if (!Number.isFinite(end)) {
+    return false;
+  }
+  return nowMs >= end;
+}
+
+/**
+ * Status updates are push-driven (emitChanged). Cooldown expiry is not — Apollo cache can stay at canRun: false
+ * until the next poll or other event. Schedule a re-render for when the server-provided cooldown instant passes.
+ */
+function useManualSyncRerenderWhenCooldownEnds(
+  m: StatusSnapshot['manual_sync'],
+) {
+  const [, setTick] = useState(0);
+
+  useEffect(() => {
+    if (m.canRun || m.reason !== 'cooldown' || !m.cooldownUntil) {
+      return;
+    }
+    const endMs = Date.parse(m.cooldownUntil);
+    if (!Number.isFinite(endMs)) {
+      return;
+    }
+    const delay = endMs - Date.now();
+    if (delay <= 0) {
+      return;
+    }
+    const id = setTimeout(() => {
+      setTick((t) => t + 1);
+    }, delay + 50);
+    return () => {
+      clearTimeout(id);
+    };
+  }, [m.canRun, m.reason, m.cooldownUntil]);
+}
 
 function resolveManualSyncView(manualSync: StatusSnapshot['manual_sync']): {
   state: 'ok' | 'degraded' | 'error';
@@ -55,7 +104,13 @@ export function ManualSyncCallout({
   onSyncNow,
   syncNowPending = false,
 }: ManualSyncCalloutProps) {
-  const view = resolveManualSyncView(manualSync);
+  useManualSyncRerenderWhenCooldownEnds(manualSync);
+
+  const now = Date.now();
+  const canRunNow = isManualSyncRunnable(manualSync, now);
+  const view = resolveManualSyncView(
+    canRunNow && !manualSync.canRun ? { canRun: true } : manualSync,
+  );
 
   return (
     <CardSection title="Manual sync">
@@ -64,14 +119,14 @@ export function ManualSyncCallout({
         <button
           type="button"
           className="btn primary btn-sm"
-          disabled={!manualSync.canRun || syncNowPending}
+          disabled={!canRunNow || syncNowPending}
           onClick={onSyncNow}
         >
           {syncNowPending ? 'Syncing…' : 'Sync now'}
         </button>
       </div>
       {view.reasonText ? <p className="muted">{view.reasonText}</p> : null}
-      {manualSync.cooldownUntil ? (
+      {manualSync.cooldownUntil && !isManualSyncRunnable(manualSync, now) ? (
         <KeyValue
           label="Cooldown until"
           value={formatIsoDateTime(manualSync.cooldownUntil)}
